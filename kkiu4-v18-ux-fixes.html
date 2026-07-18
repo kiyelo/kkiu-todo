@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.3</title>
+<title>Kkiu To Do — v18.2.4</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -509,13 +509,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.3</p>
+  <p class="note">끼우 목업 · v18.2.4</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.3";
+const BUILD="v18.2.4";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.4",date:"2026.07.19",ko:["할 일 수정 중 취소 버튼과 Escape 취소를 추가","다른 UI를 누르면 수정 모드가 자동 해제되도록 수정"],en:["Added a cancel button and Escape-to-cancel while editing a task","Automatically exits edit mode when another UI element is selected"]},
  {version:"v18.2.3",date:"2026.07.19",ko:["끼리 설정에 전체 이모지 선택 진입점을 명확히 표시","더보기 플로팅 요소가 목록 첫·마지막 위치까지 이동하도록 수정","할 일 수정 완료 뒤 현재 스크롤 위치를 유지하도록 보완"],en:["Made the full emoji picker entry points explicit in Circle settings","Allowed the More floating element to reach the first and last list positions","Preserved the current scroll position after finishing a task edit"]},
  {version:"v18.2.2",date:"2026.07.19",ko:["낮은 모바일 화면에서 상단이 잘리던 문제를 수정하고, 끼리 제목·아이콘 터치 영역을 분리","긴 끼리 이름 흐름 표시와 수정 이력의 닫기 버튼을 보완"],en:["Fixed clipped headers on short mobile screens and separated Circle title and icon touch targets","Fixed long Circle-name streaming and added an explicit close button to update history"]},
  {version:"v18.2.1",date:"2026.07.19",ko:["끼리 대표·프로필 이모지를 위한 대량 이모지 선택기와 검색·랜덤 선택 추가"],en:["Added a searchable large emoji picker and random selection for Circle and profile emojis"]},
@@ -661,7 +662,7 @@ function seedCircles(){return[
 function seedLog(){const mk=(idxC,lead,insA,daysAgo)=>({id:uid(),completedAt:new Date(Date.now()-daysAgo*864e5).toISOString(),idxAtDone:idxC,sizeAtDone:9,insertAt:insA,listAt:9,leadMs:lead*3600e3});
  return[mk(0,5,1,0),mk(2,26,2,1),mk(1,3,0,1),mk(4,49,6,3),mk(0,2,1,5)]}
 
-let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null;
+let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null, editingId=null, editingOriginal="";
 let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,expandedDoneId=null,moreTarget="home",moreQuipIndex=0;
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
@@ -772,7 +773,7 @@ function cardHtml(t,idx,o={}){
  const whoHtml=!ms.length?"":ms.length===1?`<span class="who" style="background:${ms[0].color}">${ms[0].ini}</span>`:`<span class="whos">${ms.slice(0,3).map(m=>`<span class="who" style="background:${m.color}">${m.ini}</span>`).join("")}${ms.length>3?`<span class="who more">+${ms.length-3}</span>`:""}</span>`;
  // Keep Kkiu's basic queue controls in Kkiri too; filtering only disables reordering.
  const gripOk=o.rank&&!t.done&&(o.ctx==="home"||(o.ctx==="circle"&&!state.ciFilter));
- const acts=`${whoHtml}${gripOk?`<button class="ico grip" data-act="grip" data-id="${t.id}">${I.grip}</button>`:""}`;
+ const acts=`${whoHtml}${gripOk?`<button class="ico grip" data-act="grip" data-id="${t.id}">${I.grip}</button>`:""}${editingId===t.id?`<button class="ico edit-cancel" aria-label="수정 취소" data-act="edit-cancel" data-id="${t.id}">${I.x}</button>`:""}`;
  return `<article class="card ${o.rank?"hasrank":""} ${topcls} ${searchFlashId===t.id?"search-hit":""}" data-id="${t.id}" ${o.rank?`data-idx="${idx}" data-y="${o.top??0}"`:""} ${o.top!==undefined?`style="top:${o.top}px"`:""}>${lead}${rank}<div class="mid">${mid}</div><div class="acts">${acts}</div></article>`}
 function rowHtml(r,ctx){
  const top=`style="top:${r.y}px"`;
@@ -915,6 +916,7 @@ function favorite(id){const t=findTask(id);if(!t)return;t.favorite=!t.favorite;s
 function commitEdit(id,val){const t=findTask(id);if(t&&val.trim()){t.title=val.trim();save()}
  const ctx=state.tab==="circle"?"circle":state.tab==="home"?"home":null;
  if(ctx)buildQueue(ctx,true);else renderView()}
+function cancelEdit(){if(!editingId)return;editingId=null;editingOriginal="";const ctx=state.tab==="circle"?"circle":state.tab==="home"?"home":null;if(ctx)buildQueue(ctx,true);else renderView()}
 
 function queueTasks(){return state.tab==="circle"?ciActive():active()}
 function enterSelect(id){if(state.tab!=="home"&&state.tab!=="circle")return;selecting=true;selected=new Set(id?[id]:[]);vibe(20);renderView()}
@@ -1228,8 +1230,9 @@ function navHtml(){const n=circleUnreadTotal();return `<div class="nav-ind" id="
  <button class="nb" data-tab="more">${I.more}<span>${T("navMore")}</span></button>`}
 function setLang(l){if(state.lang===l)return;state.lang=l;save();document.getElementById("nav").innerHTML=navHtml();renderView();setNavActive();requestAnimationFrame(moveInd)}
 
-function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)return;
+function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)return;if(editingId&&editingId!==id)cancelEdit();editingId=id;editingOriginal=t.title;
  const cardEl=el.closest(".card");cardEl?.classList.add("editing");
+ const actsEl=cardEl?.querySelector(".acts");if(actsEl&&!actsEl.querySelector(".edit-cancel"))actsEl.insertAdjacentHTML("beforeend",`<button class="ico edit-cancel" aria-label="수정 취소" data-act="edit-cancel" data-id="${id}">${I.x}</button>`);
  const rest=el.parentElement.querySelector(".t-rest");if(rest)rest.style.display="none";
  el.setAttribute("contenteditable","true");el.textContent=t.title;el.focus();
  let placed=false;try{let range=null;
@@ -1242,9 +1245,9 @@ function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)retu
   row.addEventListener("pointerdown",e2=>{e2.preventDefault();e2.stopPropagation();const b=e2.target.closest("[data-em]");if(!b)return;t.assignees=[b.dataset.em];save();row.querySelectorAll(".asgc").forEach(x=>x.classList.toggle("on",x.dataset.em===b.dataset.em))});
   row.addEventListener("click",e2=>e2.stopPropagation());
   cardEl.querySelector(".mid")?.appendChild(row)}}
- const fin=()=>{el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");commitEdit(id,el.textContent)};
+ const fin=()=>{const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
  el.addEventListener("blur",fin,{once:true});
- el.addEventListener("keydown",e2=>{if(e2.key==="Enter"){e2.preventDefault();el.blur()}if(e2.key==="Escape"){el.textContent=t.title;el.blur()}})}
+ el.addEventListener("keydown",e2=>{if(e2.key==="Enter"){e2.preventDefault();el.blur()}if(e2.key==="Escape"){e2.preventDefault();cancelEdit()}})}
 
 function mount(){
  if(state.tab==="circle")markCircleSeen();
@@ -1267,6 +1270,7 @@ function mount(){
  },true);
  const bt=document.getElementById("buildtag");if(bt)bt.textContent=BUILD;
  renderView();setNavActive();requestAnimationFrame(moveInd)}
+app.addEventListener("pointerdown",e=>{if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()});
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
@@ -1312,6 +1316,7 @@ app.addEventListener("click",e=>{
  if(act==="modal-clear-confirm"){const ids=[...document.querySelectorAll(".clrow input:checked")].map(i=>i.dataset.id);closeModal();if(ids.length)sheetClear(ids.join(","));return}
  if(act==="lang"){setLang(el.dataset.lang);return}
  if(act==="stub"){toast(T("tSoon"));return}
+ if(act==="edit-cancel"){cancelEdit();return}
  if(act==="title"){if(selecting)toggleSelect(id);else startEdit(el,id,e);return}
  if(act==="sel"){toggleSelect(id);return}
  if(selecting&&e.target.closest(".card")){toggleSelect(id);return}
