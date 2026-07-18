@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.1.0</title>
+<title>Kkiu To Do — v18.1.2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -81,6 +81,7 @@
   .card.t1 .rank{background:var(--accent);color:#fff;box-shadow:0 3px 8px rgba(224,137,74,.35)}
   .mid{min-width:0;display:flex;flex-direction:column;justify-content:center;position:relative}
   .t-title{margin:0;font-size:15.5px;font-weight:580;letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .card.hasrank .t-title{text-overflow:clip}
   .t-rest{margin:1px 0 0;font-size:11.5px;font-weight:530;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
   .card.t1 .t-title{font-weight:680}
   .t-title[contenteditable="true"]{white-space:normal;overflow-wrap:anywhere;word-break:break-word;text-overflow:clip;overflow-y:auto;max-height:4.2em;outline:none;border-bottom:2px solid var(--accent);padding-bottom:2px}
@@ -220,8 +221,7 @@
   .drow{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:13px;box-shadow:var(--sh-card);padding:10px 12px;margin-bottom:8px}
   .drow .dtitle{flex:1;min-width:0;font-size:13.5px;font-weight:560;color:var(--faint);text-decoration:line-through;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .drow .dtime{font-size:10.5px;font-weight:600;color:var(--faint);flex:none}
-  .drow .ck{width:22px;height:22px;flex:none}
-  .drow .ck{padding:0;line-height:0}
+  .drow .ck{width:22px;height:22px;flex:none;padding:0;line-height:0;display:grid;place-items:center}
   .drow .who{width:27px;height:27px;margin:0;font-size:18px}
   .drow .dx{width:28px;height:28px;border-radius:8px;color:var(--faint);display:grid;place-items:center;flex:none}
   .drow .dx svg{width:14px;height:14px}
@@ -244,10 +244,10 @@
 
   .mdiv{height:1px;background:var(--hair);margin:14px 4px}
   .suprow{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;box-shadow:var(--sh-card);padding:12px 14px;width:100%;text-align:left;transition:.15s}
-  .ttlbtn{position:relative;display:flex;align-items:center;gap:7px;max-width:100%;padding:6px 7px 6px 10px;border-radius:14px;background:rgba(70,55,30,.055);text-align:left;transition:.15s}
-  .ttlbtn:active{transform:scale(.98);background:var(--accent-soft)}
-  .ttlbtn .ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ttlbtn .car{width:24px;height:24px;flex:none;display:grid;place-items:center;border-left:1px solid rgba(70,55,30,.13);color:var(--accent-ink)}
+  .ttlbtn{position:relative;display:flex;align-items:flex-start;gap:5px;max-width:100%;padding:0;text-align:left;transition:.15s}
+  .ttlbtn:active{transform:scale(.98);opacity:.72}
+  .ttlbtn .ttl{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;line-height:1.14}
+  .ttlbtn .car{width:25px;height:29px;flex:none;display:grid;place-items:center;color:var(--accent-ink)}
   .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
   .mrank{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
   .mrank svg{width:15px;height:15px}
@@ -324,10 +324,10 @@
   .card.search-hit{animation:searchhit 1.1s ease}
   @keyframes searchhit{0%,100%{box-shadow:var(--sh-card)}25%,58%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.24)}}
   .circle-head .headrow{display:block}
-  .circle-head .ttlbtn{width:100%;justify-content:space-between}
-  .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+  .circle-head .ttlbtn{width:100%;justify-content:flex-start}
+  .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .circle-tools .head-sub{margin:0}
-  .home-head .headrow{align-items:center}
+  .home-head .headrow{align-items:center;min-height:38px}
   .home-head .hicons{margin-top:0;gap:6px}
   .head .hbtn{background:var(--surface);box-shadow:var(--sh-card)}
   .chip{position:relative}.chip-dot{position:absolute;top:-2px;right:-1px;border:2px solid var(--paper)}
@@ -502,13 +502,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.1.0</p>
+  <p class="note">끼우 목업 · v18.1.2</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.1.0";
+const BUILD="v18.1.2";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.1.2",date:"2026.07.19",ko:["긴 할 일 카드의 첫 줄에서 말줄임표가 다시 생기지 않도록 최종 보정"],en:["Final adjustment to prevent ellipses on the first line of long task cards"]},
+ {version:"v18.1.1",date:"2026.07.19",ko:["끼리 긴 그룹명을 두 줄까지 온전히 표시하도록 상단 구조 개선","끼우·끼리·더보기 상단의 제목 기준선과 완료 체크 아이콘 정렬 보완","긴 할 일 제목 첫 줄에서 말줄임표가 생기지 않도록 보정"],en:["Improved Circle headers for long group names","Aligned top headers and completed-task check icons","Prevented ellipses in the first line of long task titles"]},
  {version:"v18.1.0",date:"2026.07.19",ko:["더보기 하단에 현재 버전과 수정 이력 버튼 추가","버전을 누르면 앱 안에서 변경 이력 확인 가능"],en:["Added a version and update-history button to More","View the update history inside the app"]},
  {version:"v18.0.0",date:"2026.07.19",ko:["끼우·끼리·더보기 상단 UI와 검색·완료 목록 흐름 개선","할 일 입력 카드와 더보기 플로팅 요소 동작 보완","끼리별 프로필·담당자·읽지 않은 업데이트 UI 정리"],en:["Refined headers, search, and completed-task flows","Improved task input and the More floating element","Polished Circle profiles, assignees, and unread updates"]}
 ];
