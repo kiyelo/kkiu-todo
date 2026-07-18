@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.1</title>
+<title>Kkiu To Do — v18.2.2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -21,7 +21,7 @@
   button,input,textarea{font:inherit;color:inherit}
   button{-webkit-tap-highlight-color:transparent;cursor:pointer;border:0;background:none}
   .wrap{width:min(100%,416px)}
-  .phone{position:relative;width:100%;height:min(884px,calc(100vh - 48px));min-height:680px;display:flex;flex-direction:column;
+  .phone{position:relative;width:100%;height:min(884px,calc(100dvh - 48px));min-height:0;display:flex;flex-direction:column;
     overflow:hidden;border-radius:46px;background:var(--paper);border:1px solid rgba(70,55,30,.06);box-shadow:var(--sh-pop)}
   .phone::before{content:"";position:absolute;z-index:60;top:12px;left:50%;width:104px;height:28px;transform:translateX(-50%);border-radius:999px;background:rgba(70,55,30,.05)}
   #app{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -44,7 +44,7 @@
   .chip.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
   .vpage.compact-head .head{padding-top:24px!important;padding-bottom:10px!important}
   .vpage.compact-head .ttl{font-size:25px}
-  .circle-head .headrow>div:first-child{flex:1;min-width:0}
+  .circle-head .headrow{display:block}
   .circle-head .hicons{flex:none;gap:4px;margin-top:0}
   .circle-head .hbtn{width:36px;height:36px;border-radius:12px}
 
@@ -210,6 +210,9 @@
   .sheethead b{font-size:17px;font-weight:750;letter-spacing:-.02em}
   .sheethead .mini{font-size:11.5px;font-weight:650;color:var(--sub);text-align:right}
   .sheethead .mini u{display:block;text-decoration:none;color:var(--accent-ink);font-weight:750;cursor:pointer}
+  .sheetclose{flex:none;width:32px;height:32px;margin:-4px -6px -4px 8px;border-radius:10px;display:grid;place-items:center;color:var(--sub)}
+  .sheetclose:active{transform:scale(.92);background:rgba(70,55,30,.07)}
+  .sheetclose svg{width:16px;height:16px}
   .sheetbody{flex:1;min-height:0;overflow-y:auto;padding:0 18px calc(18px + var(--safe));scrollbar-width:none}
   .sheetbody::-webkit-scrollbar{display:none}
   .donechips{display:flex;gap:6px;overflow-x:auto;padding:0 2px 6px;scrollbar-width:none}
@@ -251,8 +254,10 @@
   .ttlbtn .car{width:25px;height:29px;flex:none;display:grid;place-items:center;color:var(--accent-ink)}
   .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
   .ttlbtn .ttl.stream{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
-  .circle-head .ttlbtn .ttl{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
-  @keyframes stream-title{0%,18%{text-indent:0}82%,100%{text-indent:calc(-1 * var(--stream, 0px))}}
+  .circle-head .ttlbtn{width:100%;max-width:100%;justify-content:flex-start}
+  .circle-head .ttlbtn .ttl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .circle-head .ttlbtn .ttl.stream{animation:stream-title 7s ease-in-out infinite alternate}
+  @keyframes stream-title{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(-22%)}}
   .mrank{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
   .mrank svg{width:15px;height:15px}
   .mlead{display:flex;align-items:center;gap:11px;min-width:0}
@@ -327,8 +332,6 @@
   .hbadge.dot{min-width:9px;width:9px;height:9px;padding:0;top:2px;right:2px;border:2px solid var(--paper)}
   .card.search-hit{animation:searchhit 1.35s ease 2}
   @keyframes searchhit{0%,100%{box-shadow:var(--sh-card);filter:none}35%,62%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.3);filter:brightness(1.05)}}
-  .circle-head .headrow{display:block}
-  .circle-head .ttlbtn{width:100%;justify-content:flex-start}
   .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .circle-tools .head-sub{margin:0}
   .home-head .headrow{align-items:center;min-height:38px}
@@ -506,13 +509,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.1</p>
+  <p class="note">끼우 목업 · v18.2.2</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.1";
+const BUILD="v18.2.2";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.2",date:"2026.07.19",ko:["낮은 모바일 화면에서 상단이 잘리던 문제를 수정하고, 끼리 제목·아이콘 터치 영역을 분리","긴 끼리 이름 흐름 표시와 수정 이력의 닫기 버튼을 보완"],en:["Fixed clipped headers on short mobile screens and separated Circle title and icon touch targets","Fixed long Circle-name streaming and added an explicit close button to update history"]},
  {version:"v18.2.1",date:"2026.07.19",ko:["끼리 대표·프로필 이모지를 위한 대량 이모지 선택기와 검색·랜덤 선택 추가"],en:["Added a searchable large emoji picker and random selection for Circle and profile emojis"]},
  {version:"v18.2.0",date:"2026.07.19",ko:["상단 UI를 고정 크기로 통일하고, 긴 끼리 이름 흐름 표시 추가","입력 카드 바깥 탭으로 취소, 롱탭 선택 깜빡임 제거","더보기 플로팅 요소를 끼우·끼리와 같은 slotwrap 구조로 통합"],en:["Unified compact headers and added long Circle-name streaming","Dismiss input by tapping outside and removed selection flicker","Unified More floating UI with the shared slotwrap structure"]},
  {version:"v18.1.2",date:"2026.07.19",ko:["긴 할 일 카드의 첫 줄에서 말줄임표가 다시 생기지 않도록 최종 보정"],en:["Final adjustment to prevent ellipses on the first line of long task cards"]},
@@ -795,7 +799,7 @@ function headHtml(){
   const cd=ciCompleted().length;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
-  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><h1 class="ttl">${ce} ${esc(cc.name)}</h1><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
+  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><h1 class="ttl${cc.name.length>10?" stream":""}">${ce} ${esc(cc.name)}</h1><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
  return `<div class="head"><h1 class="ttl">${T("hMore")}</h1></div>`}
 function asgRowHtml(){const c=curC();if(!c)return"";
@@ -1068,7 +1072,7 @@ function openSheet(){renderSheet();document.getElementById("sheetwrap").classLis
 function closeSheet(){document.getElementById("sheetwrap").classList.remove("on");ciDoneFilter=null;expandedDoneId=null}
 function openHistorySheet(){
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody"),en=state.lang==="en";
- head.innerHTML=`<b>${en?"Update history":"수정 이력"}</b><div class="mini">${en?"What changed in Kkiu":"끼우의 변경 기록"}</div>`;
+ head.innerHTML=`<b>${en?"Update history":"수정 이력"}</b><div class="mini">${en?"What changed in Kkiu":"끼우의 변경 기록"}</div><button class="sheetclose" aria-label="${en?"Close":"닫기"}" data-act="sheet-close">${I.x}</button>`;
  body.innerHTML=CHANGE_HISTORY.map(h=>`<section class="history-entry"><div class="history-meta"><b>${h.version}</b><span>${h.date}</span></div><ul>${(en?h.en:h.ko).map(x=>`<li>${x}</li>`).join("")}</ul></section>`).join("");
  document.getElementById("sheetwrap").classList.add("on")
 }
