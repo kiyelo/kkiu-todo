@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v17 Liquid Glass</title>
+<title>Kkiu To Do — v18.1.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -154,6 +154,12 @@
   .moreslotwrap .quip{pointer-events:auto}
   .more-anchor{height:0;pointer-events:none;transition:height .2s cubic-bezier(.2,.7,.3,1)}
   .more-anchor.active{height:44px}
+  .more-version{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px 0 8px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--faint)}
+  .more-version:active{transform:scale(.98)}
+  .history-entry{padding:15px 16px;border-radius:16px;background:var(--surface);box-shadow:var(--sh-card)}
+  .history-entry+.history-entry{margin-top:9px}.history-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .history-meta b{font-size:15px;letter-spacing:-.02em}.history-meta span{font-size:11px;font-weight:650;color:var(--faint)}
+  .history-entry ul{margin:0;padding-left:17px;color:var(--sub);font-size:12.5px;font-weight:560;line-height:1.65}
   .buildtag{position:absolute;right:10px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.02em;color:rgba(70,55,30,.16);z-index:5;pointer-events:none;user-select:none}
 
   .scroller{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:6px 18px calc(var(--nav-h) + 30px + var(--safe));touch-action:pan-y}
@@ -496,12 +502,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">v17 Liquid Glass 리디자인 · iOS 기본 앱의 계층과 반투명 머티리얼을 적용 · 기존 인터랙션과 데이터 구조 유지</p>
+  <p class="note">끼우 목업 · v18.1.0</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18-ux-fixes";
+const BUILD="v18.1.0";
 const APP_VERSION=BUILD;
+const CHANGE_HISTORY=[
+ {version:"v18.1.0",date:"2026.07.19",ko:["더보기 하단에 현재 버전과 수정 이력 버튼 추가","버전을 누르면 앱 안에서 변경 이력 확인 가능"],en:["Added a version and update-history button to More","View the update history inside the app"]},
+ {version:"v18.0.0",date:"2026.07.19",ko:["끼우·끼리·더보기 상단 UI와 검색·완료 목록 흐름 개선","할 일 입력 카드와 더보기 플로팅 요소 동작 보완","끼리별 프로필·담당자·읽지 않은 업데이트 UI 정리"],en:["Refined headers, search, and completed-task flows","Improved task input and the More floating element","Polished Circle profiles, assignees, and unread updates"]}
+];
 const AD_FIRST=10, AD_EVERY=7;
 const TABS=["home","circle","more"];
 const PAGE_DUR=240, PAGE_EASE="cubic-bezier(.22,.72,.25,1)", IND_DELAY=50;
@@ -1046,6 +1056,12 @@ function finishReorder(e){try{viewEl.releasePointerCapture(e.pointerId)}catch{}
 
 function openSheet(){renderSheet();document.getElementById("sheetwrap").classList.add("on")}
 function closeSheet(){document.getElementById("sheetwrap").classList.remove("on");ciDoneFilter=null;expandedDoneId=null}
+function openHistorySheet(){
+ const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody"),en=state.lang==="en";
+ head.innerHTML=`<b>${en?"Update history":"수정 이력"}</b><div class="mini">${en?"What changed in Kkiu":"끼우의 변경 기록"}</div>`;
+ body.innerHTML=CHANGE_HISTORY.map(h=>`<section class="history-entry"><div class="history-meta"><b>${h.version}</b><span>${h.date}</span></div><ul>${(en?h.en:h.ko).map(x=>`<li>${x}</li>`).join("")}</ul></section>`).join("");
+ document.getElementById("sheetwrap").classList.add("on")
+}
 function renderSheet(){
  const isCircle=state.tab==="circle",allList=isCircle?ciCompleted():completed();
  const list=isCircle&&ciDoneFilter?allList.filter(t=>(t.assignees||[])[0]===ciDoneFilter):allList;
@@ -1171,7 +1187,8 @@ function moreView(){
  <button class="rbtn" data-act="import">${T("mImport")} <span>⇧</span></button>
  <div class="more-anchor"></div>
  <button class="rbtn danger" data-act="reset">${T("mReset")} <span>⟲</span></button>
- <div style="height:74px"></div>
+ <button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
+ <div style="height:54px"></div>
  </div></div>
  <div class="moreslotwrap" id="moreSlotWrap">
   <button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button>
@@ -1242,6 +1259,7 @@ app.addEventListener("click",e=>{
  if(act==="search-go"){goToSearchResult(id,el.dataset.done==="1");return}
  if(act==="sheet-open"){const c=curC();if(state.tab==="circle"&&c&&(c.unreadDone||0)){c.unreadDone=0;save();renderView()}openSheet();return}
  if(act==="sheet-close"){closeSheet();return}
+ if(act==="history"){openHistorySheet();return}
  if(act==="done-filter"){ciDoneFilter=el.dataset.m||null;renderSheet();return}
  if(act==="sheet-expand"){expandedDoneId=expandedDoneId===id?null:id;renderSheet();return}
  if(act==="restore"){restore(id);return}
