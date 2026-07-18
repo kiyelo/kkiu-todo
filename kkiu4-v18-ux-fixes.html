@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.21</title>
+<title>Kkiu To Do — v18.2.22</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -531,19 +531,21 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   .statcard .big{color:var(--ink)}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){.circle-head .circle-title-text.stream{animation-duration:9s!important;animation-iteration-count:infinite!important}}
 
 </style>
 </head>
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.21</p>
+  <p class="note">끼우 목업 · v18.2.22</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.21";
+const BUILD="v18.2.22";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.22",date:"2026.07.19",ko:["동작 줄이기 환경에서도 긴 끼리 타이틀 스트리밍이 0.01ms로 축소되지 않도록 예외 처리"],en:["Kept long Circle title streaming at a readable speed even when reduced-motion settings are enabled"]},
  {version:"v18.2.21",date:"2026.07.19",ko:["끼리 검색 버튼을 터치 종료 이벤트로도 직접 처리해 모바일에서 검색 모드 진입이 누락되지 않도록 수정"],en:["Handled Circle search through a direct pointer-up event so mobile taps cannot miss search-mode entry"]},
  {version:"v18.2.20",date:"2026.07.19",ko:["끼리 설정 목록의 긴 라벨을 끼리·내 프로필로 단순화하고 이름·이모지·찾기 라벨을 입력 영역 위에 정리"],en:["Simplified long settings labels to Circle and My profile, with clear Name, Emoji, and Find labels above inputs"]},
  {version:"v18.2.19",date:"2026.07.19",ko:["끼리 검색 버튼에 직접 진입·닫기 동작을 연결해 검색 화면 전환이 막히지 않도록 보완"],en:["Connected direct open and close behavior to the Circle search button so entering search cannot be blocked"]},
