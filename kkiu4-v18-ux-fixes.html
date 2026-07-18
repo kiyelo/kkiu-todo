@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.4</title>
+<title>Kkiu To Do — v18.2.9</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -44,9 +44,12 @@
   .chip.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
   .vpage.compact-head .head{padding-top:24px!important;padding-bottom:10px!important}
   .vpage.compact-head .ttl{font-size:25px}
-  .circle-head .headrow{display:block}
-  .circle-head .hicons{flex:none;gap:4px;margin-top:0}
-  .circle-head .hbtn{width:36px;height:36px;border-radius:12px}
+  .circle-head .headrow{display:flex;align-items:center}
+  .circle-head .circle-tools{display:contents}
+  .circle-head .circle-tools .head-sub{display:none}
+  .home-head .hicons,.circle-head .hicons{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .home-head .hbtn,.circle-head .hbtn{position:relative;flex:none;width:36px;height:36px;padding:0;border-radius:12px;background:rgba(70,55,30,.05);display:grid;place-items:center;color:var(--ink2)}
+  .home-head .hbtn svg,.circle-head .hbtn svg{width:18px;height:18px}
 
   .stage{flex:1;min-height:0;position:relative;overflow:hidden}
   .stage.q{touch-action:none}
@@ -254,7 +257,7 @@
   .ttlbtn .car{width:25px;height:29px;flex:none;display:grid;place-items:center;color:var(--accent-ink)}
   .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
   .ttlbtn .ttl.stream{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
-  .circle-head .ttlbtn{width:100%;max-width:100%;justify-content:flex-start}
+  .circle-head .ttlbtn{flex:1;width:auto;min-width:0;max-width:none;justify-content:flex-start;align-items:center}
   .circle-head .ttlbtn .ttl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .circle-head .ttlbtn .ttl.stream{animation:stream-title 7s ease-in-out infinite alternate}
   @keyframes stream-title{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(-22%)}}
@@ -335,8 +338,9 @@
   .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .circle-tools .head-sub{margin:0}
   .home-head .headrow{align-items:center;min-height:38px}
-  .home-head .hicons{margin-top:0;gap:6px}
-  .head .hbtn{background:var(--surface);box-shadow:var(--sh-card)}
+  .more-head .headrow{align-items:center;min-height:38px}
+  .home-head .hicons,.circle-head .hicons{margin-top:0;gap:6px}
+  .home-head .hbtn,.circle-head .hbtn{background:var(--surface);box-shadow:var(--sh-card)}
   .chip{position:relative}.chip-dot{position:absolute;top:-2px;right:-1px;border:2px solid var(--paper)}
 
   .toast{position:absolute;left:50%;bottom:96px;z-index:80;transform:translate(-50%,14px);opacity:0;pointer-events:none;max-width:calc(100% - 40px);padding:11px 17px;border-radius:999px;background:rgba(28,26,23,.94);color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.2s;backdrop-filter:blur(10px)}
@@ -509,13 +513,18 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.4</p>
+  <p class="note">끼우 목업 · v18.2.9</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.4";
+const BUILD="v18.2.9";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.9",date:"2026.07.19",ko:["끼리 이름·대표 이모지와 내 프로필 이름·이모지를 각각 한 화면에서 함께 편집하도록 통합","빠른 선택 이모지 칩을 제거하고 대량 이모지 목록·검색·랜덤 선택을 제공"],en:["Combined Circle name and emoji editing, and profile name and emoji editing, into one screen each","Removed quick emoji chips and added a large searchable emoji list with random selection"]},
+ {version:"v18.2.8",date:"2026.07.19",ko:["끼우·끼리·더보기 상단을 동일한 headrow 높이와 제목 기준선으로 통일"],en:["Unified Queue, Circle, and More headers with the same headrow height and title baseline"]},
+ {version:"v18.2.7",date:"2026.07.19",ko:["상단 버튼 공통 스타일이 다른 보정 규칙에 덮어쓰이지 않도록 최종 정렬·간격·배경을 고정"],en:["Locked the final shared header button alignment, spacing, and surface styling against later overrides"]},
+ {version:"v18.2.6",date:"2026.07.19",ko:["끼우와 끼리의 상단 버튼 크기·모서리·간격·아이콘 정렬을 공통 스타일로 통일"],en:["Unified Queue and Circle header button size, corners, spacing, and icon alignment"]},
+ {version:"v18.2.5",date:"2026.07.19",ko:["끼리 상단을 끼우와 같은 한 줄 구조로 통일하고 그룹명·우측 아이콘을 같은 행에 배치","그룹명이 길어도 두 줄로 늘어나지 않도록 흐름 표시를 유지"],en:["Unified the Circle header into the same single-row layout as Queue with the title and actions aligned","Kept long Circle names on one line with streaming instead of expanding to two lines"]},
  {version:"v18.2.4",date:"2026.07.19",ko:["할 일 수정 중 취소 버튼과 Escape 취소를 추가","다른 UI를 누르면 수정 모드가 자동 해제되도록 수정"],en:["Added a cancel button and Escape-to-cancel while editing a task","Automatically exits edit mode when another UI element is selected"]},
  {version:"v18.2.3",date:"2026.07.19",ko:["끼리 설정에 전체 이모지 선택 진입점을 명확히 표시","더보기 플로팅 요소가 목록 첫·마지막 위치까지 이동하도록 수정","할 일 수정 완료 뒤 현재 스크롤 위치를 유지하도록 보완"],en:["Made the full emoji picker entry points explicit in Circle settings","Allowed the More floating element to reach the first and last list positions","Preserved the current scroll position after finishing a task edit"]},
  {version:"v18.2.2",date:"2026.07.19",ko:["낮은 모바일 화면에서 상단이 잘리던 문제를 수정하고, 끼리 제목·아이콘 터치 영역을 분리","긴 끼리 이름 흐름 표시와 수정 이력의 닫기 버튼을 보완"],en:["Fixed clipped headers on short mobile screens and separated Circle title and icon touch targets","Fixed long Circle-name streaming and added an explicit close button to update history"]},
@@ -654,7 +663,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 🥹 😊 😎 🤓 🥳 😴 🤔 😍 🥰 😇 🤝 👍 👏 🙌 💪 🧡 ❤️ 💛 💚 💙 💜 ✨ ⭐ 🌙 ☀️ 🌈 🔥 🎈 🎉 🎁 🎯 🧩 🎮 🎵 🎬 📚 ✏️ 🖍️ 📷 ☕ 🍳 🍔 🍜 🍰 🍊 🍀 🌿 🌸 🌳 🌊 🏠 🏡 🏕️ ✈️ 🚗 🚲 🚆 🐶 🐱 🦊 🐼 🐧 🦁 🐳 🐝 🪴 🌵 🍎 🧺 🛒 💼 📌 📎 🗓️ ⏰ 💡 🔔 🧘 🏃 ⚽ 🏆".split(" ");
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 🍙 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 🧁 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 📚 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -662,7 +671,7 @@ function seedCircles(){return[
 function seedLog(){const mk=(idxC,lead,insA,daysAgo)=>({id:uid(),completedAt:new Date(Date.now()-daysAgo*864e5).toISOString(),idxAtDone:idxC,sizeAtDone:9,insertAt:insA,listAt:9,leadMs:lead*3600e3});
  return[mk(0,5,1,0),mk(2,26,2,1),mk(1,3,0,1),mk(4,49,6,3),mk(0,2,1,5)]}
 
-let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null, editingId=null, editingOriginal="";
+let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null, editingId=null, editingOriginal="", identityEditKind=null, identityEditEmoji="✨", identityEditBaseName="";
 let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,expandedDoneId=null,moreTarget="home",moreQuipIndex=0;
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
@@ -803,7 +812,7 @@ function headHtml(){
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
   return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><h1 class="ttl${cc.name.length>10?" stream":""}">${ce} ${esc(cc.name)}</h1><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
- return `<div class="head"><h1 class="ttl">${T("hMore")}</h1></div>`}
+ return `<div class="head more-head"><div class="headrow"><h1 class="ttl">${T("hMore")}</h1><div class="hicons" aria-hidden="true"></div></div></div>`}
 function asgRowHtml(){const c=curC();if(!c)return"";
  const valid=c.members.filter(k=>MEMBERS[k]);
  const cur=[...ciAssignees][0];
@@ -1113,9 +1122,8 @@ function renderManageSheet(){const c=curC();if(!c)return;
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;
  body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
- <button class="rbtn" data-act="circle-rename"><span class="mlead"><span class="mrank">${I.gear}</span>끼리 이름 변경</span><span>›</span></button>
- <div class="pcard" style="margin-top:8px"><div class="mlead"><span class="mrank">${c.emoji||"✨"}</span><h3 style="margin:0">대표 이모지</h3><button class="seltxt" data-act="circle-emoji-random" style="margin-left:auto">이모지 선택</button></div><p style="margin:7px 0 0;font-size:11.5px;color:var(--sub)">아래 빠른 선택 또는 전체 이모지에서 고를 수 있어요.</p><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">${CIRCLE_EMOJIS.map(e=>`<button class="asgc ${(c.emoji||"✨")===e?"on":""}" data-act="circle-emoji" data-e="${e}">${e}</button>`).join("")}</div></div>
- <div class="pcard" style="margin-top:8px"><div class="mlead"><span class="mrank">${myProfile(c).emoji}</span><h3 style="margin:0">내 끼리 프로필</h3><button class="seltxt" data-act="my-profile-random" style="margin-left:auto">이모지 선택</button></div><button class="rbtn" data-act="my-profile-name" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)"><span>이름</span><span>${esc(myProfile(c).name)} ›</span></button><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px"><span style="font-size:11px;font-weight:700;color:var(--faint);margin-right:2px">빠른 선택</span>${PROFILE_EMOJIS.map(e=>`<button class="asgc ${myProfile(c).emoji===e?"on":""}" data-act="my-profile-emoji" data-e="${e}">${e}</button>`).join("")}</div></div>
+ <button class="rbtn" data-act="circle-identity-edit"><span class="mlead"><span class="mrank">${c.emoji||"✨"}</span><span><b>끼리 이름·이모지</b><em style="display:block;margin:3px 0 0">${esc(c.name)}</em></span></span><span>편집 ›</span></button>
+ <button class="rbtn" data-act="profile-identity-edit" style="margin-top:8px"><span class="mlead"><span class="mrank">${myProfile(c).emoji}</span><span><b>내 프로필 이름·이모지</b><em style="display:block;margin:3px 0 0">${esc(myProfile(c).name)}</em></span></span><span>편집 ›</span></button>
  <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span></div>
  ${c.members.map(k=>{const m=circlePerson(c,k);if(!m)return"";const cnt=c.tasks.filter(t=>(t.assignees||[]).includes(k)&&!t.done).length;
   return `<div class="suprow" style="margin-bottom:8px"><span class="who" style="background:${m.color};width:30px;height:30px;font-size:12.5px">${m.ini}</span><span class="smid"><b>${m[state.lang]}${k==="me"?" ("+T("meTag")+")":""}</b><span>${T("taskCnt",{n:cnt})}</span></span></div>`}).join("")}
@@ -1291,6 +1299,8 @@ app.addEventListener("click",e=>{
  if(act==="collapse"){collapseBundle(el.dataset.key);return}
  if(act==="circle-pick"){openCircleSheet();return}
  if(act==="circle-manage"){openManageSheet();return}
+ if(act==="circle-identity-edit"){openIdentityEditor("group");return}
+ if(act==="profile-identity-edit"){openIdentityEditor("profile");return}
  if(act==="circle-pick-i"){const i=+el.dataset.i;if(i!==state.ci){state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0}markCircleSeen();save();closeSheet();renderView();return}
  if(act==="circle-new"){askPrompt(T("circleNewPrompt"),T("circleNewPh"),v=>{if(v&&v.trim()){const name=v.trim().slice(0,20);state.circles.push({id:uid(),name,emoji:newCircleEmoji(),code:newCircleCode(),unread:0,members:["me"],tasks:[]});state.ci=state.circles.length-1;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();if(state.tab==="circle")renderView();toast(T("tCircleNew",{n:name}))}});return}
  if(act==="circle-rename"){const c=curC();if(!c)return;askPrompt("끼리 이름 변경","새 이름",v=>{if(v&&v.trim()){c.name=v.trim().slice(0,20);save();closeSheet();renderView();toast("이름을 변경했어요")}},c.name);return}
@@ -1300,6 +1310,9 @@ app.addEventListener("click",e=>{
  if(act==="my-profile-emoji"){const c=curC();if(!c)return;c.myProfile={...myProfile(c),emoji:el.dataset.e};save();renderManageSheet();renderView();return}
  if(act==="my-profile-random"){openEmojiPicker("profile");return}
  if(act==="emoji-library-pick"||act==="emoji-library-random"){const c=curC();if(!c)return;const e=act==="emoji-library-random"?EMOJI_LIBRARY[Math.floor(Math.random()*EMOJI_LIBRARY.length)]:el.dataset.e;if(el.dataset.kind==="group")c.emoji=e;else c.myProfile={...myProfile(c),emoji:e};save();closeModal();renderManageSheet();renderView();toast("이모지를 바꿨어요");return}
+ if(act==="identity-emoji-pick"){identityEditEmoji=el.dataset.e;drawIdentityEmojiGrid(document.getElementById("identityEmojiSearch")?.value||"");return}
+ if(act==="identity-random"){identityEditEmoji=EMOJI_LIBRARY[Math.floor(Math.random()*EMOJI_LIBRARY.length)];drawIdentityEmojiGrid(document.getElementById("identityEmojiSearch")?.value||"");return}
+ if(act==="identity-save"){const c=curC(),name=(document.getElementById("identityName")?.value||"").trim();if(!c)return;if(identityEditKind==="group"){c.name=(name||c.name).slice(0,20);c.emoji=identityEditEmoji}else{c.myProfile={...myProfile(c),name:(name||myProfile(c).name).slice(0,16),emoji:identityEditEmoji}}save();closeModal();renderManageSheet();renderView();toast("설정을 저장했어요");return}
  if(act==="invite"){const c=curC();if(!c||!c.code)return;try{navigator.clipboard?.writeText(c.code)}catch{}toast(T("tInvite",{n:c.code}));return}
  if(act==="circle-leave"){const c=curC();if(!c)return;askConfirm(T("leaveCircle"),T("leaveConfirm",{n:c.name}),T("leaveCircle"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tLeave",{n:c.name}))},true);return}
  if(act==="circle-del"){const c=curC();if(!c)return;askConfirm(T("circleDel"),T("circleDelConfirm",{n:c.name}),T("circleDel"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tCircleDel"))},true);return}
@@ -1339,6 +1352,8 @@ app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
 });
+function drawIdentityEmojiGrid(q){const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q)),grid=document.getElementById("identityEmojiGrid");if(!grid)return;const current=document.getElementById("identityEmojiCurrent");if(current)current.textContent=identityEditEmoji;grid.innerHTML=arr.map(e=>`<button class="asgc ${identityEditEmoji===e?"on":""}" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px" data-act="identity-emoji-pick" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"}
+function openIdentityEditor(kind){const c=curC();if(!c)return;identityEditKind=kind;const profile=kind==="profile"?myProfile(c):null;identityEditEmoji=profile?.emoji||c.emoji||"✨";identityEditBaseName=profile?.name||c.name||"";openModal(`<h3>${kind==="profile"?"내 끼리 프로필 편집":"끼리 이름·이모지 편집"}</h3><input class="field" id="identityName" value="${esc(identityEditBaseName)}" placeholder="${kind==="profile"?"이 끼리에서 사용할 이름":"끼리 이름"}"/><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 7px"><b style="font-size:13px">이모지 <span id="identityEmojiCurrent" style="font-size:22px">${identityEditEmoji}</span></b><div style="display:flex;gap:6px"><button class="seltxt" data-act="identity-random">🎲 랜덤</button><button class="seltxt" data-act="identity-save">저장</button></div></div><input class="field" id="identityEmojiSearch" placeholder="이모지 검색"/><div id="identityEmojiGrid" style="display:flex;gap:6px;flex-wrap:wrap;max-height:300px;overflow:auto;margin-top:10px"></div>`);drawIdentityEmojiGrid("");setTimeout(()=>document.getElementById("identityEmojiSearch")?.addEventListener("input",e=>drawIdentityEmojiGrid(e.target.value)),0)}
 function openEmojiPicker(kind){const draw=q=>{const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q));const grid=document.getElementById("emojiGrid");if(grid)grid.innerHTML=arr.map(e=>`<button class="asgc" style="width:42px;padding:0;justify-content:center" data-act="emoji-library-pick" data-kind="${kind}" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"};openModal(`<h3>이모지 선택</h3><input class="field" id="emojiSearch" placeholder="이모지 검색"/><button class="rbtn" data-act="emoji-library-random" data-kind="${kind}" style="margin:10px 0">🎲 랜덤으로 고르기</button><div id="emojiGrid" style="display:flex;gap:7px;flex-wrap:wrap;max-height:280px;overflow:auto"></div>`);draw("");setTimeout(()=>document.getElementById("emojiSearch")?.addEventListener("input",e=>draw(e.target.value)),0)}
 function openModal(html){document.getElementById("modal").innerHTML=html;document.getElementById("modalwrap").classList.add("on")}
 function closeModal(){document.getElementById("modalwrap").classList.remove("on");modalOkCb=null}
