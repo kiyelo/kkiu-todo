@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.14</title>
+<title>Kkiu To Do — v18.2.15</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -535,13 +535,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.14</p>
+  <p class="note">끼우 목업 · v18.2.15</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.14";
+const BUILD="v18.2.15";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.15",date:"2026.07.19",ko:["더보기를 할일 큐·플로팅 구조에서 분리하고 메뉴 카드 전용 화면으로 단순화"],en:["Separated More from the task-queue and floating-slot structure and simplified it into a menu-card-only screen"]},
  {version:"v18.2.14",date:"2026.07.19",ko:["끼리 검색 버튼을 누르면 전용 검색 화면으로 확실히 진입하고, 상단 버튼에서 페이지 전환 제스처가 시작되지 않도록 보완"],en:["Made the Circle search button enter its dedicated search view reliably and blocked page-swipe gestures from header controls"]},
  {version:"v18.2.13",date:"2026.07.19",ko:["끼리 담당자 필터를 좌우로 스크롤하는 동안 페이지 전환 제스처가 시작되지 않도록 터치 영역을 분리"],en:["Isolated the Circle assignee filter touch area so horizontal scrolling never starts page navigation"]},
  {version:"v18.2.12",date:"2026.07.19",ko:["더보기 화면을 계정·환경·데이터 섹션 중심으로 전면 재구축하고 끼우·끼리와 같은 플로팅 삽입 구조로 정리"],en:["Rebuilt More around Account, Preferences, and Data sections with the same floating insertion behavior as Queue and Circle"]},
@@ -859,7 +860,6 @@ function renderView(){
  if(state.tab==="home"){homeSearch===null?buildQueue("home"):buildSearch();return}
  if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3><p>${T("emptyCircleP")}</p></div></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div>`;wireCircleTitleStream();setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
  viewEl.innerHTML=`${headHtml()}<div class="stage">${moreView()}</div>`;
- if(state.tab==="more")wireMoreSlot();
  wireCircleTitleStream();setNavActive()}
 function wireCircleTitleStream(){
  const win=viewEl.querySelector(".circle-title-window"),text=viewEl.querySelector(".circle-title-text");
@@ -1226,29 +1226,29 @@ function statsView(){
 
 function moreView(){
  const segBtn=(l,label)=>`<button class="more-lang ${state.lang===l?"on":""}" data-act="lang" data-lang="${l}">${label}</button>`;
- const row=(icon,label,action="stub",tail="›")=>`<div class="more-anchor"></div><button class="rbtn more-row" data-act="${action}"><span class="mlead"><span class="mrank">${icon}</span><span>${label}</span></span><span>${tail}</span></button>`;
+ const row=(icon,label,action="stub",tail="›")=>`<button class="rbtn more-row" data-act="${action}"><span class="mlead"><span class="mrank">${icon}</span><span>${label}</span></span><span>${tail}</span></button>`;
  return `<div class="scroller more-scroller"><div class="list more-list">
   <section class="more-section"><p class="more-section-label">${state.lang==="en"?"ACCOUNT":"계정"}</p><div class="more-group">
    ${row(I.user,T("mAccount"),"stub",`<em>${T("soon")}</em> ›`)}
    ${row(I.bell,T("mNoti"),"stub",`<em>${T("soon")}</em> ›`)}
   </div></section>
   <section class="more-section"><p class="more-section-label">${state.lang==="en"?"PREFERENCES":"환경"}</p><div class="more-group">
-   <div class="more-anchor"></div><div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
+   <div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
    ${row(I.shield,T("mTerms"),"stub")}
    ${row(I.mail,T("mContact"),"stub")}
   </div></section>
   <div class="more-divider"></div>
   <section class="more-section"><p class="more-section-label">${state.lang==="en"?"DATA":"데이터"}</p><div class="more-group">
-   <div class="more-anchor"></div><div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>
+   <div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>
    ${row(I.arrow,T("mExport"),"export","⇩")}
-   <div class="more-anchor"></div><textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
+   <textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
    ${row(I.arrow,T("mImport"),"import","⇧")}
    ${row(I.x,T("mReset"),"reset","⟲")}
   </div></section>
-  <div class="more-anchor"></div><button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
-  <div class="more-anchor"></div><div style="height:54px"></div>
+  <button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
+  <div style="height:54px"></div>
  </div></div>
- <div class="slotwrap" id="moreSlotWrap"><button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button></div>`}
+ `}
 function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
 function importJson(){const ta=document.getElementById("io");if(!ta)return;
  try{const p=JSON.parse(ta.value);const arr=Array.isArray(p)?p:p.tasks;if(!Array.isArray(arr))throw 0;
