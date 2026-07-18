@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.22</title>
+<title>Kkiu To Do — v18.2.25</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -334,6 +334,11 @@
   .identity-actions{display:flex;gap:7px;margin-top:10px}
   .identity-actions .seltxt{flex:1;text-align:center;background:rgba(70,55,30,.06)}
   .identity-actions .identity-save{background:var(--accent);color:#fff}
+  .identity-setting{align-items:center;text-align:left}
+  .identity-setting .mlead{justify-content:flex-start;text-align:left;min-width:0}
+  .identity-setting .mlead>span:last-child{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  .identity-setting .identity-label-text{font-size:14px;font-weight:760;line-height:1.2;color:var(--ink)}
+  .identity-setting .identity-value{display:block;max-width:190px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:560;line-height:1.2;color:var(--sub)}
   .selscroll{padding-bottom:calc(var(--nav-h) + 30px + var(--safe))}
   .seldock{position:absolute;left:16px;right:16px;bottom:calc(14px + var(--safe));z-index:50;height:var(--nav-h);display:flex;gap:8px;padding:8px;border-radius:22px;background:rgba(251,248,242,.92);box-shadow:0 14px 36px rgba(60,45,25,.16);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.55);animation:dockin .24s ease}
   @keyframes dockin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -538,13 +543,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.22</p>
+  <p class="note">끼우 목업 · v18.2.25</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.22";
+const BUILD="v18.2.25";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.25",date:"2026.07.19",ko:["끼리·내 프로필 설정 항목을 좌측 정렬하고 라벨은 굵게, 현재 값은 작고 옅게 표시"],en:["Left-aligned Circle and My profile settings, using bold labels and smaller muted current values"]},
+ {version:"v18.2.24",date:"2026.07.19",ko:["더보기의 모든 메뉴·입력 영역·구분선 전후에 플로팅 UI가 들어갈 수 있도록 위치 앵커를 촘촘하게 구성"],en:["Added insertion anchors around every More menu, input area, and both sides of the divider"]},
+ {version:"v18.2.23",date:"2026.07.19",ko:["더보기 플로팅 UI를 메뉴 앵커를 따라 이동하지 않고 끼우처럼 화면 높이의 고정 위치에 유지"],en:["Kept the More floating UI at a fixed viewport position like Queue instead of moving it between menu anchors"]},
  {version:"v18.2.22",date:"2026.07.19",ko:["동작 줄이기 환경에서도 긴 끼리 타이틀 스트리밍이 0.01ms로 축소되지 않도록 예외 처리"],en:["Kept long Circle title streaming at a readable speed even when reduced-motion settings are enabled"]},
  {version:"v18.2.21",date:"2026.07.19",ko:["끼리 검색 버튼을 터치 종료 이벤트로도 직접 처리해 모바일에서 검색 모드 진입이 누락되지 않도록 수정"],en:["Handled Circle search through a direct pointer-up event so mobile taps cannot miss search-mode entry"]},
  {version:"v18.2.20",date:"2026.07.19",ko:["끼리 설정 목록의 긴 라벨을 끼리·내 프로필로 단순화하고 이름·이모지·찾기 라벨을 입력 영역 위에 정리"],en:["Simplified long settings labels to Circle and My profile, with clear Name, Emoji, and Find labels above inputs"]},
@@ -1173,8 +1181,8 @@ function renderManageSheet(){const c=curC();if(!c)return;
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;
  body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
- <button class="rbtn" data-act="circle-identity-edit"><span class="mlead"><span class="mrank">${c.emoji||"✨"}</span><span><b>끼리</b><em style="display:block;margin:3px 0 0">${esc(c.name)}</em></span></span><span>편집 ›</span></button>
- <button class="rbtn" data-act="profile-identity-edit" style="margin-top:8px"><span class="mlead"><span class="mrank">${myProfile(c).emoji}</span><span><b>내 프로필</b><em style="display:block;margin:3px 0 0">${esc(myProfile(c).name)}</em></span></span><span>편집 ›</span></button>
+ <button class="rbtn identity-setting" data-act="circle-identity-edit"><span class="mlead"><span class="mrank">${c.emoji||"✨"}</span><span><b class="identity-label-text">끼리</b><em class="identity-value">${esc(c.name)}</em></span></span><span>편집 ›</span></button>
+ <button class="rbtn identity-setting" data-act="profile-identity-edit" style="margin-top:8px"><span class="mlead"><span class="mrank">${myProfile(c).emoji}</span><span><b class="identity-label-text">내 프로필</b><em class="identity-value">${esc(myProfile(c).name)}</em></span></span><span>편집 ›</span></button>
  <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span></div>
  ${c.members.map(k=>{const m=circlePerson(c,k);if(!m)return"";const cnt=c.tasks.filter(t=>(t.assignees||[]).includes(k)&&!t.done).length;
   return `<div class="suprow" style="margin-bottom:8px"><span class="who" style="background:${m.color};width:30px;height:30px;font-size:12.5px">${m.ini}</span><span class="smid"><b>${m[state.lang]}${k==="me"?" ("+T("meTag")+")":""}</b><span>${T("taskCnt",{n:cnt})}</span></span></div>`}).join("")}
@@ -1256,11 +1264,11 @@ function moreView(){
    ${row(I.shield,T("mTerms"),"stub")}
    ${row(I.mail,T("mContact"),"stub")}
   </div></section>
-  <div class="more-divider"></div>
+  <div class="more-anchor"></div><div class="more-divider"></div><div class="more-anchor"></div>
   <section class="more-section"><p class="more-section-label">${state.lang==="en"?"DATA":"데이터"}</p><div class="more-group">
    <div class="more-anchor"></div><div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>
    ${row(I.arrow,T("mExport"),"export","⇩")}
-   <textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
+   <div class="more-anchor"></div><textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
    ${row(I.arrow,T("mImport"),"import","⇧")}
    ${row(I.x,T("mReset"),"reset","⟲")}
   </div></section>
@@ -1393,8 +1401,8 @@ function submitFeat(){const w=viewEl.querySelector("#moreSlotWrap"),ta=w?.queryS
  }
  save();if(ta)ta.value="";w?.classList.remove("open");vibe([10,16,10]);toast(state.lang==="en"?"Kkiu'd it at the top":"맨 앞에 끼웠어요");if(state.tab==="more")renderView()}
 function wireMoreSlot(){const sc=viewEl.querySelector(".scroller"),slot=viewEl.querySelector("#moreSlotWrap");if(!sc||!slot)return;
- const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const max=Math.max(0,sc.scrollHeight-sc.clientHeight),atTop=sc.scrollTop<=8,atBottom=sc.scrollTop>=max-8;const desired=sc.scrollTop+sc.clientHeight*.46;let best=atTop?anchors[0]:atBottom?anchors[anchors.length-1]:anchors[0],dist=Infinity;if(!atTop&&!atBottom)anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;const d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});if(!best.classList.contains("active")){anchors.forEach(a=>a.classList.toggle("active",a===best));const q=viewEl.querySelector("#quipTxt"),a=state.lang==="en"?["One thing at a time","A tiny win counts","Leave room for later","You can stop here","Queue magic, quietly"]:["한 번에 하나씩","작은 진척도 진척","나중의 나를 위한 자리","여기서 잠깐 쉬어도 돼요","조용히 끼워졌어요"];if(q){moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex]}requestAnimationFrame(place);return}const y=best.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;slot.style.top=Math.max(8,y-sc.scrollTop)+"px";viewEl.classList.toggle("compact-head",sc.scrollTop>44)};
- sc.addEventListener("scroll",place,{passive:true});requestAnimationFrame(place)}
+ const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const max=Math.max(0,sc.scrollHeight-sc.clientHeight),atTop=sc.scrollTop<=8,atBottom=sc.scrollTop>=max-8,desired=sc.scrollTop+sc.clientHeight*.54;let best=atTop?anchors[0]:atBottom?anchors[anchors.length-1]:anchors[0],dist=Infinity;if(!atTop&&!atBottom)anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;const d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});const changed=!best.classList.contains("active");anchors.forEach(a=>a.classList.toggle("active",a===best));slot.style.top=Math.round(sc.clientHeight*.54)+"px";slot.style.transform="translateY(-50%)";viewEl.classList.toggle("compact-head",sc.scrollTop>44);if(changed){const q=viewEl.querySelector("#quipTxt"),a=state.lang==="en"?["One thing at a time","A tiny win counts","Leave room for later","You can stop here","Queue magic, quietly"]:["한 번에 하나씩","작은 진척도 진척","나중의 나를 위한 자리","여기서 잠깐 쉬어도 돼요","조용히 끼워졌어요"];if(q){moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex]}requestAnimationFrame(()=>{slot.style.top=Math.round(sc.clientHeight*.54)+"px"})}};
+ sc.addEventListener("scroll",place,{passive:true});window.addEventListener("resize",place,{passive:true});requestAnimationFrame(place)}
 app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
