@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.9</title>
+<title>Kkiu To Do — v18.2.14</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -161,6 +161,20 @@
   .more-anchor.active{height:44px}
   .more-version{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px 0 8px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--faint)}
   .more-version:active{transform:scale(.98)}
+  .more-scroller{padding-top:10px}
+  .more-list{gap:0;padding-bottom:22px}
+  .more-section{margin:0 0 18px}
+  .more-section-label{margin:0 4px 8px;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--faint)}
+  .more-group{display:flex;flex-direction:column;gap:8px}
+  .more-group .rbtn,.more-group .pcard{margin:0}
+  .more-group .rbtn{min-height:56px}
+  .more-group .pcard{padding:15px 16px}
+  .more-group .field{min-height:86px;margin:0}
+  .more-langbar{display:flex;gap:7px;margin-top:12px}
+  .more-lang{flex:1;height:38px;border-radius:11px;background:rgba(70,55,30,.05);color:var(--sub);font-size:13px;font-weight:750}
+  .more-lang.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent) inset}
+  .more-divider{height:1px;margin:4px 4px 18px;background:var(--hair)}
+  .more-anchor{height:0;margin:0;pointer-events:none}
   .history-entry{padding:15px 16px;border-radius:16px;background:var(--surface);box-shadow:var(--sh-card)}
   .history-entry+.history-entry{margin-top:9px}.history-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
   .history-meta b{font-size:15px;letter-spacing:-.02em}.history-meta span{font-size:11px;font-weight:650;color:var(--faint)}
@@ -257,10 +271,12 @@
   .ttlbtn .car{width:25px;height:29px;flex:none;display:grid;place-items:center;color:var(--accent-ink)}
   .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
   .ttlbtn .ttl.stream{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
-  .circle-head .ttlbtn{flex:1;width:auto;min-width:0;max-width:none;justify-content:flex-start;align-items:center}
-  .circle-head .ttlbtn .ttl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .circle-head .ttlbtn .ttl.stream{animation:stream-title 7s ease-in-out infinite alternate}
-  @keyframes stream-title{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(-22%)}}
+  .circle-head .ttlbtn{flex:1;width:auto;min-width:0;max-width:none;justify-content:flex-start;align-items:center;gap:6px}
+  .circle-head .circle-emoji{flex:none;width:28px;text-align:center;font-size:22px;line-height:1}
+  .circle-head .circle-title-window{flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+  .circle-head .circle-title-text{display:inline-block;min-width:max-content;white-space:nowrap;text-overflow:clip}
+  .circle-head .circle-title-text.stream{animation:stream-title 9s ease-in-out infinite alternate}
+  @keyframes stream-title{0%,16%{transform:translateX(0)}84%,100%{transform:translateX(var(--stream-distance,0px))}}
   .mrank{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
   .mrank svg{width:15px;height:15px}
   .mlead{display:flex;align-items:center;gap:11px;min-width:0}
@@ -311,6 +327,12 @@
   .selx svg{width:18px;height:18px}.selx:active{transform:scale(.92)}
   .selhead b{font-size:18px;font-weight:700;letter-spacing:-.02em}
   .seltxt{font-size:13px;font-weight:700;color:var(--accent-ink);padding:9px 11px;border-radius:11px}.seltxt:active{transform:scale(.95)}
+  .identity-block{margin-top:14px}
+  .identity-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:12px;font-weight:750;color:var(--sub)}
+  .identity-current{font-size:24px;line-height:1;color:var(--ink)}
+  .identity-actions{display:flex;gap:7px;margin-top:10px}
+  .identity-actions .seltxt{flex:1;text-align:center;background:rgba(70,55,30,.06)}
+  .identity-actions .identity-save{background:var(--accent);color:#fff}
   .selscroll{padding-bottom:calc(var(--nav-h) + 30px + var(--safe))}
   .seldock{position:absolute;left:16px;right:16px;bottom:calc(14px + var(--safe));z-index:50;height:var(--nav-h);display:flex;gap:8px;padding:8px;border-radius:22px;background:rgba(251,248,242,.92);box-shadow:0 14px 36px rgba(60,45,25,.16);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.55);animation:dockin .24s ease}
   @keyframes dockin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -400,7 +422,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 }
 .hbtn:hover{background:rgba(255,255,255,.74)}
 .hbadge{background:var(--danger);box-shadow:0 1px 4px rgba(255,69,58,.28)}
-.chips{gap:8px;padding:2px 22px 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .chips{gap:8px;padding:2px 22px 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;overscroll-behavior-x:contain}
 .chips::-webkit-scrollbar{display:none}
 .chip{
   flex:none;height:36px;padding:0 13px 0 6px;
@@ -513,13 +535,18 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.9</p>
+  <p class="note">끼우 목업 · v18.2.14</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.9";
+const BUILD="v18.2.14";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.14",date:"2026.07.19",ko:["끼리 검색 버튼을 누르면 전용 검색 화면으로 확실히 진입하고, 상단 버튼에서 페이지 전환 제스처가 시작되지 않도록 보완"],en:["Made the Circle search button enter its dedicated search view reliably and blocked page-swipe gestures from header controls"]},
+ {version:"v18.2.13",date:"2026.07.19",ko:["끼리 담당자 필터를 좌우로 스크롤하는 동안 페이지 전환 제스처가 시작되지 않도록 터치 영역을 분리"],en:["Isolated the Circle assignee filter touch area so horizontal scrolling never starts page navigation"]},
+ {version:"v18.2.12",date:"2026.07.19",ko:["더보기 화면을 계정·환경·데이터 섹션 중심으로 전면 재구축하고 끼우·끼리와 같은 플로팅 삽입 구조로 정리"],en:["Rebuilt More around Account, Preferences, and Data sections with the same floating insertion behavior as Queue and Circle"]},
+ {version:"v18.2.11",date:"2026.07.19",ko:["끼리·프로필 편집창의 이름과 이모지 라벨을 간결한 카드형 구조로 정리하고 저장 동작을 명확하게 개선"],en:["Simplified the Circle and profile editor into a clear card layout with concise labels and an obvious save action"]},
+ {version:"v18.2.10",date:"2026.07.19",ko:["끼리 상단 이모지를 고정하고 긴 그룹명이 말줄임표 없이 전체 흐름 표시되도록 개선"],en:["Fixed the Circle header emoji in place and streamed the full group name without ellipsis"]},
  {version:"v18.2.9",date:"2026.07.19",ko:["끼리 이름·대표 이모지와 내 프로필 이름·이모지를 각각 한 화면에서 함께 편집하도록 통합","빠른 선택 이모지 칩을 제거하고 대량 이모지 목록·검색·랜덤 선택을 제공"],en:["Combined Circle name and emoji editing, and profile name and emoji editing, into one screen each","Removed quick emoji chips and added a large searchable emoji list with random selection"]},
  {version:"v18.2.8",date:"2026.07.19",ko:["끼우·끼리·더보기 상단을 동일한 headrow 높이와 제목 기준선으로 통일"],en:["Unified Queue, Circle, and More headers with the same headrow height and title baseline"]},
  {version:"v18.2.7",date:"2026.07.19",ko:["상단 버튼 공통 스타일이 다른 보정 규칙에 덮어쓰이지 않도록 최종 정렬·간격·배경을 고정"],en:["Locked the final shared header button alignment, spacing, and surface styling against later overrides"]},
@@ -810,7 +837,7 @@ function headHtml(){
   const cd=ciCompleted().length;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
-  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><h1 class="ttl${cc.name.length>10?" stream":""}">${ce} ${esc(cc.name)}</h1><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
+  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><span class="circle-emoji" aria-hidden="true">${ce}</span><span class="circle-title-window"><span class="circle-title-text${cc.name.length>10?" stream":""}">${esc(cc.name)}</span></span><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
  return `<div class="head more-head"><div class="headrow"><h1 class="ttl">${T("hMore")}</h1><div class="hicons" aria-hidden="true"></div></div></div>`}
 function asgRowHtml(){const c=curC();if(!c)return"";
@@ -830,10 +857,15 @@ function renderView(){
  app.classList.toggle("sel-mode",selecting&&(state.tab==="home"||state.tab==="circle"));
  if(selecting&&(state.tab==="home"||state.tab==="circle")){renderSelect();return}
  if(state.tab==="home"){homeSearch===null?buildQueue("home"):buildSearch();return}
- if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3><p>${T("emptyCircleP")}</p></div></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div>`;setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
+ if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3><p>${T("emptyCircleP")}</p></div></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div>`;wireCircleTitleStream();setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
  viewEl.innerHTML=`${headHtml()}<div class="stage">${moreView()}</div>`;
  if(state.tab==="more")wireMoreSlot();
- setNavActive()}
+ wireCircleTitleStream();setNavActive()}
+function wireCircleTitleStream(){
+ const win=viewEl.querySelector(".circle-title-window"),text=viewEl.querySelector(".circle-title-text");
+ if(!win||!text)return;
+ requestAnimationFrame(()=>{const distance=Math.max(0,text.scrollWidth-win.clientWidth);text.style.setProperty("--stream-distance",`${-distance}px`);text.classList.toggle("stream",distance>2)})
+}
 function buildQueue(ctx,preserve){
  if(ctx==="circle"&&!curC()){renderView();return}
  cancelAnimationFrame(raf);
@@ -864,7 +896,7 @@ function buildQueue(ctx,preserve){
  si.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();submitAdd()}});
  si.addEventListener("blur",()=>setTimeout(()=>{if(slotOpen&&document.activeElement!==si&&!document.activeElement?.closest("#slotwrap")&&!si.value.trim())closeSlot()},160));
  if(slotOpen){sw.classList.add("open");stageEl.classList.add("adding");si.value=inputVal;autoGrowSi(si);si.focus({preventScroll:true});onVV()}
- setNavActive()}
+ wireCircleTitleStream();setNavActive()}
 function nearestSlotIdx(y){let bi=0,bd=1e9;for(let i=0;i<Q.slots.length;i++){const d=Math.abs(Q.slots[i].y-y);if(d<bd){bd=d;bi=i}}return bi}
 function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":"home");
  if(!Q||!qtrackEl)return;
@@ -948,7 +980,7 @@ function renderSelect(){const l=queueTasks();const allSel=l.length&&l.every(t=>s
 <script>
 function gDown(e){
  if(switching||selecting)return;
- if(e.target.closest(".asgrow"))return;
+ if(e.target.closest(".asgrow,.chips,.head,.hicons,.ttlbtn"))return;
  if(slotOpen&&e.target.closest(".ibar")){dragEndAt=0;tapSuppressMs=0;return}
  if(slotOpen){closeSlot();e.preventDefault();return}
  axis=null;dragging=true;moved=0;dragEndAt=0;tapSuppressMs=0;gripArmed=false;gx=e.clientX;gy=e.clientY;
@@ -1140,7 +1172,7 @@ function buildSearch(){
  setTimeout(()=>hq.focus(),80);setNavActive()}
 function buildCircleSearch(){
  viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><input class="field" id="cq" value="${esc(circleSearch||"")}" placeholder="${T("searchPh")}" autocomplete="off"/><div id="cres" class="list">${circleSearchResults()}</div></div></div></div>`;
- const cq=viewEl.querySelector("#cq");cq.addEventListener("input",e=>{circleSearch=e.target.value;viewEl.querySelector("#cres").innerHTML=circleSearchResults()});setTimeout(()=>cq.focus(),80);setNavActive()}
+ const cq=viewEl.querySelector("#cq");cq.addEventListener("input",e=>{circleSearch=e.target.value;viewEl.querySelector("#cres").innerHTML=circleSearchResults()});setTimeout(()=>cq.focus(),80);wireCircleTitleStream();setNavActive()}
 function circleSearchResults(){const q=(circleSearch||"").trim(),all=ciActive(),done=ciCompleted();
  if(!q)return `<div class="empty"><div class="empty-c"><h3>${T("emptySearchT")}</h3><p>${T("emptySearchP")}</p></div></div>`;
  const act=all.map((t,i)=>({t,i})).filter(x=>x.t.title.toLowerCase().includes(q.toLowerCase()));const fin=done.filter(t=>t.title.toLowerCase().includes(q.toLowerCase()));
@@ -1193,34 +1225,30 @@ function statsView(){
  </div></div>`}
 
 function moreView(){
- const segBtn=(l,label)=>`<button data-act="lang" data-lang="${l}" style="flex:1;height:40px;border-radius:11px;font-size:13.5px;font-weight:700;background:${state.lang===l?"var(--accent-soft)":"rgba(70,55,30,.05)"};color:${state.lang===l?"var(--accent-ink)":"var(--sub)"}">${label}</button>`;
- return `<div class="scroller"><div class="list">
- <div class="more-anchor"></div>
- <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.user}</span>${T("mAccount")}</span><span><em>${T("soon")}</em> ›</span></button>
- <div class="more-anchor"></div>
- <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.bell}</span>${T("mNoti")}</span><span><em>${T("soon")}</em> ›</span></button>
- <div class="more-anchor"></div>
- <div class="pcard"><div class="mlead"><span class="mrank">${I.globe}</span><h3 style="margin:0">${T("mLang")}</h3></div><div style="display:flex;gap:6px;margin-top:10px">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
- <div class="more-anchor"></div>
- <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.shield}</span>${T("mTerms")}</span><span>›</span></button>
- <div class="more-anchor"></div>
- <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.mail}</span>${T("mContact")}</span><span>›</span></button>
- <div class="mdiv"></div>
- <div class="pcard"><h3>${T("mBackupT")}</h3><p>${T("mBackupP")}</p></div><div class="more-anchor"></div>
- <button class="rbtn" data-act="export">${T("mExport")} <span>⇩</span></button>
- <div class="more-anchor"></div>
- <textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
- <div class="more-anchor"></div>
- <button class="rbtn" data-act="import">${T("mImport")} <span>⇧</span></button>
- <div class="more-anchor"></div>
- <button class="rbtn danger" data-act="reset">${T("mReset")} <span>⟲</span></button>
- <button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
- <div class="more-anchor"></div>
- <div style="height:54px"></div>
+ const segBtn=(l,label)=>`<button class="more-lang ${state.lang===l?"on":""}" data-act="lang" data-lang="${l}">${label}</button>`;
+ const row=(icon,label,action="stub",tail="›")=>`<div class="more-anchor"></div><button class="rbtn more-row" data-act="${action}"><span class="mlead"><span class="mrank">${icon}</span><span>${label}</span></span><span>${tail}</span></button>`;
+ return `<div class="scroller more-scroller"><div class="list more-list">
+  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"ACCOUNT":"계정"}</p><div class="more-group">
+   ${row(I.user,T("mAccount"),"stub",`<em>${T("soon")}</em> ›`)}
+   ${row(I.bell,T("mNoti"),"stub",`<em>${T("soon")}</em> ›`)}
+  </div></section>
+  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"PREFERENCES":"환경"}</p><div class="more-group">
+   <div class="more-anchor"></div><div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
+   ${row(I.shield,T("mTerms"),"stub")}
+   ${row(I.mail,T("mContact"),"stub")}
+  </div></section>
+  <div class="more-divider"></div>
+  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"DATA":"데이터"}</p><div class="more-group">
+   <div class="more-anchor"></div><div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>
+   ${row(I.arrow,T("mExport"),"export","⇩")}
+   <div class="more-anchor"></div><textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
+   ${row(I.arrow,T("mImport"),"import","⇧")}
+   ${row(I.x,T("mReset"),"reset","⟲")}
+  </div></section>
+  <div class="more-anchor"></div><button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
+  <div class="more-anchor"></div><div style="height:54px"></div>
  </div></div>
- <div class="slotwrap" id="moreSlotWrap">
-  <button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button>
- </div>`}
+ <div class="slotwrap" id="moreSlotWrap"><button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button></div>`}
 function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
 function importJson(){const ta=document.getElementById("io");if(!ta)return;
  try{const p=JSON.parse(ta.value);const arr=Array.isArray(p)?p:p.tasks;if(!Array.isArray(arr))throw 0;
@@ -1285,7 +1313,7 @@ app.addEventListener("click",e=>{
  if(act==="slot-open"){openSlot();return}
  if(act==="slot-close"){closeSlot();return}
  if(act==="hsearch"){homeSearch=homeSearch===null?"":null;renderView();return}
- if(act==="csearch"){circleSearch=circleSearch===null?"":null;renderView();return}
+ if(act==="csearch"){circleSearch=circleSearch===null?"":null;if(circleSearch===null)renderView();else buildCircleSearch();return}
  if(act==="search-go"){goToSearchResult(id,el.dataset.done==="1");return}
  if(act==="sheet-open"){const c=curC();if(state.tab==="circle"&&c&&(c.unreadDone||0)){c.unreadDone=0;save();renderView()}openSheet();return}
  if(act==="sheet-close"){closeSheet();return}
@@ -1353,7 +1381,7 @@ app.addEventListener("submit",e=>{
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
 });
 function drawIdentityEmojiGrid(q){const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q)),grid=document.getElementById("identityEmojiGrid");if(!grid)return;const current=document.getElementById("identityEmojiCurrent");if(current)current.textContent=identityEditEmoji;grid.innerHTML=arr.map(e=>`<button class="asgc ${identityEditEmoji===e?"on":""}" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px" data-act="identity-emoji-pick" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"}
-function openIdentityEditor(kind){const c=curC();if(!c)return;identityEditKind=kind;const profile=kind==="profile"?myProfile(c):null;identityEditEmoji=profile?.emoji||c.emoji||"✨";identityEditBaseName=profile?.name||c.name||"";openModal(`<h3>${kind==="profile"?"내 끼리 프로필 편집":"끼리 이름·이모지 편집"}</h3><input class="field" id="identityName" value="${esc(identityEditBaseName)}" placeholder="${kind==="profile"?"이 끼리에서 사용할 이름":"끼리 이름"}"/><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 7px"><b style="font-size:13px">이모지 <span id="identityEmojiCurrent" style="font-size:22px">${identityEditEmoji}</span></b><div style="display:flex;gap:6px"><button class="seltxt" data-act="identity-random">🎲 랜덤</button><button class="seltxt" data-act="identity-save">저장</button></div></div><input class="field" id="identityEmojiSearch" placeholder="이모지 검색"/><div id="identityEmojiGrid" style="display:flex;gap:6px;flex-wrap:wrap;max-height:300px;overflow:auto;margin-top:10px"></div>`);drawIdentityEmojiGrid("");setTimeout(()=>document.getElementById("identityEmojiSearch")?.addEventListener("input",e=>drawIdentityEmojiGrid(e.target.value)),0)}
+function openIdentityEditor(kind){const c=curC();if(!c)return;identityEditKind=kind;const profile=kind==="profile"?myProfile(c):null;identityEditEmoji=profile?.emoji||c.emoji||"✨";identityEditBaseName=profile?.name||c.name||"";openModal(`<h3>${kind==="profile"?"내 프로필":"끼리 편집"}</h3><div class="identity-block" style="margin-top:10px"><label class="identity-label" for="identityName">이름</label><input class="field" id="identityName" value="${esc(identityEditBaseName)}" placeholder="${kind==="profile"?"이 끼리에서 사용할 이름":"끼리 이름"}"/></div><div class="identity-block"><div class="identity-label"><span>이모지</span><span class="identity-current" id="identityEmojiCurrent">${identityEditEmoji}</span></div><input class="field" id="identityEmojiSearch" placeholder="이모지 검색"/><div class="identity-actions"><button class="seltxt" data-act="identity-random">🎲 랜덤</button><button class="seltxt identity-save" data-act="identity-save">저장</button></div><div id="identityEmojiGrid" style="display:flex;gap:6px;flex-wrap:wrap;max-height:300px;overflow:auto;margin-top:12px"></div></div>`);drawIdentityEmojiGrid("");setTimeout(()=>document.getElementById("identityEmojiSearch")?.addEventListener("input",e=>drawIdentityEmojiGrid(e.target.value)),0)}
 function openEmojiPicker(kind){const draw=q=>{const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q));const grid=document.getElementById("emojiGrid");if(grid)grid.innerHTML=arr.map(e=>`<button class="asgc" style="width:42px;padding:0;justify-content:center" data-act="emoji-library-pick" data-kind="${kind}" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"};openModal(`<h3>이모지 선택</h3><input class="field" id="emojiSearch" placeholder="이모지 검색"/><button class="rbtn" data-act="emoji-library-random" data-kind="${kind}" style="margin:10px 0">🎲 랜덤으로 고르기</button><div id="emojiGrid" style="display:flex;gap:7px;flex-wrap:wrap;max-height:280px;overflow:auto"></div>`);draw("");setTimeout(()=>document.getElementById("emojiSearch")?.addEventListener("input",e=>draw(e.target.value)),0)}
 function openModal(html){document.getElementById("modal").innerHTML=html;document.getElementById("modalwrap").classList.add("on")}
 function closeModal(){document.getElementById("modalwrap").classList.remove("on");modalOkCb=null}
