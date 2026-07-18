@@ -28,7 +28,7 @@
   #viewport{flex:1;min-height:0;position:relative;overflow:hidden}
   .vpage{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;will-change:transform;background:var(--paper)}
 
-  .head{flex:none;padding:46px 24px 10px}
+  .head{flex:none;padding:46px 24px 10px;transition:padding .2s ease}
   .headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
   .ttl{margin:0;font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
   .head-sub{margin:7px 0 0;font-size:13px;font-weight:560;color:var(--sub);letter-spacing:-.01em}
@@ -42,6 +42,12 @@
   .chip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 6px;border-radius:999px;background:var(--surface);box-shadow:var(--sh-card);font-size:12.5px;font-weight:700;color:var(--sub);transition:.15s}
   .chip .av{width:28px;height:28px;display:grid;place-items:center;background:transparent!important;color:inherit!important;font-size:19px;font-weight:400}
   .chip.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
+  .vpage.compact-head .head{padding-top:18px!important;padding-bottom:7px!important}
+  .vpage.compact-head .head-sub{max-height:0;margin-top:0;opacity:0;overflow:hidden}
+  .vpage.compact-head .ttl{font-size:25px}
+  .circle-head .headrow>div:first-child{flex:1;min-width:0}
+  .circle-head .hicons{flex:none;gap:4px;margin-top:0}
+  .circle-head .hbtn{width:34px;height:34px;border-radius:11px}
 
   .stage{flex:1;min-height:0;position:relative;overflow:hidden}
   .stage.q{touch-action:none}
@@ -123,13 +129,14 @@
   .save{flex:none;width:44px;height:44px;border-radius:14px;background:var(--accent);color:#fff;display:grid;place-items:center;box-shadow:0 8px 16px rgba(224,137,74,.32);transition:.15s}
   .save:hover{filter:brightness(1.04)}.save:active{transform:scale(.9)}.save svg{width:19px;height:19px}
   .ibar{position:relative}
-  .asgrow{position:absolute;bottom:calc(100% + 10px);left:2px;right:2px;max-width:calc(100vw - 34px);display:flex;align-items:center;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 0}
+  .asgrow{position:absolute;z-index:4;bottom:calc(100% + 10px);left:2px;right:2px;max-width:calc(100vw - 34px);display:flex;align-items:center;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:none;padding:2px 0}
   .asgrow::-webkit-scrollbar{display:none}
   .asglb{height:32px;display:grid;place-items:center;padding:0 10px;border-radius:999px;background:var(--surface);box-shadow:var(--sh-slot);font-size:10.5px;font-weight:750;color:var(--faint)}
   .asgc{display:flex;align-items:center;gap:6px;height:32px;padding:0 11px 0 5px;border-radius:999px;background:var(--surface);box-shadow:var(--sh-slot);font-size:12px;font-weight:700;color:var(--sub);transition:.15s}
   .asgc .av{width:28px;height:28px;display:grid;place-items:center;background:transparent!important;color:inherit!important;font-size:19px;font-weight:400}
   .asgc.compact{flex:none;width:36px;height:36px;padding:0;justify-content:center;border-radius:12px}
-  .asgrow .asgc{flex:none;white-space:nowrap}
+  .asgrow .asgc{flex:none;white-space:nowrap;background:var(--paper);box-shadow:var(--sh-card)}
+  .asgrow .asgc.on{background:var(--paper);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset,var(--sh-card)}
   .asgc.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset,var(--sh-slot)}
   .asgc.dft{background:transparent;box-shadow:none;border:1.6px dashed var(--faint);color:var(--faint)}
   .asgc:active{transform:scale(.95)}
@@ -141,9 +148,12 @@
   .devrow.coffee .drank{background:var(--accent);color:#fff}
   .devins{display:flex;align-items:center;gap:8px;height:38px;padding:0 8px;border-radius:10px;border:1.6px dashed var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;background:var(--accent-soft)}
   .devins:active{transform:scale(.98)}
-  .moreslotwrap{position:absolute;left:16px;right:16px;bottom:calc(var(--nav-h) + 24px + var(--safe));z-index:40}
-  .moreslotwrap .ins{box-shadow:var(--sh-slot);background:var(--surface)}
-  .moreslotwrap.open .ins{display:none}.moreslotwrap.open .ibar{display:flex}
+  .moreslotwrap{position:absolute;left:16px;right:16px;top:120px;z-index:40;pointer-events:none;transition:top .2s cubic-bezier(.2,.7,.3,1)}
+  .moreslotwrap .quip{width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:22px;background:var(--surface);box-shadow:var(--sh-slot);color:var(--ink2);font-size:13px;font-weight:700;letter-spacing:-.02em;pointer-events:auto}
+  .moreslotwrap .quip:active{transform:scale(.985)}
+  .moreslotwrap .quip .dice{font-size:18px}
+  .more-anchor{height:0;pointer-events:none;transition:height .2s cubic-bezier(.2,.7,.3,1)}
+  .more-anchor.active{height:44px}
   .buildtag{position:absolute;right:10px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.02em;color:rgba(70,55,30,.16);z-index:5;pointer-events:none;user-select:none}
 
   .scroller{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:6px 18px calc(var(--nav-h) + 30px + var(--safe));touch-action:pan-y}
@@ -225,9 +235,11 @@
 
   .mdiv{height:1px;background:var(--hair);margin:14px 4px}
   .suprow{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;box-shadow:var(--sh-card);padding:12px 14px;width:100%;text-align:left;transition:.15s}
-  .ttlbtn{position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:rgba(70,55,30,.055);text-align:left;transition:.15s}
+  .ttlbtn{position:relative;display:flex;align-items:center;gap:7px;max-width:100%;padding:6px 7px 6px 10px;border-radius:14px;background:rgba(70,55,30,.055);text-align:left;transition:.15s}
   .ttlbtn:active{transform:scale(.98);background:var(--accent-soft)}
-  .ttlbtn .car{width:18px;height:22px;display:grid;place-items:center;font-size:17px;color:var(--accent-ink);font-weight:800}
+  .ttlbtn .ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ttlbtn .car{width:24px;height:24px;flex:none;display:grid;place-items:center;border-left:1px solid rgba(70,55,30,.13);color:var(--accent-ink)}
+  .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
   .mrank{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
   .mrank svg{width:15px;height:15px}
   .mlead{display:flex;align-items:center;gap:11px;min-width:0}
@@ -474,7 +486,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   <p class="note">v17 Liquid Glass 리디자인 · iOS 기본 앱의 계층과 반투명 머티리얼을 적용 · 기존 인터랙션과 데이터 구조 유지</p>
 </div>
 <script>
-const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.70;
+const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
 const BUILD="v18-ux-fixes";
 const APP_VERSION=BUILD;
 const AD_FIRST=10, AD_EVERY=7;
@@ -504,7 +516,7 @@ const I={
 };
 const STR={
 ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
- hHome:"끼우",hHomeSub:"{a}개의 할 일 · 완료 {d}",
+ hHome:"할일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
  hCircle:"끼리",hCircleSub:"가족·연인·친구와 함께 끼우기",
  hStats:"통계",hStatsSub:"끼우가 잘 작동하고 있나요?",
  hMore:"더보기",hMoreSub:"설정 · 후원 · 데이터",
@@ -548,7 +560,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  emptyCircleT:"아직 끼리가 없어요",emptyCircleP:"가족·연인·친구와 함께 쓰는 공유 큐를 만들어 보세요.",
  mFeatSlot:"여기에 원하는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
 en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
- hHome:"Kkiu",hHomeSub:"{a} to-dos · {d} done",
+ hHome:"Queue",hHomeSub:"{a} to-dos · {d} done",
  hCircle:"Circle",hCircleSub:"A queue you share with your circle",
  hStats:"Stats",hStatsSub:"See your to-do habits at a glance",
  hMore:"More",hMoreSub:"Settings · Support · Data",
@@ -612,7 +624,7 @@ function seedLog(){const mk=(idxC,lead,insA,daysAgo)=>({id:uid(),completedAt:new
  return[mk(0,5,1,0),mk(2,26,2,1),mk(1,3,0,1),mk(4,49,6,3),mk(0,2,1,5)]}
 
 let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null;
-let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,moreTarget="home";
+let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,moreTarget="home",moreQuipIndex=0;
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false;
@@ -713,7 +725,7 @@ function cardHtml(t,idx,o={}){
  const lead=`<button class="ck" data-act="complete" data-id="${t.id}"></button>`;
  const rank=o.rank?`<div class="rank ${topN?"top":""}">${idx+1}</div>`:"";
  let mid;
- if(o.rank){const w=Math.max(80,o.ctx==="circle"?TITLE_W-30:TITLE_W);const[l1,l2]=splitTitle(t.title,w);
+ if(o.rank){const w=Math.max(104,TITLE_W);const[l1,l2]=splitTitle(t.title,w);
   mid=`<p class="t-title" data-act="title" data-id="${t.id}">${esc(l1)}</p>${l2?`<p class="t-rest">${esc(l2)}</p>`:""}`}
  else mid=`<p class="t-title" data-act="title" data-id="${t.id}">${esc(t.title)}</p>`;
  const ms=o.ctx==="circle"?(t.assignees||["me"]).map(k=>MEMBERS[k]).filter(Boolean):[];
@@ -742,21 +754,21 @@ function chipsHtml(){
 function headHtml(){
  const a=active().length,d=completed().length;
  if(state.tab==="home"){
-  return `<div class="head"><div class="headrow"><div><h1 class="ttl">${T("hHome")}</h1><p class="head-sub">${T("hHomeSub",{a,d})}</p></div><div class="hicons"><button class="hbtn" data-act="hsearch">${homeSearch===null?I.search:I.x}</button><button class="hbtn" data-act="sheet-open">${I.done}${d?`<span class="hbadge">${d}</span>`:""}</button></div></div></div>`}
+  return `<div class="head"><div class="headrow"><div><h1 class="ttl">${T("hHome")}</h1></div><div class="hicons"><button class="hbtn" aria-label="검색" data-act="hsearch">${homeSearch===null?I.search:I.x}</button><button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}${d?`<span class="hbadge">${d}</span>`:""}</button></div></div></div>`}
  if(state.tab==="circle"){const cc=curC();
   if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1><p class="head-sub">${T("hCircleSub")}</p></div>`;
   const cd=ciCompleted().length;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
-  return `<div class="head"><div class="headrow"><div><button class="ttlbtn" data-act="circle-pick"><h1 class="ttl">${ce} ${esc(cc.name)}</h1><span class="car">▾</span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><p class="head-sub">멤버 ${cc.members.length}명</p></div><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button><button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button><button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div>${chipsHtml()}`}
+  return `<div class="head circle-head"><div class="headrow"><div><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><h1 class="ttl">${ce} ${esc(cc.name)}</h1><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><p class="head-sub">멤버 ${cc.members.length}명</p></div><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button><button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button><button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
- return `<div class="head"><h1 class="ttl">${T("hMore")}</h1><p class="head-sub">${T("hMoreSub")}</p></div>`}
+ return `<div class="head"><h1 class="ttl">${T("hMore")}</h1></div>`}
 function asgRowHtml(){const c=curC();if(!c)return"";
  const valid=c.members.filter(k=>MEMBERS[k]);
  const cur=[...ciAssignees][0];
  if(!valid.includes(cur)){ciAssignees=new Set([valid.includes(state.ciFilter)?state.ciFilter:"me"])}
  const sel=[...ciAssignees][0];
- return `<div class="asgrow"><span class="asglb">${T("asgLabel")}</span>${valid.map(k=>`<button type="button" class="asgc ${k===sel?"on":""}" data-act="asg-pick" data-m="${k}" title="${esc(MEMBERS[k][state.lang])}"><span class="av">${MEMBERS[k].ini}</span>${MEMBERS[k][state.lang]}</button>`).join("")}</div>`}
+ return `<div class="asgrow" aria-label="담당자 선택">${valid.map(k=>`<button type="button" class="asgc ${k===sel?"on":""}" data-act="asg-pick" data-m="${k}" title="${esc(MEMBERS[k][state.lang])}"><span class="av">${MEMBERS[k].ini}</span>${MEMBERS[k][state.lang]}</button>`).join("")}</div>`}
 function slotHtml(ctx){const n=ctx==="home"?active().length:ciActive().length;
  const gi=clamp(ctx==="home"?state.insertIndex:state.ciInsertIndex,0,n);
  return `<div class="slotwrap" id="slotwrap">
@@ -783,7 +795,7 @@ function buildQueue(ctx,preserve){
  const emptyHtml=qTasks.length?"":`<div class="queueempty"><div class="empty-c"><h3>${emptyCopy.t}</h3><p>${emptyCopy.p}</p><button data-act="${emptyCopy.act}">${emptyCopy.a}</button></div></div>`;
  viewEl.innerHTML=`${headHtml()}<div class="stage q" id="stage"><div class="qvp"><div class="qtrack" id="qtrack"></div></div>${emptyHtml}<div class="qfade t"></div><div class="qfade b"></div>${slotHtml(ctx)}</div>`;
  stageEl=viewEl.querySelector("#stage");qtrackEl=viewEl.querySelector("#qtrack");
- TITLE_W=Math.max(80,(qtrackEl.clientWidth-36)-190);
+ TITLE_W=Math.max(104,(qtrackEl.clientWidth-36)-(ctx==="circle"?154:122));
  Q=ctx==="home"?buildQueueModel(active(),{ads:true,doneBtn:completed().length>0}):buildCircleModel();
  qtrackEl.style.height=Q.totalH+"px";
  qtrackEl.innerHTML=Q.rows.map(r=>rowHtml(r,ctx)).join("");
@@ -805,6 +817,7 @@ function buildQueue(ctx,preserve){
 function nearestSlotIdx(y){let bi=0,bd=1e9;for(let i=0;i<Q.slots.length;i++){const d=Math.abs(Q.slots[i].y-y);if(d<bd){bd=d;bi=i}}return bi}
 function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":"home");
  if(!Q||!qtrackEl)return;
+ viewEl.classList.toggle("compact-head",qOffset>54&&!slotOpen);
  const si=nearestSlotIdx(qOffset);
  qtrackEl.style.transform=`translateY(${qTT-qOffset}px)`;
  if(si!==qPrevSI){
@@ -880,6 +893,7 @@ function renderSelect(){const l=queueTasks();const allSel=l.length&&l.every(t=>s
 <script>
 function gDown(e){
  if(switching||selecting)return;
+ if(e.target.closest(".asgrow"))return;
  if(slotOpen&&e.target.closest(".ibar")){dragEndAt=0;tapSuppressMs=0;return}
  if(slotOpen)e.preventDefault();
  axis=null;dragging=true;moved=0;dragEndAt=0;tapSuppressMs=0;gripArmed=false;gx=e.clientX;gy=e.clientY;
@@ -1118,34 +1132,29 @@ function statsView(){
 
 function moreView(){
  const segBtn=(l,label)=>`<button data-act="lang" data-lang="${l}" style="flex:1;height:40px;border-radius:11px;font-size:13.5px;font-weight:700;background:${state.lang===l?"var(--accent-soft)":"rgba(70,55,30,.05)"};color:${state.lang===l?"var(--accent-ink)":"var(--sub)"}">${label}</button>`;
- const quick=state.lang==="en"?{title:"Flash Kkiu",desc:"A thought just appeared? Slip it into today before it escapes.",btn:"⚡ Kkiu it now",ph:"What just came to mind?",me:"Personal",circle:"This circle"}:{title:"번개 끼우기",desc:"방금 떠오른 일, 도망가기 전에 오늘 줄에 살짝 끼워 넣으세요.",btn:"⚡ 지금 끼우기",ph:"방금 떠오른 일을 적어보세요",me:"개인",circle:"현재 끼리"};
  return `<div class="scroller"><div class="list">
  <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.user}</span>${T("mAccount")}</span><span><em>${T("soon")}</em> ›</span></button>
+ <div class="more-anchor"></div>
  <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.bell}</span>${T("mNoti")}</span><span><em>${T("soon")}</em> ›</span></button>
+ <div class="more-anchor"></div>
  <div class="pcard"><div class="mlead"><span class="mrank">${I.globe}</span><h3 style="margin:0">${T("mLang")}</h3></div><div style="display:flex;gap:6px;margin-top:10px">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
+ <div class="more-anchor"></div>
  <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.shield}</span>${T("mTerms")}</span><span>›</span></button>
+ <div class="more-anchor"></div>
  <button class="rbtn" data-act="stub"><span class="mlead"><span class="mrank">${I.mail}</span>${T("mContact")}</span><span>›</span></button>
  <div class="mdiv"></div>
- <div class="pcard"><h3>${quick.title}</h3><p>${quick.desc}</p></div>
- <div class="pcard"><h3>${T("mSupportT")}</h3><p>${T("mSupportP")}</p></div>
- <button class="suprow" data-act="link"><span class="sic">🏠</span><span class="smid"><b>${T("lnkSite")}</b><span>${T("lnkSiteP")}</span></span><span class="out">↗</span></button>
- <button class="suprow" data-act="link"><span class="sic">☕</span><span class="smid"><b>${T("lnkCoffee")}</b><span>${T("lnkCoffeeP")}</span></span><span class="out">↗</span></button>
- <button class="suprow" data-act="link"><span class="sic">📒</span><span class="smid"><b><span class="afftag">${T("aff")}</span>${T("aff1")}</b><span>${T("aff1P")}</span></span><span class="out">↗</span></button>
- <button class="suprow" data-act="link"><span class="sic">🍅</span><span class="smid"><b><span class="afftag">${T("aff")}</span>${T("aff2")}</b><span>${T("aff2P")}</span></span><span class="out">↗</span></button>
- <div class="mdiv"></div>
- <div class="pcard"><h3>${T("mBackupT")}</h3><p>${T("mBackupP")}</p></div>
+ <div class="pcard"><h3>${T("mBackupT")}</h3><p>${T("mBackupP")}</p></div><div class="more-anchor"></div>
  <button class="rbtn" data-act="export">${T("mExport")} <span>⇩</span></button>
+ <div class="more-anchor"></div>
  <textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
+ <div class="more-anchor"></div>
  <button class="rbtn" data-act="import">${T("mImport")} <span>⇧</span></button>
+ <div class="more-anchor"></div>
  <button class="rbtn danger" data-act="reset">${T("mReset")} <span>⟲</span></button>
  <div style="height:74px"></div>
  </div></div>
  <div class="moreslotwrap" id="moreSlotWrap">
-  <button type="button" class="ins" data-act="mslot-open"><span class="p">⚡</span>${quick.btn}</button>
-  <div class="ibar" id="mIbar">
-   <div style="position:absolute;bottom:calc(100% + 9px);left:0;display:flex;gap:6px"><button class="asgc ${moreTarget==="home"?"on":""}" data-act="quick-target" data-target="home">${quick.me}</button><button class="asgc ${moreTarget==="circle"?"on":""}" data-act="quick-target" data-target="circle">${quick.circle}</button></div>
-   <textarea class="si" id="msi" rows="1" placeholder="${quick.ph}"></textarea><button class="save" type="button" data-act="mfeat-submit">${I.arrow}</button>
-  </div>
+  <button type="button" class="quip" data-act="quip-next"><span class="dice">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button>
  </div>`}
 function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
 function importJson(){const ta=document.getElementById("io");if(!ta)return;
@@ -1229,7 +1238,8 @@ app.addEventListener("click",e=>{
  if(act==="circle-del"){const c=curC();if(!c)return;askConfirm(T("circleDel"),T("circleDelConfirm",{n:c.name}),T("circleDel"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tCircleDel"))},true);return}
  if(act==="asg-pick"){const k=el.dataset.m;ciAssignees=new Set([k]);viewEl.querySelectorAll(".asgrow .asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
  if(act==="add-submit"){submitAdd();return}
- if(act==="mslot-open"){const w=viewEl.querySelector("#moreSlotWrap");if(!w)return;w.classList.add("open");const ta=w.querySelector("#msi");if(ta)requestAnimationFrame(()=>ta.focus());return}
+ if(act==="quip-next"){const q=viewEl.querySelector("#quipTxt");if(q){const a=state.lang==="en"?["One thing at a time","Tiny progress still counts","Leave a little room for later","Today can stay unfinished","A queue is not a verdict"]:["한 번에 하나씩이면 충분해요","작은 진척도 진척이에요","나중의 나를 위한 빈자리","오늘이 덜 끝나도 괜찮아요","줄은 평가표가 아니에요"];moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex];vibe(8)}return}
+ if(act==="mslot-open"){return}
  if(act==="quick-target"){moreTarget=el.dataset.target;viewEl.querySelectorAll("#mIbar [data-act='quick-target']").forEach(b=>b.classList.toggle("on",b.dataset.target===moreTarget));return}
  if(act==="mfeat-submit"){submitFeat();return}
  if(act==="chip"){ciAssignees=new Set();state.ciFilter=el.dataset.m||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(el.dataset.m){const c=curC();if(c?.memberUnread)c.memberUnread[el.dataset.m]=0}save();buildQueue("circle");return}
@@ -1254,10 +1264,9 @@ function submitFeat(){const w=viewEl.querySelector("#moreSlotWrap"),ta=w?.queryS
   state.tasks.filter(t=>!t.done).forEach(t=>t.order++);state.tasks.push({id:uid(),title:v.slice(0,120),favorite:false,done:false,order:0,createdAt:now(),completedAt:null,insertAt:0,listAt:active().length,doneAt:null});reindex()
  }
  save();if(ta)ta.value="";w?.classList.remove("open");vibe([10,16,10]);toast(state.lang==="en"?"Kkiu'd it at the top":"맨 앞에 끼웠어요");if(state.tab==="more")renderView()}
-function wireMoreSlot(){const msi=viewEl.querySelector("#msi");if(!msi)return;const grow=()=>{msi.style.height="auto";const max=78;const h=Math.min(msi.scrollHeight,max);msi.style.height=h+"px";msi.style.overflowY=msi.scrollHeight>max?"auto":"hidden"};
- msi.addEventListener("input",grow);
- msi.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();submitFeat()}});
- msi.addEventListener("blur",()=>setTimeout(()=>{const w=viewEl.querySelector("#moreSlotWrap");if(w&&document.activeElement!==msi&&!document.activeElement?.closest("#moreSlotWrap")&&!msi.value.trim())w.classList.remove("open")},160))}
+function wireMoreSlot(){const sc=viewEl.querySelector(".scroller"),slot=viewEl.querySelector("#moreSlotWrap");if(!sc||!slot)return;
+ const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const desired=sc.scrollTop+sc.clientHeight*.46;let best=anchors[0],dist=Infinity;anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;const d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});if(!best.classList.contains("active")){anchors.forEach(a=>a.classList.toggle("active",a===best));requestAnimationFrame(place);return}const y=best.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;slot.style.top=Math.max(70,y-sc.scrollTop)+"px";viewEl.classList.toggle("compact-head",sc.scrollTop>44)};
+ sc.addEventListener("scroll",place,{passive:true});requestAnimationFrame(place)}
 app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
