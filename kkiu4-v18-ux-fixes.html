@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.1.2</title>
+<title>Kkiu To Do — v18.2.1</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -28,13 +28,13 @@
   #viewport{flex:1;min-height:0;position:relative;overflow:hidden}
   .vpage{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;will-change:transform;background:var(--paper)}
 
-  .head{flex:none;padding:46px 24px 10px;transition:padding .2s ease}
+  .head{flex:none;padding:24px 24px 10px;transition:none}
   .headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .ttl{margin:0;font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+  .ttl{margin:0;font-size:25px;font-weight:700;letter-spacing:-.03em;line-height:1.12}
   .head-sub{margin:7px 0 0;font-size:13px;font-weight:560;color:var(--sub);letter-spacing:-.01em}
   .head-sub .meta-link{margin:0;padding:0;color:var(--accent-ink);font-size:inherit;font-weight:750;text-decoration:underline;text-underline-offset:3px}
   .hicons{display:flex;gap:8px;margin-top:5px}
-  .hbtn{position:relative;width:38px;height:38px;border-radius:13px;background:rgba(70,55,30,.05);display:grid;place-items:center;color:var(--ink2);transition:.15s}
+  .hbtn{position:relative;width:36px;height:36px;border-radius:12px;background:rgba(70,55,30,.05);display:grid;place-items:center;color:var(--ink2);transition:.15s}
   .hbtn:active{transform:scale(.92)} .hbtn svg{width:18px;height:18px}
   .hbadge{position:absolute;top:-4px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
   .mini-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 6px;margin-left:5px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:10.5px;font-weight:800;vertical-align:1px}
@@ -42,12 +42,11 @@
   .chip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 6px;border-radius:999px;background:var(--surface);box-shadow:var(--sh-card);font-size:12.5px;font-weight:700;color:var(--sub);transition:.15s}
   .chip .av{width:28px;height:28px;display:grid;place-items:center;background:transparent!important;color:inherit!important;font-size:19px;font-weight:400}
   .chip.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
-  .vpage.compact-head .head{padding-top:18px!important;padding-bottom:7px!important}
-  .vpage.compact-head .head-sub{max-height:0;margin-top:0;opacity:0;overflow:hidden}
+  .vpage.compact-head .head{padding-top:24px!important;padding-bottom:10px!important}
   .vpage.compact-head .ttl{font-size:25px}
   .circle-head .headrow>div:first-child{flex:1;min-width:0}
   .circle-head .hicons{flex:none;gap:4px;margin-top:0}
-  .circle-head .hbtn{width:34px;height:34px;border-radius:11px}
+  .circle-head .hbtn{width:36px;height:36px;border-radius:12px}
 
   .stage{flex:1;min-height:0;position:relative;overflow:hidden}
   .stage.q{touch-action:none}
@@ -87,6 +86,8 @@
   .t-title[contenteditable="true"]{white-space:normal;overflow-wrap:anywhere;word-break:break-word;text-overflow:clip;overflow-y:auto;max-height:4.2em;outline:none;border-bottom:2px solid var(--accent);padding-bottom:2px}
   .card.editing{height:auto;min-height:62px;padding-top:11px;padding-bottom:11px;z-index:60;box-shadow:0 14px 34px rgba(60,45,25,.22)}
   .card.editing .t-rest{display:none}
+  .card.editing .acts{align-self:start;padding-top:2px}
+  .card.editing .mid{min-width:0;padding-bottom:2px}
   .editasg{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
   .editasg .asgc{height:28px;padding:0 9px 0 4px;font-size:11.5px;box-shadow:none;background:rgba(70,55,30,.06)}
   .editasg .asgc.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
@@ -151,8 +152,8 @@
   .devrow.coffee .drank{background:var(--accent);color:#fff}
   .devins{display:flex;align-items:center;gap:8px;height:38px;padding:0 8px;border-radius:10px;border:1.6px dashed var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;background:var(--accent-soft)}
   .devins:active{transform:scale(.98)}
-  .moreslotwrap{position:absolute;left:16px;right:16px;top:120px;z-index:40;pointer-events:none;transition:top .2s cubic-bezier(.2,.7,.3,1)}
-  .moreslotwrap .quip{pointer-events:auto}
+  #moreSlotWrap{position:absolute;z-index:40;pointer-events:none;transition:top .2s cubic-bezier(.2,.7,.3,1)}
+  #moreSlotWrap .quip{pointer-events:auto}
   .more-anchor{height:0;pointer-events:none;transition:height .2s cubic-bezier(.2,.7,.3,1)}
   .more-anchor.active{height:44px}
   .more-version{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px 0 8px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--faint)}
@@ -225,8 +226,8 @@
   .drow .who{width:27px;height:27px;margin:0;font-size:18px}
   .drow .dx{width:28px;height:28px;border-radius:8px;color:var(--faint);display:grid;place-items:center;flex:none}
   .drow .dx svg{width:14px;height:14px}
-  .drow.expanded{align-items:flex-start}
-  .drow.expanded .dtitle{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.55;padding:3px 0}
+  .drow.expanded{align-items:center}
+  .drow.expanded .dtitle{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.55}
 
   .seg{display:flex;gap:6px;padding:6px;border-radius:15px;background:var(--surface);box-shadow:var(--sh-card)}
   .seg button{flex:1;height:40px;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--sub);transition:.15s}
@@ -249,6 +250,9 @@
   .ttlbtn .ttl{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;line-height:1.14}
   .ttlbtn .car{width:25px;height:29px;flex:none;display:grid;place-items:center;color:var(--accent-ink)}
   .ttlbtn .car svg{width:15px;height:15px;stroke-width:2.5}
+  .ttlbtn .ttl.stream{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
+  .circle-head .ttlbtn .ttl{white-space:nowrap;overflow:hidden;max-width:100%;animation:stream-title 7s ease-in-out infinite alternate}
+  @keyframes stream-title{0%,18%{text-indent:0}82%,100%{text-indent:calc(-1 * var(--stream, 0px))}}
   .mrank{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
   .mrank svg{width:15px;height:15px}
   .mlead{display:flex;align-items:center;gap:11px;min-width:0}
@@ -321,8 +325,8 @@
   .alert-dot,.chip-dot{display:block;width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 1px 4px rgba(255,69,58,.3)}
   .ttlbtn .alert-dot{position:absolute;top:-1px;right:-8px;border:2px solid var(--paper)}
   .hbadge.dot{min-width:9px;width:9px;height:9px;padding:0;top:2px;right:2px;border:2px solid var(--paper)}
-  .card.search-hit{animation:searchhit 1.1s ease}
-  @keyframes searchhit{0%,100%{box-shadow:var(--sh-card)}25%,58%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.24)}}
+  .card.search-hit{animation:searchhit 1.35s ease 2}
+  @keyframes searchhit{0%,100%{box-shadow:var(--sh-card);filter:none}35%,62%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.3);filter:brightness(1.05)}}
   .circle-head .headrow{display:block}
   .circle-head .ttlbtn{width:100%;justify-content:flex-start}
   .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
@@ -502,13 +506,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.1.2</p>
+  <p class="note">끼우 목업 · v18.2.1</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.1.2";
+const BUILD="v18.2.1";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.1",date:"2026.07.19",ko:["끼리 대표·프로필 이모지를 위한 대량 이모지 선택기와 검색·랜덤 선택 추가"],en:["Added a searchable large emoji picker and random selection for Circle and profile emojis"]},
+ {version:"v18.2.0",date:"2026.07.19",ko:["상단 UI를 고정 크기로 통일하고, 긴 끼리 이름 흐름 표시 추가","입력 카드 바깥 탭으로 취소, 롱탭 선택 깜빡임 제거","더보기 플로팅 요소를 끼우·끼리와 같은 slotwrap 구조로 통합"],en:["Unified compact headers and added long Circle-name streaming","Dismiss input by tapping outside and removed selection flicker","Unified More floating UI with the shared slotwrap structure"]},
  {version:"v18.1.2",date:"2026.07.19",ko:["긴 할 일 카드의 첫 줄에서 말줄임표가 다시 생기지 않도록 최종 보정"],en:["Final adjustment to prevent ellipses on the first line of long task cards"]},
  {version:"v18.1.1",date:"2026.07.19",ko:["끼리 긴 그룹명을 두 줄까지 온전히 표시하도록 상단 구조 개선","끼우·끼리·더보기 상단의 제목 기준선과 완료 체크 아이콘 정렬 보완","긴 할 일 제목 첫 줄에서 말줄임표가 생기지 않도록 보정"],en:["Improved Circle headers for long group names","Aligned top headers and completed-task check icons","Prevented ellipses in the first line of long task titles"]},
  {version:"v18.1.0",date:"2026.07.19",ko:["더보기 하단에 현재 버전과 수정 이력 버튼 추가","버전을 누르면 앱 안에서 변경 이력 확인 가능"],en:["Added a version and update-history button to More","View the update history inside the app"]},
@@ -642,6 +648,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 🥹 😊 😎 🤓 🥳 😴 🤔 😍 🥰 😇 🤝 👍 👏 🙌 💪 🧡 ❤️ 💛 💚 💙 💜 ✨ ⭐ 🌙 ☀️ 🌈 🔥 🎈 🎉 🎁 🎯 🧩 🎮 🎵 🎬 📚 ✏️ 🖍️ 📷 ☕ 🍳 🍔 🍜 🍰 🍊 🍀 🌿 🌸 🌳 🌊 🏠 🏡 🏕️ ✈️ 🚗 🚲 🚆 🐶 🐱 🦊 🐼 🐧 🦁 🐳 🐝 🪴 🌵 🍎 🧺 🛒 💼 📌 📎 🗓️ ⏰ 💡 🔔 🧘 🏃 ⚽ 🏆".split(" ");
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -653,7 +660,7 @@ let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ci
 let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,expandedDoneId=null,moreTarget="home",moreQuipIndex=0;
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
-let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false;
+let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
 let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx="home";
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
@@ -761,7 +768,7 @@ function cardHtml(t,idx,o={}){
  // Keep Kkiu's basic queue controls in Kkiri too; filtering only disables reordering.
  const gripOk=o.rank&&!t.done&&(o.ctx==="home"||(o.ctx==="circle"&&!state.ciFilter));
  const acts=`${whoHtml}${gripOk?`<button class="ico grip" data-act="grip" data-id="${t.id}">${I.grip}</button>`:""}`;
- return `<article class="card ${o.rank?"hasrank":""} ${topcls}" data-id="${t.id}" ${o.rank?`data-idx="${idx}" data-y="${o.top??0}"`:""} ${o.top!==undefined?`style="top:${o.top}px"`:""}>${lead}${rank}<div class="mid">${mid}</div><div class="acts">${acts}</div></article>`}
+ return `<article class="card ${o.rank?"hasrank":""} ${topcls} ${searchFlashId===t.id?"search-hit":""}" data-id="${t.id}" ${o.rank?`data-idx="${idx}" data-y="${o.top??0}"`:""} ${o.top!==undefined?`style="top:${o.top}px"`:""}>${lead}${rank}<div class="mid">${mid}</div><div class="acts">${acts}</div></article>`}
 function rowHtml(r,ctx){
  const top=`style="top:${r.y}px"`;
  if(r.kind==="task")return cardHtml(r.task,r.ti,{rank:true,ctx,top:r.y});
@@ -802,7 +809,7 @@ function slotHtml(ctx){const n=ctx==="home"?active().length:ciActive().length;
  return `<div class="slotwrap" id="slotwrap">
   <button type="button" class="ins" data-act="slot-open"><span class="p">+</span><span id="sposT">${T("slotLabel",{n:gi+1})}</span></button>
   <form class="ibar" id="addForm" autocomplete="off">${ctx==="circle"?asgRowHtml():""}<span class="ipos" id="sposN2">${gi+1}</span>
-   <textarea class="si" id="si" enterkeyhint="done" rows="1" placeholder="${T("placeholder")}"></textarea><button class="slotclose" type="button" aria-label="입력 닫기" data-act="slot-close">${I.x}</button><button class="save" type="button" data-act="add-submit">${I.arrow}</button></form></div>`}
+   <textarea class="si" id="si" enterkeyhint="done" rows="1" placeholder="${T("placeholder")}"></textarea><button class="save" type="button" data-act="add-submit">${I.arrow}</button></form></div>`}
 
 function renderView(){
  app.classList.toggle("sel-mode",selecting&&(state.tab==="home"||state.tab==="circle"));
@@ -904,7 +911,8 @@ function commitEdit(id,val){const t=findTask(id);if(t&&val.trim()){t.title=val.t
 
 function queueTasks(){return state.tab==="circle"?ciActive():active()}
 function enterSelect(id){if(state.tab!=="home"&&state.tab!=="circle")return;selecting=true;selected=new Set(id?[id]:[]);vibe(20);renderView()}
-function toggleSelect(id){selected.has(id)?selected.delete(id):selected.add(id);vibe(8);renderView()}
+function toggleSelect(id){selected.has(id)?selected.delete(id):selected.add(id);vibe(8);syncSelectUI()}
+function syncSelectUI(){const l=queueTasks(),all=l.length&&l.every(t=>selected.has(t.id));document.querySelectorAll(".selbox").forEach(b=>b.classList.toggle("on",selected.has(b.dataset.id)));document.querySelectorAll(".sel-mode .card").forEach(c=>c.classList.toggle("sel-on",selected.has(c.dataset.id)));const n=document.getElementById("selCount");if(n)n.textContent=selected.size?T("selCnt",{n:selected.size}):T("selNone");const a=document.getElementById("selAll");if(a)a.textContent=all?T("selUnall"):T("selAll");const d=document.getElementById("selDelete");if(d)d.disabled=!selected.size;if(d)d.textContent=T("selDel")+(selected.size?" · "+selected.size:"")}
 function selectAll(){const ids=queueTasks().map(t=>t.id);const all=ids.length&&ids.every(i=>selected.has(i));selected=all?new Set():new Set(ids);renderView()}
 function deleteSelected(){if(!selected.size)return;const n=selected.size;
  if(state.tab==="circle"){const c=curC();if(c)c.tasks=c.tasks.filter(t=>!selected.has(t.id));ciReindex();state.ciInsertIndex=clamp(state.ciInsertIndex,0,ciActive().length)}
@@ -913,18 +921,18 @@ function deleteSelected(){if(!selected.size)return;const n=selected.size;
 function cancelSelect(){selecting=false;selected=new Set();renderView()}
 function renderSelect(){const l=queueTasks();const allSel=l.length&&l.every(t=>selected.has(t.id));
  viewEl.innerHTML=`<div class="selhead"><button class="selx" data-act="sel-cancel">${I.x}</button>
-   <b>${selected.size?T("selCnt",{n:selected.size}):T("selNone")}</b>
-   <button class="seltxt" data-act="sel-all">${allSel?T("selUnall"):T("selAll")}</button></div>
+   <b id="selCount">${selected.size?T("selCnt",{n:selected.size}):T("selNone")}</b>
+   <button class="seltxt" id="selAll" data-act="sel-all">${allSel?T("selUnall"):T("selAll")}</button></div>
   <div class="stage"><div class="scroller selscroll"><div class="list">${l.map(t=>cardHtml(t,0,{select:true})).join("")}</div></div></div>
   <div class="seldock"><button class="dbtn" data-act="sel-cancel">${T("selCancel")}</button>
-   <button class="dbtn del" data-act="sel-delete" ${selected.size?"":"disabled"}>${T("selDel")}${selected.size?" · "+selected.size:""}</button></div>`}
+   <button class="dbtn del" id="selDelete" data-act="sel-delete" ${selected.size?"":"disabled"}>${T("selDel")}${selected.size?" · "+selected.size:""}</button></div>`}
 </script>
 <script>
 function gDown(e){
  if(switching||selecting)return;
  if(e.target.closest(".asgrow"))return;
  if(slotOpen&&e.target.closest(".ibar")){dragEndAt=0;tapSuppressMs=0;return}
- if(slotOpen)e.preventDefault();
+ if(slotOpen){closeSlot();e.preventDefault();return}
  axis=null;dragging=true;moved=0;dragEndAt=0;tapSuppressMs=0;gripArmed=false;gx=e.clientX;gy=e.clientY;
  startY=e.clientY;panBase=qOffset;lastY=e.clientY;lastT=performance.now();vel=0;
  pressId=e.target.closest(".card")?.dataset.id||null;
@@ -1134,9 +1142,9 @@ function searchResults(){
 function goToSearchResult(id,done){
  const isCircle=state.tab==="circle";
  if(done){openSheet();return}
- if(isCircle)circleSearch=null;else homeSearch=null;
+ searchFlashId=id;if(isCircle)circleSearch=null;else homeSearch=null;
  renderView();
- requestAnimationFrame(()=>{const row=Q?.rows.find(r=>r.kind==="task"&&r.task.id===id);if(!row)return;const slot=Q.slots.find(s=>s.gi===row.ti+1);qOffset=clamp(slot?.y??row.y,0,qMaxY);apply(isCircle?"circle":"home");requestAnimationFrame(()=>{const card=qtrackEl?.querySelector(`.card[data-id="${id}"]`);if(!card)return;card.classList.remove("search-hit");void card.offsetWidth;card.classList.add("search-hit");setTimeout(()=>card.classList.remove("search-hit"),1150)})})}
+ requestAnimationFrame(()=>{const row=Q?.rows.find(r=>r.kind==="task"&&r.task.id===id);if(!row)return;const slot=Q.slots.find(s=>s.gi===row.ti+1);qOffset=clamp(slot?.y??row.y,0,qMaxY);apply(isCircle?"circle":"home");setTimeout(()=>{searchFlashId=null;const card=qtrackEl?.querySelector(`.card[data-id="${id}"]`);card?.classList.remove("search-hit")},2700)})}
 
 function computeStreak(){const days=new Set(state.doneLog.map(l=>{const d=new Date(l.completedAt);d.setHours(0,0,0,0);return d.getTime()}));
  let d=new Date();d.setHours(0,0,0,0);if(!days.has(d.getTime()))d.setTime(d.getTime()-864e5);
@@ -1192,7 +1200,7 @@ function moreView(){
  <button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
  <div style="height:54px"></div>
  </div></div>
- <div class="moreslotwrap" id="moreSlotWrap">
+ <div class="slotwrap" id="moreSlotWrap">
   <button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button>
  </div>`}
 function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
@@ -1275,10 +1283,11 @@ app.addEventListener("click",e=>{
  if(act==="circle-new"){askPrompt(T("circleNewPrompt"),T("circleNewPh"),v=>{if(v&&v.trim()){const name=v.trim().slice(0,20);state.circles.push({id:uid(),name,emoji:newCircleEmoji(),code:newCircleCode(),unread:0,members:["me"],tasks:[]});state.ci=state.circles.length-1;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();if(state.tab==="circle")renderView();toast(T("tCircleNew",{n:name}))}});return}
  if(act==="circle-rename"){const c=curC();if(!c)return;askPrompt("끼리 이름 변경","새 이름",v=>{if(v&&v.trim()){c.name=v.trim().slice(0,20);save();closeSheet();renderView();toast("이름을 변경했어요")}},c.name);return}
  if(act==="circle-emoji"){const c=curC();if(!c)return;c.emoji=el.dataset.e;save();renderManageSheet();renderView();return}
- if(act==="circle-emoji-random"){const c=curC();if(!c)return;c.emoji=newCircleEmoji();save();renderManageSheet();renderView();toast("대표 이모지를 바꿨어요");return}
+ if(act==="circle-emoji-random"){openEmojiPicker("group");return}
  if(act==="my-profile-name"){const c=curC();if(!c)return;askPrompt("내 끼리 이름","이 끼리에서 사용할 이름",v=>{if(v&&v.trim()){c.myProfile={...myProfile(c),name:v.trim().slice(0,16)};save();renderManageSheet();renderView();toast("이 끼리에서의 이름을 바꿨어요")}},myProfile(c).name);return}
  if(act==="my-profile-emoji"){const c=curC();if(!c)return;c.myProfile={...myProfile(c),emoji:el.dataset.e};save();renderManageSheet();renderView();return}
- if(act==="my-profile-random"){const c=curC();if(!c)return;c.myProfile={...myProfile(c),emoji:PROFILE_EMOJIS[Math.floor(Math.random()*PROFILE_EMOJIS.length)]};save();renderManageSheet();renderView();toast("내 이모지를 바꿨어요");return}
+ if(act==="my-profile-random"){openEmojiPicker("profile");return}
+ if(act==="emoji-library-pick"||act==="emoji-library-random"){const c=curC();if(!c)return;const e=act==="emoji-library-random"?EMOJI_LIBRARY[Math.floor(Math.random()*EMOJI_LIBRARY.length)]:el.dataset.e;if(el.dataset.kind==="group")c.emoji=e;else c.myProfile={...myProfile(c),emoji:e};save();closeModal();renderManageSheet();renderView();toast("이모지를 바꿨어요");return}
  if(act==="invite"){const c=curC();if(!c||!c.code)return;try{navigator.clipboard?.writeText(c.code)}catch{}toast(T("tInvite",{n:c.code}));return}
  if(act==="circle-leave"){const c=curC();if(!c)return;askConfirm(T("leaveCircle"),T("leaveConfirm",{n:c.name}),T("leaveCircle"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tLeave",{n:c.name}))},true);return}
  if(act==="circle-del"){const c=curC();if(!c)return;askConfirm(T("circleDel"),T("circleDelConfirm",{n:c.name}),T("circleDel"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tCircleDel"))},true);return}
@@ -1317,6 +1326,7 @@ app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
 });
+function openEmojiPicker(kind){const draw=q=>{const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q));const grid=document.getElementById("emojiGrid");if(grid)grid.innerHTML=arr.map(e=>`<button class="asgc" style="width:42px;padding:0;justify-content:center" data-act="emoji-library-pick" data-kind="${kind}" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"};openModal(`<h3>이모지 선택</h3><input class="field" id="emojiSearch" placeholder="이모지 검색"/><button class="rbtn" data-act="emoji-library-random" data-kind="${kind}" style="margin:10px 0">🎲 랜덤으로 고르기</button><div id="emojiGrid" style="display:flex;gap:7px;flex-wrap:wrap;max-height:280px;overflow:auto"></div>`);draw("");setTimeout(()=>document.getElementById("emojiSearch")?.addEventListener("input",e=>draw(e.target.value)),0)}
 function openModal(html){document.getElementById("modal").innerHTML=html;document.getElementById("modalwrap").classList.add("on")}
 function closeModal(){document.getElementById("modalwrap").classList.remove("on");modalOkCb=null}
 function askConfirm(title,msg,okLabel,cb,danger){modalOkCb=cb;
