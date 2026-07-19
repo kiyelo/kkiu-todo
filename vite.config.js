@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/kkiu-todo/',
   plugins: [react()],
   build: {
-    outDir: '..',
-    emptyOutDir: false,
+    outDir: '../dist',
+    emptyOutDir: true,
   },
 })
