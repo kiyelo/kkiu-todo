@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.42</title>
+<title>Kkiu To Do — v18.2.43</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -409,6 +409,11 @@
 .nav{backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%)}
 body:not(.motion-ready) .emoji-reel{animation:none!important}
 @media(prefers-reduced-motion:reduce){.emoji-reel{animation:none!important}.qtrack>*{transition:none!important}}
+
+/* First-gesture horizontal strips: JS owns horizontal drag; vertical queue gestures stay outside these controls. */
+.chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:none}
+.chips::-webkit-scrollbar{display:none}
+.chips .chip,.asgrow,.asgrow .asgc{touch-action:none}
 </style>
 <style>
 /* KKIU v17 — Apple-inspired Liquid Glass redesign */
@@ -584,13 +589,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.42</p>
+  <p class="note">끼우 목업 · v18.2.43</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.42";
+const BUILD="v18.2.43";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.43",date:"2026.07.19",ko:["담당자 필터·입력 선택·수정 선택을 브라우저 기본 스크롤이 아닌 공용 포인터 제스처로 통합","최초 pointerdown부터 가로 이동량을 직접 반영해 첫 스와이프가 포커스 전환에 소모되지 않도록 수정","짧은 터치는 선택, 일정 거리 이상 이동은 스와이프로 판정해 수정 중 필터가 드래그 시작과 동시에 선택되던 문제 제거","담당자 필터를 단일 행 가로 스크롤 구조로 변경"],en:["Unified member filters and input/edit assignee pickers under one explicit pointer gesture","Applied horizontal movement from the first pointer sequence so focus changes cannot consume the first swipe","Distinguished short taps from drags to stop filters activating at swipe start during editing","Changed member filters to a single-row horizontal scroller"]},
  {version:"v18.2.42",date:"2026.07.19",ko:["실제 연속 터치 테스트에서 재현된 관성 스크롤 직후 앱바 click 누락 수정","상·하단 앱바 컨트롤을 pointerdown 시 즉시 실행해 브라우저의 합성 click 취소 여부와 무관하게 첫 터치 보장","담당자 선택·가로 스와이프·수정 중 담당자 필터의 첫 터치 동작 유지"],en:["Fixed missing app-bar clicks after momentum scrolling reproduced with raw touch sequences","Executed top and bottom app-bar controls immediately on pointerdown so first touch no longer depends on a synthetic click","Preserved first-touch assignee selection, horizontal swiping, and member filtering during editing"]},
  {version:"v18.2.41",date:"2026.07.19",ko:["큐 스크롤·관성·스냅 도중 앱바 컨트롤을 누르면 진행 중인 모션을 즉시 정지하고 첫 터치부터 버튼 동작","끼리 입력·수정 담당자 선택 영역의 pointerdown 차단 제거로 최초 터치 선택과 가로 스와이프 지원","수정 중 담당자 필터를 처음 누를 때 편집 카드가 먼저 닫혀 클릭이 소실되던 이벤트 순서 수정","담당자 영역 조작 중 입력창과 수정 제목의 포커스를 안전하게 복원"],en:["Stopped queue motion immediately when app-bar controls are pressed so the first tap works during scrolling","Removed pointerdown blocking from Circle assignee strips for first-touch selection and horizontal swiping","Fixed the event order that discarded the first assignee-filter tap during editing","Safely restored input and edit focus after assignee-strip interaction"]},
  {version:"v18.2.40",date:"2026.07.19",ko:["끼우 탭 한국어 타이틀을 ‘할 일’로 수정하고 완료 아이콘의 숫자 뱃지 제거","끼리 전체 목록에서는 업데이트 뱃지를 유지하고 해당 담당자 필터에서 확인할 때만 읽음 처리","끼리 할 일 수동 순서 변경 시 실제 위치가 달라진 기존 할 일에 업데이트 뱃지 표시","새 할 일 삽입으로 기존 순번이 밀리는 경우에는 재배치 업데이트에서 제외"],en:["Renamed the Korean Queue title to ‘할 일’ and removed the completed-count badge","Kept Circle update badges in the All view and marked them seen only in an assignee filter","Added update badges to existing Circle tasks whose positions changed through manual reordering","Excluded index shifts caused only by inserting a new task"]},
@@ -780,7 +786,7 @@ let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
-let assigneeTouching=false,pendingAssigneeInput=null,pendingEditFocus=null;
+let assigneeTouching=false,stripGesture=null,stripSuppressClickUntil=0;
 let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx="home";
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
@@ -1383,7 +1389,7 @@ function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)retu
   if(range){range.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(range);placed=true}}catch{}
  if(!placed){const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}
  if(state.tab==="circle"&&cardEl){const c=curC();if(c)cardEl.insertAdjacentHTML("beforeend",assigneePickerHtml(c,(t.assignees||[])[0],"edit",id))}
- const fin=()=>{if(assigneeTouching){pendingEditFocus={el,id,fin};return}const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
+ const fin=()=>{const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
  el.addEventListener("blur",fin,{once:true});
  el.addEventListener("keydown",e2=>{if(e2.key==="Enter"){e2.preventDefault();el.blur()}if(e2.key==="Escape"){e2.preventDefault();cancelEdit()}})}
 
@@ -1408,9 +1414,13 @@ function mount(){
  const bt=document.getElementById("buildtag");if(bt)bt.textContent=BUILD;
  renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))})}
 function applyCircleFilter(member){ciAssignees=new Set();state.ciFilter=member||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(member){const c=curC();if(c?.memberUnread)c.memberUnread[member]=0}save();buildQueue("circle")}
-app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const control=e.target.closest(".chips button,.asgrow button");if(control)stopQueueMotion();const strip=e.target.closest(".asgrow");if(strip){assigneeTouching=true;pendingAssigneeInput=strip.classList.contains("edit-assignee-picker")?null:viewEl.querySelector("#si");return}const chip=e.target.closest('.chips .chip[data-act="chip"]');if(chip&&editingId){document.querySelector('.card.editing .t-title[contenteditable="true"]')?.blur();applyCircleFilter(chip.dataset.m||null);e.preventDefault();e.stopPropagation();return}if(!editingId)return;if(e.target.closest(".chips"))return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
-function finishAssigneeTouch(){if(!assigneeTouching)return;requestAnimationFrame(()=>{assigneeTouching=false;const input=pendingAssigneeInput,edit=pendingEditFocus;pendingAssigneeInput=null;pendingEditFocus=null;if(input?.isConnected&&slotOpen)input.focus({preventScroll:true});if(edit?.el?.isConnected&&editingId===edit.id){edit.el.focus({preventScroll:true});edit.el.addEventListener("blur",edit.fin,{once:true})}})}
-app.addEventListener("pointerup",finishAssigneeTouch,true);app.addEventListener("pointercancel",finishAssigneeTouch,true);
+function activateStripButton(btn){if(!btn)return;const act=btn.dataset.act,k=btn.dataset.m,id=btn.dataset.id;if(act==="chip"){applyCircleFilter(k||null);return}if(act==="asg-pick"){ciAssignees=new Set([k]);btn.closest(".asgrow")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}if(act==="edit-asg-pick"){const t=findTask(id);if(!t||!k)return;t.assignees=[k];scheduleSave();btn.closest(".edit-assignee-picker")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k))}}
+function startStripGesture(e,strip){stopQueueMotion();assigneeTouching=true;stripGesture={strip,button:e.target.closest("button"),pointerId:e.pointerId,x:e.clientX,y:e.clientY,start:strip.scrollLeft,moved:false};try{strip.setPointerCapture(e.pointerId)}catch{}e.preventDefault();e.stopPropagation()}
+function moveStripGesture(e){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)>4||Math.abs(dy)>4)g.moved=true;if(g.moved){g.strip.scrollLeft=g.start-dx;e.preventDefault();e.stopPropagation()}}
+function finishStripGesture(e,cancelled=false){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;try{g.strip.releasePointerCapture(e.pointerId)}catch{}stripGesture=null;assigneeTouching=false;stripSuppressClickUntil=performance.now()+350;e.preventDefault();e.stopPropagation();if(!cancelled&&!g.moved)activateStripButton(g.button)}
+app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const strip=e.target.closest(".chips,.asgrow");if(strip){startStripGesture(e,strip);return}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
+app.addEventListener("pointermove",moveStripGesture,true);app.addEventListener("pointerup",e=>finishStripGesture(e,false),true);app.addEventListener("pointercancel",e=>finishStripGesture(e,true),true);
+app.addEventListener("click",e=>{if(e.target.closest(".chips,.asgrow")&&performance.now()<stripSuppressClickUntil){e.preventDefault();e.stopPropagation()}},true);
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
@@ -1449,8 +1459,7 @@ app.addEventListener("click",e=>{
  if(act==="invite"){const c=curC();if(!c||!c.code)return;try{navigator.clipboard?.writeText(c.code)}catch{}toast(T("tInvite",{n:c.code}));return}
  if(act==="circle-leave"){const c=curC();if(!c)return;askConfirm(T("leaveCircle"),T("leaveConfirm",{n:c.name}),T("leaveCircle"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tLeave",{n:c.name}))},true);return}
  if(act==="circle-del"){const c=curC();if(!c)return;askConfirm(T("circleDel"),T("circleDelConfirm",{n:c.name}),T("circleDel"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tCircleDel"))},true);return}
- if(act==="edit-asg-pick"){const t=findTask(id),k=el.dataset.m;if(!t||!k)return;t.assignees=[k];scheduleSave();el.closest(".edit-assignee-picker")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
- if(act==="asg-pick"){const k=el.dataset.m;ciAssignees=new Set([k]);viewEl.querySelectorAll(".asgrow .asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
+ if(act==="edit-asg-pick"||act==="asg-pick"){activateStripButton(el);return}
  if(act==="add-submit"){submitAdd();return}
  if(act==="quip-next"){toggleSlotLock();return}
  if(act==="chip"){applyCircleFilter(el.dataset.m||null);return}
