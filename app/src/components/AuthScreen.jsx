@@ -80,7 +80,7 @@ export default function AuthScreen() {
         <label><span>비밀번호</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength="8" required placeholder="8자 이상" /></label>
         {message && <p className="auth-message" role="status">{message}</p>}
         <button className="auth-submit" disabled={busy}>{busy ? '잠시만요…' : mode === 'login' ? '로그인' : '계정 만들기'}</button>
-        {mode === 'signup' && (awaitingConfirmation || initialMessage) && <button className="auth-resend" type="button" disabled={busy} onClick={resendConfirmation}>확인 메일 다시 받기</button>}
+        {((mode === 'signup' && awaitingConfirmation) || initialMessage) && <button className="auth-resend" type="button" disabled={busy} onClick={resendConfirmation}>확인 메일 다시 받기</button>}
       </form>
     </main>
   </section></div>
