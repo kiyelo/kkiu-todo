@@ -381,3 +381,209 @@ body {
     left: 12px;
   }
 }
+
+
+/* Floating queue parity */
+.floating-queue-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  outline: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.floating-queue-track {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  right: 18px;
+  left: 18px;
+  height: 0;
+  will-change: transform;
+  transition: transform .22s cubic-bezier(.2, .7, .3, 1);
+}
+
+.floating-queue-stage.is-dragging .floating-queue-track {
+  transition: none;
+}
+
+.queue-position {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 62px;
+}
+
+.queue-position .task-card {
+  width: 100%;
+  height: 62px;
+  margin: 0;
+}
+
+.queue-fade {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.queue-fade-top {
+  top: 0;
+  height: 46px;
+  background: linear-gradient(to bottom, var(--paper) 18%, transparent);
+}
+
+.queue-fade-bottom {
+  bottom: 0;
+  height: calc(var(--nav-h) + 72px + var(--safe));
+  background: linear-gradient(to top, var(--paper) 54%, transparent);
+}
+
+.floating-composer {
+  position: absolute;
+  z-index: 30;
+  top: 50%;
+  right: 22px;
+  left: 22px;
+  transform: translateY(-50%);
+}
+
+.floating-insert {
+  width: 100%;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 23px;
+  color: var(--ink2);
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(80, 55, 25, .18);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.floating-insert:active {
+  transform: scale(.985);
+}
+
+.floating-insert b {
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+.floating-plus {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding-bottom: 1px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.floating-input-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 32px 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(80, 55, 25, .18);
+}
+
+.floating-position {
+  min-width: 36px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+  border-radius: 11px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.floating-input-card textarea {
+  min-width: 0;
+  min-height: 34px;
+  max-height: 78px;
+  padding: 6px 0;
+  overflow-y: auto;
+  resize: none;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 560;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+.floating-input-card textarea::placeholder {
+  color: var(--faint);
+}
+
+.floating-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: var(--sub);
+  background: rgba(70, 55, 30, .05);
+  font-size: 20px;
+}
+
+.floating-save {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.floating-assignees {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
+  padding: 3px 0;
+}
+
+.queue-empty-copy {
+  position: absolute;
+  z-index: 8;
+  top: calc(50% + 58px);
+  right: 24px;
+  left: 24px;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 650;
+  text-align: center;
+  pointer-events: none;
+}
+
+.search-scroll {
+  padding-top: 4px;
+  touch-action: pan-y;
+}
+
+.search-results {
+  padding-bottom: calc(var(--nav-h) + 30px + var(--safe));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-queue-track {
+    transition-duration: .01ms;
+  }
+}
