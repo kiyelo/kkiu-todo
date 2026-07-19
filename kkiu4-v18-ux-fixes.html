@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.39</title>
+<title>Kkiu To Do — v18.2.41</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -584,13 +584,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.39</p>
+  <p class="note">끼우 목업 · v18.2.41</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.39";
+const BUILD="v18.2.41";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.41",date:"2026.07.19",ko:["큐 스크롤·관성·스냅 도중 앱바 컨트롤을 누르면 진행 중인 모션을 즉시 정지하고 첫 터치부터 버튼 동작","끼리 입력·수정 담당자 선택 영역의 pointerdown 차단 제거로 최초 터치 선택과 가로 스와이프 지원","수정 중 담당자 필터를 처음 누를 때 편집 카드가 먼저 닫혀 클릭이 소실되던 이벤트 순서 수정","담당자 영역 조작 중 입력창과 수정 제목의 포커스를 안전하게 복원"],en:["Stopped queue motion immediately when app-bar controls are pressed so the first tap works during scrolling","Removed pointerdown blocking from Circle assignee strips for first-touch selection and horizontal swiping","Fixed the event order that discarded the first assignee-filter tap during editing","Safely restored input and edit focus after assignee-strip interaction"]},
+ {version:"v18.2.40",date:"2026.07.19",ko:["끼우 탭 한국어 타이틀을 ‘할 일’로 수정하고 완료 아이콘의 숫자 뱃지 제거","끼리 전체 목록에서는 업데이트 뱃지를 유지하고 해당 담당자 필터에서 확인할 때만 읽음 처리","끼리 할 일 수동 순서 변경 시 실제 위치가 달라진 기존 할 일에 업데이트 뱃지 표시","새 할 일 삽입으로 기존 순번이 밀리는 경우에는 재배치 업데이트에서 제외"],en:["Renamed the Korean Queue title to ‘할 일’ and removed the completed-count badge","Kept Circle update badges in the All view and marked them seen only in an assignee filter","Added update badges to existing Circle tasks whose positions changed through manual reordering","Excluded index shifts caused only by inserting a new task"]},
  {version:"v18.2.39",date:"2026.07.19",ko:["끼리 할일 수정 시 담당자 선택 UI를 입력 UI와 동일한 화면 폭으로 확장","담당자 칩의 가로 스크롤 범위와 좌우 여백을 입력 상태와 정확히 통일"],en:["Expanded the Circle edit assignee picker to the same viewport width as task entry","Matched horizontal scrolling and side insets between edit and input states"]},
  {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 ��컬 설정으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·��은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["앱 톤과 맞지 않던 젬을 제거하고 파란 점·선·파동으로 구성된 키네틱 포인트 적용","알림 뱃지 위치를 아이콘과 콘텐츠 내부 기준으로 통일","끼리 원본 진행 할일과 완료 할일에 최초 확인용 빨간 점 표시 추가","중복 렌더러·구형 더보기 스크롤·미사용 입력 로직을 제거하고 공용 큐 엔진 중심으로 리팩토링"],en:["Replaced the mismatched gem with a minimal kinetic point made of a blue dot, lines, and ripple","Normalized notification badge placement","Added first-view red source dots to original active and completed Circle tasks","Removed duplicate renderers, legacy More scrolling, and unused input logic around the shared queue engine"]},
@@ -663,7 +665,7 @@ const I={
 };
 const STR={
 ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
- hHome:"할일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
+ hHome:"할 일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
  hCircle:"끼리",hCircleSub:"가���·연인·친구와 함께 끼우기",
  hStats:"통계",hStatsSub:"끼우가 잘 작동하고 있나요?",
  hMore:"더보기",hMoreSub:"설정 · 후원 · 데이터",
@@ -697,7 +699,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  aff1:"심플 가계부",aff1P:"제휴 · 지출도 위치로 정리",aff2:"포모도로 타이머",aff2P:"제휴 · 끼우와 함께 쓰기 좋은 집중 타이머",aff:"제휴",
  mBackupT:"데이터 백업",mBackupP:"현재 버전은 서버 없이 이 브라우저(localStorage)에 저장됩니다.",
  mExport:"JSON 내보내기 / 복사",mImport:"JSON 가져오기",mReset:"전체 초기화",ioPh:"가져올 JSON 붙여넣기",
- emptySearchT:"무엇을 찾을까요?",emptySearchP:"제목으로 바로 검색합니다. 완료된 일도 함께 찾아요. 검색 중에는 끼우기·순서 변경이 잠시 꺼집니다.",
+ emptySearchT:"무���을 찾을까요?",emptySearchP:"제목으로 바로 검색합니다. 완료된 일도 함께 찾아요. 검색 중에는 끼우기·순서 변경이 잠시 꺼집니다.",
  selNone:"항목을 선택하세요",selCnt:"{n}개 선택됨",selAll:"전체 선택",selUnall:"선택 해제",selCancel:"취소",selDel:"삭제",
  cancel:"취소",create:"만들기",clearModalT:"삭제할 항목을 선택하세요",
  circlePickT:"끼리 전환",circleNew:"새 끼리 만들기",circleNewPrompt:"새 끼리 이름",circleNewPh:"예: 우리집, 강릉 여행",tCircleNew:"'{n}' 끼리를 만들었어요 — 관리에서 멤버를 초대하세요",
@@ -764,7 +766,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 🍙 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 ��� 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ���️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 ���� 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 ��� 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 ��� 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ���️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 ���� 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -777,6 +779,7 @@ let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
+let assigneeTouching=false,pendingAssigneeInput=null,pendingEditFocus=null;
 let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx="home";
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
@@ -808,7 +811,6 @@ const ciCompleted=()=>{const c=curC();return c?c.tasks.filter(t=>t.done).sort((a
 const ciMine=c=>(c?.tasks||[]).filter(t=>!t.done&&(t.assignees||[])[0]==="me").length;
 const circleUnreadTotal=()=>state.circles.reduce((n,c)=>n+Math.max(0,c.unread||0),0);
 const hasOtherCircleUpdates=()=>state.circles.some((c,i)=>i!==state.ci&&(c.unread||0)>0);
-function markCircleSeen(c=curC()){if(c&&(c.unread||0)){c.unread=0;save()}}
 function sourceUnreadDot(t){return t?.sourceUnread?`<i class="source-unread-dot" aria-label="처음 확인하는 업데이트"></i>`:""}
 function refreshCircleUnread(c){if(!c)return;const activeUnread=c.tasks.filter(t=>!t.done&&t.sourceUnread),doneUnread=c.tasks.filter(t=>t.done&&t.sourceUnread);c.unread=activeUnread.length;c.unreadDone=doneUnread.length;c.memberUnread={};activeUnread.forEach(t=>(t.assignees||[]).forEach(k=>c.memberUnread[k]=(c.memberUnread[k]||0)+1))}
 function markSourcesSeenLater(tasks,kind){const c=curC(),ids=tasks.filter(t=>t?.sourceUnread).map(t=>t.id);if(!c||!ids.length)return;setTimeout(()=>{let changed=false;c.tasks.forEach(t=>{if(ids.includes(t.id)&&t.sourceUnread){t.sourceUnread=false;changed=true}});if(!changed)return;refreshCircleUnread(c);save();setNavActive();if(kind==="done")document.querySelector(".circle-head .hbadge.dot")?.remove()},650)}
@@ -912,9 +914,9 @@ function chipsHtml(){
  const mk=(id,label,ini,color,on)=>`<button class="chip ${on?"on":""}" data-act="chip" data-m="${id||""}"><span class="av" style="background:${color||"#b9b1a1"}">${ini}</span>${label}${id&&c?.memberUnread?.[id]?`<i class="chip-dot"></i>`:""}</button>`;
  return `<div class="chips">${mk(null,T("chipAll"),"☰",null,!state.ciFilter)}${orderedCircleMembers(c).map(k=>{const m=circlePerson(c,k);return mk(k,m[state.lang],m.ini,m.color,state.ciFilter===k)}).join("")}</div>`}
 function headHtml(){
- const a=active().length,d=completed().length;
+ const a=active().length;
  if(state.tab==="home"){
-  return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="검색" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}${d?`<span class="hbadge">${d}</span>`:""}</button>`:""}</div></div></div>`}
+  return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="검색" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}</button>`:""}</div></div></div>`}
  if(state.tab==="circle"){const cc=curC();
   if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1><p class="head-sub">${T("hCircleSub")}</p></div>`;
   const ce=cc.emoji||"✨";
@@ -962,7 +964,7 @@ function buildQueue(ctx,preserve){
  const keepOffset=preserve?qOffset:null;
  if(ctx==="home")reindex();else ciReindex();
  const qTasks=ctx==="home"?active():ciActive();
- const emptyCopy=ctx==="circle"&&state.ciFilter?{t:"이 담당자에게 맡긴 진행 할 일이 없어요",p:"전체 필터로 돌아가거나, 이 담당자의 첫 할 일을 끼워 보세요.",a:"전체 보기",act:"empty-all"}:ctx==="circle"?{t:"아직 진행 중인 끼리 할 일이 없어요",p:"가장 먼저 할 일을 이 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"}:{t:"아직 끼운 할 일이 없어요",p:"떠오른 첫 할 일을 오늘의 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"};
+ const emptyCopy=ctx==="circle"&&state.ciFilter?{t:"이 담당자에게 맡긴 진행 할 일이 없어요",p:"전체 필터로 돌아가거나, 이 담당자의 첫 할 일을 끼워 보세요.",a:"전체 보기",act:"empty-all"}:ctx==="circle"?{t:"아직 진행 중인 끼리 할 일이 없어요",p:"가장 먼저 할 일을 이 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"}:{t:"아직 끼운 할 일이 없어요",p:"���오른 첫 할 일을 오늘의 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"};
  const emptyHtml=qTasks.length?"":`<div class="queueempty"><div class="empty-c"><h3>${emptyCopy.t}</h3><p>${emptyCopy.p}</p><button data-act="${emptyCopy.act}">${emptyCopy.a}</button></div></div>`;
  viewEl.innerHTML=`${headHtml()}<div class="stage q" id="stage"><div class="qvp"><div class="qtrack" id="qtrack"></div></div>${emptyHtml}<div class="qfade t"></div><div class="qfade b"></div>${slotHtml(ctx)}</div>`;
  stageEl=viewEl.querySelector("#stage");qtrackEl=viewEl.querySelector("#qtrack");
@@ -983,9 +985,9 @@ function buildQueue(ctx,preserve){
  autoGrowSi(si);
  si.addEventListener("input",()=>autoGrowSi(si));
  si.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();submitAdd()}});
- si.addEventListener("blur",()=>setTimeout(()=>{if(slotOpen&&document.activeElement!==si&&!document.activeElement?.closest("#slotwrap")&&!si.value.trim())closeSlot()},160));
+ si.addEventListener("blur",()=>setTimeout(()=>{if(assigneeTouching)return;if(slotOpen&&document.activeElement!==si&&!document.activeElement?.closest("#slotwrap")&&!si.value.trim())closeSlot()},160));
  if(slotOpen){sw.classList.add("open");stageEl.classList.add("adding");si.value=inputVal;autoGrowSi(si);si.focus({preventScroll:true});onVV()}
- if(ctx==="circle")markSourcesSeenLater(Q.rows.filter(r=>r.kind==="task").map(r=>r.task),"active");
+ if(ctx==="circle"&&state.ciFilter)markSourcesSeenLater(Q.rows.filter(r=>r.kind==="task"&&(r.task.assignees||[]).includes(state.ciFilter)).map(r=>r.task),"active");
  wireCircleTitleStream();wireCircleSearchButton();setNavActive()}
 function nearestSlotIdx(y){let bi=0,bd=1e9;for(let i=0;i<Q.slots.length;i++){const d=Math.abs(Q.slots[i].y-y);if(d<bd){bd=d;bi=i}}return bi}
 function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":state.tab==="more"?"more":"home");
@@ -1071,6 +1073,7 @@ function renderSelect(){const l=queueTasks();const allSel=l.length&&l.every(t=>s
    <button class="dbtn del" id="selDelete" data-act="sel-delete" ${selected.size?"":"disabled"}>${T("selDel")}${selected.size?" · "+selected.size:""}</button></div>`}
 </script>
 <script>
+function stopQueueMotion(){cancelAnimationFrame(raf);clearTimeout(wheelT);clearTimeout(pressTimer);clearTimeout(gripArmTimer);vel=0;dragging=false;axis=null;gripArmed=false;dragEndAt=0;tapSuppressMs=0}
 function gDown(e){
  if(switching||selecting)return;
  if(e.target.closest(".asgrow,.chips,.head,.hicons,.ttlbtn"))return;
@@ -1126,7 +1129,7 @@ function commitTab(tab,dir){
  const outgoing=viewEl;
  const incoming=document.createElement("div");incoming.className="vpage";
  viewport.appendChild(incoming);
-  viewEl=incoming;state.tab=tab;if(tab==="circle")markCircleSeen();save();
+  viewEl=incoming;state.tab=tab;save();
  setNavActive();renderView();
  incoming.style.transition="none";incoming.style.transform=`translateX(${dir*w}px)`;
  void incoming.offsetWidth;
@@ -1202,10 +1205,10 @@ function layoutReorder(py){const yT=(py-reStageTop)-reTrackTop;
   if(reFrom<reTo){if(ti>reFrom&&ti<=reTo)s=-UNIT}else if(reFrom>reTo){if(ti>=reTo&&ti<reFrom)s=UNIT}
   el.style.transform=`translateY(${s}px)`})}
 function finishReorder(e){try{viewEl.releasePointerCapture(e.pointerId)}catch{}
- const arr=reActive.slice();const[m]=arr.splice(reFrom,1);arr.splice(reTo,0,m);arr.forEach((t,i)=>t.order=i);
+ const before=reActive.slice(),arr=before.slice(),didMove=reTo!==reFrom;const[m]=arr.splice(reFrom,1);arr.splice(reTo,0,m);arr.forEach((t,i)=>t.order=i);
+ if(didMove&&reCtx==="circle"){arr.forEach((t,i)=>{if(before[i]?.id!==t.id)t.sourceUnread=true});refreshCircleUnread(curC())}
  if(reCtx==="home")state.insertIndex=clamp(state.insertIndex,0,arr.length);else state.ciInsertIndex=clamp(state.ciInsertIndex,0,arr.length);
- save();const didMove=reTo!==reFrom;reEl=null;
- buildQueue(reCtx,true);if(didMove){vibe(12);toast(T("tMove",{n:reTo+1}))}}
+ save();reEl=null;buildQueue(reCtx,true);if(didMove){vibe(12);toast(T("tMove",{n:reTo+1}))}}
 
 function openSheet(){renderSheet();document.getElementById("sheetwrap").classList.add("on")}
 function closeSheet(){document.getElementById("sheetwrap").classList.remove("on");ciDoneFilter=null;expandedDoneId=null}
@@ -1232,11 +1235,11 @@ function renderSheet(){
    const m=isCircle?circlePerson(curC(),(t.assignees||[])[0]):null;
    const who=m?`<span class="who" title="${esc(m[state.lang])}">${m.ini}</span>`:"";
    return `<div class="drow ${expandedDoneId===t.id?"expanded":""}" data-act="sheet-expand" data-id="${t.id}"><button class="ck on" data-act="restore" data-id="${t.id}">${I.check}</button><span class="rankc">#${(t.doneAt??0)+1}</span><span class="dtitle">${esc(t.title)}</span>${isCircle?sourceUnreadDot(t):""}${who}<span class="dtime">${fmt(t.completedAt)}</span><button class="dx" data-act="sheet-del" data-id="${t.id}">${I.x}</button></div>`}).join("")}`:"";
- body.innerHTML=filters+grp("gToday",gs.t)+grp("gYest",gs.y)+grp("gWeek",gs.w)+grp("gOld",gs.o);if(isCircle)markSourcesSeenLater(list,"done")}
+ body.innerHTML=filters+grp("gToday",gs.t)+grp("gYest",gs.y)+grp("gWeek",gs.w)+grp("gOld",gs.o);if(isCircle&&ciDoneFilter)markSourcesSeenLater(list.filter(t=>(t.assignees||[]).includes(ciDoneFilter)),"done")}
 
 function openCircleSheet(){renderCircleSheet();document.getElementById("sheetwrap").classList.add("on")}
 function openManageSheet(){renderManageSheet();document.getElementById("sheetwrap").classList.add("on")}
-function joinCircleByCode(){const input=document.getElementById("joinCode"),code=(input?.value||"").trim().toUpperCase().replace(/\s+/g,"");if(!code){input?.focus();return}const i=state.circles.findIndex(c=>(c.code||"").toUpperCase()===code);if(i<0){toast(T("tJoinBad"));input?.focus();return}state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;markCircleSeen(state.circles[i]);save();closeSheet();state.tab="circle";renderView();setNavActive();moveInd();toast(T("tJoin",{n:state.circles[i].name}))}
+function joinCircleByCode(){const input=document.getElementById("joinCode"),code=(input?.value||"").trim().toUpperCase().replace(/\s+/g,"");if(!code){input?.focus();return}const i=state.circles.findIndex(c=>(c.code||"").toUpperCase()===code);if(i<0){toast(T("tJoinBad"));input?.focus();return}state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();state.tab="circle";renderView();setNavActive();moveInd();toast(T("tJoin",{n:state.circles[i].name}))}
 function renderCircleSheet(){
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  head.innerHTML=`<b>${T("circlePickT")}</b>`;
@@ -1379,12 +1382,11 @@ function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)retu
   if(range){range.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(range);placed=true}}catch{}
  if(!placed){const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}
  if(state.tab==="circle"&&cardEl){const c=curC();if(c)cardEl.insertAdjacentHTML("beforeend",assigneePickerHtml(c,(t.assignees||[])[0],"edit",id))}
- const fin=()=>{const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
+ const fin=()=>{if(assigneeTouching){pendingEditFocus={el,id,fin};return}const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
  el.addEventListener("blur",fin,{once:true});
  el.addEventListener("keydown",e2=>{if(e2.key==="Enter"){e2.preventDefault();el.blur()}if(e2.key==="Escape"){e2.preventDefault();cancelEdit()}})}
 
 function mount(){
- const initialCircle=state.tab==="circle"?curC():null;
  document.title=`Kkiu To Do — ${BUILD}`;
  app.innerHTML=`<div id="viewport"></div>
   <nav class="nav" id="nav">${navHtml()}</nav>
@@ -1403,8 +1405,11 @@ function mount(){
   if(performance.now()-dragEndAt<tapSuppressMs){e.stopPropagation();e.preventDefault()}
  },true);
  const bt=document.getElementById("buildtag");if(bt)bt.textContent=BUILD;
- renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))});if(initialCircle){const defer=window.requestIdleCallback||((cb)=>setTimeout(cb,120));defer(()=>markCircleSeen(initialCircle),{timeout:650})}}
-app.addEventListener("pointerdown",e=>{if(e.target.closest(".edit-assignee-picker")){e.preventDefault();return}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()});
+ renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))})}
+function applyCircleFilter(member){ciAssignees=new Set();state.ciFilter=member||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(member){const c=curC();if(c?.memberUnread)c.memberUnread[member]=0}save();buildQueue("circle")}
+app.addEventListener("pointerdown",e=>{const control=e.target.closest(".head button,.nav button,.chips button,.asgrow button,.seldock button,.sheethead button");if(control)stopQueueMotion();const strip=e.target.closest(".asgrow");if(strip){assigneeTouching=true;pendingAssigneeInput=strip.classList.contains("edit-assignee-picker")?null:viewEl.querySelector("#si");return}const chip=e.target.closest('.chips .chip[data-act="chip"]');if(chip&&editingId){document.querySelector('.card.editing .t-title[contenteditable="true"]')?.blur();applyCircleFilter(chip.dataset.m||null);e.preventDefault();e.stopPropagation();return}if(!editingId)return;if(e.target.closest(".chips"))return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
+function finishAssigneeTouch(){if(!assigneeTouching)return;requestAnimationFrame(()=>{assigneeTouching=false;const input=pendingAssigneeInput,edit=pendingEditFocus;pendingAssigneeInput=null;pendingEditFocus=null;if(input?.isConnected&&slotOpen)input.focus({preventScroll:true});if(edit?.el?.isConnected&&editingId===edit.id){edit.el.focus({preventScroll:true});edit.el.addEventListener("blur",edit.fin,{once:true})}})}
+app.addEventListener("pointerup",finishAssigneeTouch,true);app.addEventListener("pointercancel",finishAssigneeTouch,true);
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
@@ -1428,7 +1433,7 @@ app.addEventListener("click",e=>{
  if(act==="circle-manage"){openManageSheet();return}
  if(act==="circle-identity-edit"){openIdentityEditor("group");return}
  if(act==="profile-identity-edit"){openIdentityEditor("profile");return}
- if(act==="circle-pick-i"){const i=+el.dataset.i;if(i!==state.ci){state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0}markCircleSeen();save();closeSheet();renderView();return}
+ if(act==="circle-pick-i"){const i=+el.dataset.i;if(i!==state.ci){state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0}save();closeSheet();renderView();return}
  if(act==="circle-new"){askPrompt(T("circleNewPrompt"),T("circleNewPh"),v=>{if(v&&v.trim()){const name=v.trim().slice(0,20);state.circles.push({id:uid(),name,emoji:newCircleEmoji(),code:newCircleCode(),unread:0,members:["me"],tasks:[]});state.ci=state.circles.length-1;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();if(state.tab==="circle")renderView();toast(T("tCircleNew",{n:name}))}});return}
  if(act==="circle-rename"){const c=curC();if(!c)return;askPrompt("끼리 이름 변경","새 이름",v=>{if(v&&v.trim()){c.name=v.trim().slice(0,20);save();closeSheet();renderView();toast("이름을 변경했어요")}},c.name);return}
  if(act==="circle-emoji"){const c=curC();if(!c)return;c.emoji=el.dataset.e;save();renderManageSheet();renderView();return}
@@ -1447,7 +1452,7 @@ app.addEventListener("click",e=>{
  if(act==="asg-pick"){const k=el.dataset.m;ciAssignees=new Set([k]);viewEl.querySelectorAll(".asgrow .asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
  if(act==="add-submit"){submitAdd();return}
  if(act==="quip-next"){toggleSlotLock();return}
- if(act==="chip"){ciAssignees=new Set();state.ciFilter=el.dataset.m||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(el.dataset.m){const c=curC();if(c?.memberUnread)c.memberUnread[el.dataset.m]=0}save();buildQueue("circle");return}
+ if(act==="chip"){applyCircleFilter(el.dataset.m||null);return}
  if(act==="empty-all"){state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;buildQueue("circle");return}
  if(act==="modal-cancel"){closeModal();return}
  if(act==="modal-ok"){const v=document.getElementById("modalIn")?.value;const cb=modalOkCb;closeModal();cb&&cb(v);return}
