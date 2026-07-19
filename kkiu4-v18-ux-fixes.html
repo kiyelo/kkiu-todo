@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.3.0</title>
+<title>Kkiu To Do — v18.4.4</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -43,7 +43,7 @@
   .chip.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
   .vpage.compact-head .head{padding-top:24px!important;padding-bottom:10px!important}
   .vpage.compact-head .ttl{font-size:25px}
-  .circle-head .headrow{display:flex;align-items:center}
+  .circle-head .headrow{display:flex;align-items:center;min-height:44px}
   .circle-head .circle-tools{display:contents}
   .circle-head .circle-tools .head-sub{display:none}
   .home-head .hicons,.circle-head .hicons{display:flex;align-items:center;gap:8px;margin-top:5px}
@@ -64,6 +64,8 @@
     margin-bottom:10px;padding:0 14px 0 16px;border-radius:var(--r);background:var(--surface);box-shadow:var(--sh-card);
     user-select:none;transition:transform .19s cubic-bezier(.2,.7,.3,1),box-shadow .16s,opacity .26s ease}
   .card.hasrank{grid-template-columns:24px 30px 1fr auto;gap:9px;padding-left:15px}
+  .card > .ck,.card > .rank,.card > .mid{align-self:center}
+  .card.hasrank > .rank{transform:translateX(-6px)}
   .card.lift{box-shadow:0 16px 40px rgba(60,45,25,.26);z-index:20}
   .card.leaving{opacity:0}
   .card.sel-on{box-shadow:0 0 0 2px var(--accent),var(--sh-card)}
@@ -330,6 +332,7 @@
   .modalwrap.on .modal{transform:scale(1)}
   .modal h3{font-size:15px;font-weight:800;margin-bottom:8px}
   .modal p{font-size:13px;color:var(--sub);line-height:1.5}
+  .modal .confirm-copy{margin:4px 0 0;color:var(--ink);font-size:15px;font-weight:750;text-align:center;line-height:1.45}
   .modal input{width:100%;height:44px;border-radius:11px;background:rgba(70,55,30,.05);padding:0 13px;font-size:14px;margin-top:4px}
   .mrow{display:flex;gap:8px;margin-top:16px}
   .mbtn{flex:1;height:42px;border-radius:11px;font-size:13.5px;font-weight:750;background:rgba(70,55,30,.06);color:var(--ink)}
@@ -393,11 +396,12 @@
   @keyframes searchhit{0%,100%{box-shadow:var(--sh-card);filter:none}35%,62%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.3);filter:brightness(1.05)}}
   .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .circle-tools .head-sub{margin:0}
-  .home-head .headrow{align-items:center;min-height:38px}
-  .more-head .headrow{align-items:center;min-height:38px}
+  .home-head .headrow{align-items:center;min-height:44px}
+  .more-head .headrow{align-items:center;min-height:44px}
   .home-head .hicons,.circle-head .hicons{margin-top:0;gap:6px}
   .home-head .hbtn,.circle-head .hbtn{background:var(--surface);box-shadow:var(--sh-card)}
-  .chip{position:relative}.chip-dot{position:absolute;top:1px;right:2px;border:2px solid var(--paper)}
+  .chip-label{position:relative;display:inline-block;line-height:1.1}
+  .chip .chip-dot{position:absolute;top:-5px;right:-6px;border:2px solid var(--paper)}
 
   .toast{position:absolute;left:50%;bottom:96px;z-index:80;transform:translate(-50%,14px);opacity:0;pointer-events:none;max-width:calc(100% - 40px);padding:11px 17px;border-radius:999px;background:rgba(28,26,23,.94);color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.2s;backdrop-filter:blur(10px)}
   .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -485,11 +489,12 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   .chips{gap:8px;padding:2px 22px 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;overscroll-behavior-x:contain}
 .chips::-webkit-scrollbar{display:none}
 .chip{
-  flex:none;height:36px;padding:0 13px 0 6px;
+  flex:none;height:36px;gap:4px;padding:0 15px 0 6px;
   background:rgba(255,255,255,.58);border-color:rgba(255,255,255,.88)!important;
   box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 5px 16px rgba(40,65,100,.06);
   backdrop-filter:blur(16px) saturate(155%);-webkit-backdrop-filter:blur(16px) saturate(155%);
 }
+.chip-label{text-align:center;transform:translateX(-1px)}
 .chip.on{background:rgba(10,132,255,.13);color:var(--accent-ink);box-shadow:0 0 0 1px rgba(10,132,255,.3) inset,0 1px 0 rgba(255,255,255,.6)}
 .qfade.t{background:linear-gradient(to bottom,rgba(244,248,253,.92) 15%,transparent)}
 .qfade.b{background:linear-gradient(to top,rgba(240,245,251,.96) 48%,transparent)}
@@ -574,7 +579,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 }
 /* Queue, Circle, and More keep one fixed header geometry while content moves. */
 .head,.vpage.compact-head .head{padding-top:calc(34px + env(safe-area-inset-top,0px))!important;padding-bottom:10px!important}
-.home-head .ttl,.circle-head .circle-title-text,.more-head .ttl,.vpage.compact-head .ttl{font-size:25px!important;line-height:1.12!important}
+.home-head .ttl,.circle-head .ttl,.circle-head .circle-title-text,.more-head .ttl,.vpage.compact-head .ttl{font-size:25px!important;line-height:1.12!important}
 .headrow{min-width:0}
 .home-head .hicons,.circle-head .hicons,.more-head .hicons{flex:none}
 .circle-head .ttlbtn{overflow:hidden;touch-action:manipulation}
@@ -625,13 +630,27 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.3.0</p>
+  <p class="note">끼우 목업 · v18.4.4</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.3.0";
+const BUILD="v18.4.4";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.4.4",date:"2026.07.19",ko:["끼리 엠티케이스 헤더 행에도 44px 최소 높이를 적용해 더보기와 상단 UI 높이를 일치"],en:["Applied the same 44px minimum header-row height to the no-Circle state so it matches More"]},
+ {version:"v18.4.3",date:"2026.07.19",ko:["끼리 엠티케이스의 circle-head 타이틀에도 끼우와 동일한 25px 제목 규칙을 적용"],en:["Applied the same 25px title rule as Queue to the no-Circle circle-head title"]},
+ {version:"v18.4.2",date:"2026.07.19",ko:["영문 할 일 입력 안내를 ‘Add to queue at #1’ 형식으로 변경","끼우와 더보기의 헤더 높이를 44px 기준으로 통일하고 끼리 엠티케이스 타이틀 크기도 동일 기준 유지"],en:["Changed the English task-entry hint to the ‘Add to queue at #1’ format","Unified Queue and More header height around a 44px control row and kept the no-Circle title at the same size"]},
+ {version:"v18.4.1",date:"2026.07.19",ko:["끼리 미생성 화면의 타이틀 헤더를 끼우·더보기와 동일한 headrow 구조와 서식으로 통일"],en:["Unified the no-Circle title header with Queue and More using the same headrow structure and styling"]},
+ {version:"v18.4.0",date:"2026.07.19",ko:["모든 할 일 엠티케이스를 ‘할 일이 없어요’로 통일하고 부연설명과 첫 할 일 끼우기 버튼 제거","끼리 미생성 화면을 ‘공유 할 일 목록을 만들어보세요’로 변경하고 가족·연인·친구 문구 제거"],en:["Unified task empty states as ‘No tasks yet’ and removed supporting copy and the first-task action","Changed the no-Circle state to ‘Create a shared to-do list’ and removed the family/partner/friend copy"]},
+ {version:"v18.3.9",date:"2026.07.19",ko:["최근 검색·삭제·완료 목록 문구 변경을 영문 번역에도 동일한 의미로 연결하고 확인 문구를 언어 설정에 따라 표시"],en:["Mapped the recent search, delete, and completed-list copy changes to matching English translations and localized the confirmation prompt"]},
+ {version:"v18.3.8",date:"2026.07.19",ko:["끼리 관리 화면의 담당자 순서 안내 문구 ‘내 화면에서만 적용’ 제거"],en:["Removed the ‘applies only to my view’ helper text from Circle management"]},
+ {version:"v18.3.7",date:"2026.07.19",ko:["검색창 플레이스홀더를 ‘검색어’로 단순화하고 검색 엠티케이스에서 보조 설명을 제거"],en:["Simplified the search placeholder to ‘Search term’ and removed supporting copy from the empty search state"]},
+ {version:"v18.3.6",date:"2026.07.19",ko:["삭제 완료 토스트에서 ‘통계는 유지’ 문구를 제거해 메시지를 간결하게 정리"],en:["Removed the ‘stats kept’ suffix from the delete-complete toast for a cleaner message"]},
+ {version:"v18.3.5",date:"2026.07.19",ko:["완료 목록 비우기 모달에서 항목 선택 목록과 장황한 제목·설명을 제거하고 전체 비우기 확인 문구로 단순화"],en:["Simplified the completed-list clearing modal to a single confirmation prompt without the item checklist or verbose copy"]},
+ {version:"v18.3.4",date:"2026.07.19",ko:["할 일 카드 넘버링 셀을 체크박스와 본문 텍스트 사이의 중앙으로 이동하고 1·2·3위 배경도 함께 정렬"],en:["Centered the task-number cell between the checkbox and title, including the full backgrounds for ranks 1–3"]},
+ {version:"v18.3.3",date:"2026.07.19",ko:["담당자 칩의 기존 최소 가로 길이는 유지하면서 이모지와 우측 여백 사이에서 이름 텍스트가 더 균형 있게 보이도록 간격 조정"],en:["Balanced assignee-chip name placement between the emoji and trailing edge while preserving the existing minimum width"]},
+ {version:"v18.3.2",date:"2026.07.19",ko:["할 일 카드 번호에 # 접두사를 표시하고 체크박스·본문 텍스트를 카드 세로 중앙에 정렬"],en:["Added a # prefix to task-card numbering and aligned the checkbox and task text to the card center"]},
+ {version:"v18.3.1",date:"2026.07.19",ko:["끼리 담당자 필터의 새 알림 뱃지를 담당자 이름 텍스트 우측 상단으로 이동"],en:["Moved Circle assignee-filter unread badges to the upper-right of each member name"]},
  {version:"v18.3.0",date:"2026.07.19",ko:["모��� 데이터 제거·초기화·복원 시 누락 설정을 자동 보정하는 공용 상태 정규화 계층 추가","슬롯머신·담당자 순서 설정을 방어적으로 복구해 빈 상태 직후 렌더 오류 제거","완료·순서 변경·선택·끼리 검색·완료 목록·관리 버튼에 접근성 이름과 상태 속성 추가","아이콘의 시각 크기는 유지하면서 완료 체크·순서 핸들·선택 체크의 실질 터치 영역 확대","상단 아이콘·담당자 필터·언어·이력 버튼을 40~44px 터치 기준으로 확대","포인터 이벤트 중복 코드를 공용 소비·이동 판정 함수로 정리하고 키보드 활성화 지원 추가"],en:["Added shared state normalization for data removal, reset, restore, and legacy saved data","Defensively restored slot-machine and member-order preferences to eliminate empty-state render failures","Added accessible names and state attributes to completion, reordering, selection, Circle search, completed-list, and management controls","Expanded effective touch targets for completion, reorder, and selection controls without changing visual icon size","Raised header, member-filter, language, and history controls to 40–44px touch targets","Consolidated pointer-event consumption and movement thresholds and added keyboard activation support"]},
  {version:"v18.2.46",date:"2026.07.19",ko:["끼리 검색 입력창 포커스로 키보드가 열릴 때 resize 핸들러가 할 일 목록을 다시 그리던 문제 수정","끼리 검색 중에는 큐 재배치를 중단하고 검색 페이지와 입력 내용을 유지"],en:["Stopped the resize handler from rebuilding the Circle queue when focusing the search field opens the keyboard","Preserved the Circle search page and query while search mode is active"]},
  {version:"v18.2.45",date:"2026.07.19",ko:["검색모드 X 버튼이 화면을 다시 그린 뒤 같은 위치의 완료·관리 버튼으로 터치가 관통하는 문제 수정","앱바 즉시 실행 중 발생하는 후속 네이티브 클릭을 해당 터치 시퀀스에서만 차단","검색 종료 직후의 새로운 의도적 터치는 차단하지 않도록 다음 pointerdown에서 잔여 가드 해제"],en:["Stopped the search close button touch from falling through to newly rendered Done or Manage controls","Suppressed the follow-up native click only for the active fast-control touch sequence","Cleared stale guards on the next pointerdown so intentional rapid follow-up taps still work"]},
@@ -713,18 +732,18 @@ const I={
 const STR={
 ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  hHome:"할 일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
- hCircle:"끼리",hCircleSub:"가족·연인·친구와 함께 끼우기",
+ hCircle:"끼리",hCircleSub:"",
  hStats:"통계",hStatsSub:"끼우가 잘 작동하고 있나요?",
  hMore:"더보기",hMoreSub:"설정 · 후원 · 데이터",
  slotLabel:"<b>{n}</b>번째에 할일 끼우기",placeholder:"할 일을 입력하고 끼우기",
- searchPh:"제목으로 검색 (진행 중 + 완료)",searchNone:"결과가 없어요",searchDone:"완료된 할 일",
+ searchPh:"검색어",searchNone:"결과가 없어요",searchDone:"완료된 할 일",
  doneTitle:"완료됨",doneWeek:"이번 주 {n}개",doneAll:"누적 {n}개",statsLink:"통계 보기",
- gToday:"오늘",gYest:"어제",gWeek:"이번 주",gOld:"이전",clear:"비우기",
- emptyDoneT:"아직 완료한 일이 없어요",emptyDoneP:"체크하면 이곳에 쌓입니다. 동그라미를 다시 누르면 완료 당시 번호로 복원돼요.",
+ gToday:"오늘",gYest:"어제",gWeek:"이번 주",gOld:"이전",clear:"비우기",clearAllConfirm:"완료된 할 일 전체를 비우시겠어요?",
+ emptyTaskT:"할 일이 없어요",emptyDoneT:"아직 완료한 일이 없어요",emptyDoneP:"체크하면 이곳에 쌓입니다. 동그라미를 다시 누르면 완료 당시 번호로 복원돼요.",
  chipAll:"전체",bundleTxt:"··· 외 <b>{n}</b>개 (#{a}–#{b})",collapseTxt:"∧ 접기 (#{a}–#{b})",
  doneBtnLabel:"완료됨 {n}개 보기",
  adTitle:"여기에 광고가 표시됩니다",adSub:"인피드 네이티브 · 끼우 번호에서 제외",
- tAdd:"{n}번째에 끼웠어요",tDone:"완료했어요",tRestore:"#{n}으로 복원했어요",tMove:"{n}번째로 이동",tDel:"{n}개 삭제했어요 (통계는 유지)",
+ tAdd:"{n}번째에 끼웠어요",tDone:"완료했어요",tRestore:"#{n}으로 복원했어요",tMove:"{n}번째로 이동",tDel:"{n}개 삭제했어요",
  tEmpty:"할 일을 입력해 주세요",tReset:"초기화했어요",
  tLink:"데모에서는 외부 링크가 연결되지 않아요",tSoon:"출시 버전에서 제공 예정이에요",
  tFilterMove:"순서 변경은 전체 보기에서 (필터 중 스프링 로드는 추후 지원)",
@@ -745,29 +764,29 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  lnkSite:"3Day Weekend Lab.",lnkSiteP:"개발자 홈페이지",lnkCoffee:"커피 한 잔 후원",lnkCoffeeP:"Buy me a coffee",
  aff1:"심플 가계부",aff1P:"제휴 · 지출도 위치로 정리",aff2:"포모도로 타이머",aff2P:"제휴 · 끼우와 함께 쓰기 좋은 집중 타이머",aff:"제휴",
  mReset:"전체 초기화",
- emptySearchT:"무엇을 찾을까요?",emptySearchP:"제목으로 바로 검색합니다. 완료된 일도 함께 찾아요. 검색 중에는 끼우기·순서 변경이 잠시 꺼집니다.",
+ emptySearchT:"무엇을 찾을까요?",
  selNone:"항목을 선택하세요",selCnt:"{n}개 선택됨",selAll:"전체 선택",selUnall:"선택 해제",selCancel:"취소",selDel:"삭제",
  cancel:"취소",create:"만들기",clearModalT:"삭제할 항목을 선택하세요",
  circlePickT:"끼리 전환",circleNew:"새 끼리 만들기",circleNewPrompt:"새 끼리 이름",circleNewPh:"예: 우리집, 강릉 여행",tCircleNew:"'{n}' 끼리를 만들었어요 — 관리에서 멤버를 초대하세요",
  manageT:"끼리 관리",inviteT:"초대 코드",inviteP:"이 코드를 공유하면 멤버가 들어올 수 있어요. (데모: 복사만 동작)",inviteCopy:"코드 복사",tInvite:"초대 코드 {n} 복사했어요",joinT:"초대 코드로 들어가기",joinP:"받은 코드를 입력해 참여 흐름을 확인하세요. 이 목업에서는 현재 브라우저에 저장된 끼리 코드만 찾을 수 있어요.",joinPh:"예: KKIU-ABCD",joinBtn:"참여",tJoin:"'{n}' 끼리로 들어왔어요",tJoinBad:"일치하는 초대 코드를 찾지 못했어요",
  membersT:"멤버 {n}명",meTag:"나",taskCnt:"진행 중 {n}개",leaveCircle:"나가기",leaveConfirm:"'{n}' 끼리에서 나갈까요?",tLeave:"'{n}' 끼리에서 나갔어요",ownerOnly:" · 개설자만 가능(데모)",
  circleDel:"이 끼리 삭제",circleDelConfirm:"'{n}' 끼리와 모든 할 일을 삭제할까요?",tCircleDel:"끼리를 삭제했어요",
- emptyCircleT:"아직 끼리가 없어요",emptyCircleP:"가족·연인·친구와 함께 쓰는 공유 큐를 만들어 보세요.",
+ emptyCircleT:"공유 할 일 목록을 만들어보세요",
  mFeatSlot:"여기에 원하는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
 en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  hHome:"Queue",hHomeSub:"{a} to-dos · {d} done",
- hCircle:"Circle",hCircleSub:"A queue you share with your circle",
+ hCircle:"Circle",hCircleSub:"",
  hStats:"Stats",hStatsSub:"See your to-do habits at a glance",
  hMore:"More",hMoreSub:"Settings · Support · Data",
- slotLabel:"Insert to-do at <b>#{n}</b>",placeholder:"Type a to-do and insert",
- searchPh:"Search by title (active + done)",searchNone:"No results",searchDone:"Completed",
+ slotLabel:"Add to queue at <b>#{n}</b>",placeholder:"Type a to-do and insert",
+ searchPh:"Search term",searchNone:"No results",searchDone:"Completed",
  doneTitle:"Done",doneWeek:"{n} this week",doneAll:"{n} all time",statsLink:"View stats",
- gToday:"Today",gYest:"Yesterday",gWeek:"This week",gOld:"Earlier",clear:"Clear",
- emptyDoneT:"Nothing done yet",emptyDoneP:"Checked items pile up here. Tap the circle again to restore to the rank it had when completed.",
+ gToday:"Today",gYest:"Yesterday",gWeek:"This week",gOld:"Earlier",clear:"Clear",clearAllConfirm:"Clear all completed tasks?",
+ emptyTaskT:"No tasks yet",emptyDoneT:"Nothing done yet",emptyDoneP:"Checked items pile up here. Tap the circle again to restore to the rank it had when completed.",
  chipAll:"All",bundleTxt:"··· <b>{n}</b> more (#{a}–#{b})",collapseTxt:"∧ Collapse (#{a}–#{b})",
  doneBtnLabel:"View {n} done",
  adTitle:"Your ad could be here",adSub:"In-feed native · excluded from ranks",
- tAdd:"Inserted at #{n}",tDone:"Completed",tRestore:"Restored to #{n}",tMove:"Moved to #{n}",tDel:"Deleted {n} (stats kept)",
+ tAdd:"Inserted at #{n}",tDone:"Completed",tRestore:"Restored to #{n}",tMove:"Moved to #{n}",tDel:"Deleted {n}",
  tEmpty:"Type something first",tReset:"Reset done",
  tLink:"External links are disabled in this demo",tSoon:"Coming in the release version",
  tFilterMove:"Reorder in All view (spring-load while filtered: planned)",
@@ -788,14 +807,14 @@ en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  lnkSite:"3Day Weekend Lab.",lnkSiteP:"Developer homepage",lnkCoffee:"Buy me a coffee",lnkCoffeeP:"One-time support",
  aff1:"Simple Budget",aff1P:"Affiliate · sort spending by position",aff2:"Pomodoro Timer",aff2P:"Affiliate · focus timer that pairs well with Kkiu",aff:"AD",
  mReset:"Reset all",
- emptySearchT:"What are you looking for?",emptySearchP:"Searches titles instantly, including completed items. Inserting and reordering pause while searching.",
+ emptySearchT:"What are you looking for?",
  selNone:"Select items",selCnt:"{n} selected",selAll:"Select all",selUnall:"Deselect",selCancel:"Cancel",selDel:"Delete",
  cancel:"Cancel",create:"Create",clearModalT:"Select items to delete",
  circlePickT:"Switch circle",circleNew:"New circle",circleNewPrompt:"Name your circle",circleNewPh:"e.g. Home, Trip",tCircleNew:"Created '{n}' — invite members in Manage",
  manageT:"Manage circle",inviteT:"Invite code",inviteP:"Share this code to let members join. (Demo: copy only)",inviteCopy:"Copy code",tInvite:"Copied invite code {n}",joinT:"Join with an invite code",joinP:"Enter a received code to test the join flow. This mockup can find codes stored in this browser only.",joinPh:"e.g. KKIU-ABCD",joinBtn:"Join",tJoin:"Joined '{n}'",tJoinBad:"No matching invite code found",
  membersT:"{n} members",meTag:"me",taskCnt:"{n} active",leaveCircle:"Leave circle",leaveConfirm:"Leave '{n}'?",tLeave:"Left '{n}'",ownerOnly:" · owner only (demo)",
  circleDel:"Delete this circle",circleDelConfirm:"Delete '{n}' and all of its to-dos?",tCircleDel:"Circle deleted",
- emptyCircleT:"No circles yet",emptyCircleP:"Create a shared queue with family, partners, or friends.",
+ emptyCircleT:"Create a shared to-do list",
  mFeatSlot:"Insert a feature you want — request via Contact",asgLabel:"Assign",asgDefaultHint:"default if untouched"}
 };
 function T(k,vars){let s=(STR[state.lang]&&STR[state.lang][k])||STR.ko[k]||k;return vars?s.replace(/\{(\w+)\}/g,(m,g)=>vars[g]!==undefined?vars[g]:m):s}
@@ -932,7 +951,7 @@ function cardHtml(t,idx,o={}){
    <div class="mid"><p class="t-title">${esc(t.title)}</p></div></article>`}
  const topN=(!t.done&&o.rank&&idx<3)?idx+1:0,topcls=topN?`t${topN}`:"";
  const lead=`<button class="ck" aria-label="${esc((state.lang==="en"?"Complete: ":"할 일 완료: ")+t.title)}" data-act="complete" data-id="${t.id}"></button>`;
- const rank=o.rank?`<div class="rank ${topN?"top":""}">${idx+1}</div>`:"";
+ const rank=o.rank?`<div class="rank ${topN?"top":""}">#${idx+1}</div>`:"";
  let mid;
  const unread=o.ctx==="circle"?sourceUnreadDot(t):"";
  if(o.rank){const w=Math.max(104,TITLE_W);const[l1,l2]=splitTitle(t.title,w);
@@ -959,14 +978,14 @@ function rowHtml(r,ctx){
 function weekDone(){const wk=Date.now()-7*864e5;return completed().filter(t=>new Date(t.completedAt).getTime()>wk).length}
 function chipsHtml(){
  const c=curC();
- const mk=(id,label,ini,color,on)=>`<button class="chip ${on?"on":""}" data-act="chip" data-m="${id||""}"><span class="av" style="background:${color||"#b9b1a1"}">${ini}</span>${label}${id&&c?.memberUnread?.[id]?`<i class="chip-dot"></i>`:""}</button>`;
+ const mk=(id,label,ini,color,on)=>`<button class="chip ${on?"on":""}" data-act="chip" data-m="${id||""}"><span class="av" style="background:${color||"#b9b1a1"}">${ini}</span><span class="chip-label">${label}${id&&c?.memberUnread?.[id]?`<i class="chip-dot"></i>`:""}</span></button>`;
  return `<div class="chips">${mk(null,T("chipAll"),"☰",null,!state.ciFilter)}${orderedCircleMembers(c).map(k=>{const m=circlePerson(c,k);return mk(k,m[state.lang],m.ini,m.color,state.ciFilter===k)}).join("")}</div>`}
 function headHtml(){
  const a=active().length;
  if(state.tab==="home"){
   return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="${homeSearch===null?(state.lang==="en"?"Search":"검색"):(state.lang==="en"?"Close search":"검색 닫기")}" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}</button>`:""}</div></div></div>`}
  if(state.tab==="circle"){const cc=curC();
-  if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1><p class="head-sub">${T("hCircleSub")}</p></div>`;
+  if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1></div>`;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
   return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><span class="circle-emoji" aria-hidden="true">${ce}</span><span class="circle-title-window"><span class="circle-title-text${cc.name.length>10?" stream":""}">${esc(cc.name)}</span></span><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" aria-label="${circleSearch===null?(state.lang==="en"?"Search":"검색"):(state.lang==="en"?"Close search":"검색 닫기")}" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" aria-label="${state.lang==="en"?"Completed tasks":"완료 목록"}" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" aria-label="${state.lang==="en"?"Circle settings":"끼리 관리"}" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
@@ -985,7 +1004,7 @@ function renderView(){
  app.classList.toggle("sel-mode",selecting&&(state.tab==="home"||state.tab==="circle"));
  if(selecting&&(state.tab==="home"||state.tab==="circle")){renderSelect();return}
  if(state.tab==="home"){homeSearch===null?buildQueue("home"):buildSearch();return}
- if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3><p>${T("emptyCircleP")}</p></div></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div>`;wireCircleTitleStream();setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
+ if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`<div class="head circle-head"><div class="headrow"><h1 class="ttl">${T("hCircle")}</h1></div></div><div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div></div>`;wireCircleTitleStream();setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
  if(state.tab==="more"){buildMoreQueue();return}}
 function wireCircleTitleStream(){
  const win=viewEl.querySelector(".circle-title-window"),text=viewEl.querySelector(".circle-title-text");
@@ -1012,8 +1031,7 @@ function buildQueue(ctx,preserve){
  const keepOffset=preserve?qOffset:null;
  if(ctx==="home")reindex();else ciReindex();
  const qTasks=ctx==="home"?active():ciActive();
- const emptyCopy=ctx==="circle"&&state.ciFilter?{t:"이 담당자에게 맡긴 진행 할 일이 없어요",p:"전체 필터로 돌아가거나, 이 담당자의 첫 할 일을 끼워 보세요.",a:"전체 보기",act:"empty-all"}:ctx==="circle"?{t:"아직 진행 중인 끼리 할 일이 없어요",p:"가장 먼저 할 일을 이 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"}:{t:"아직 끼운 할 일이 없어요",p:"떠오른 첫 할 일을 오늘의 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"};
- const emptyHtml=qTasks.length?"":`<div class="queueempty"><div class="empty-c"><h3>${emptyCopy.t}</h3><p>${emptyCopy.p}</p><button data-act="${emptyCopy.act}">${emptyCopy.a}</button></div></div>`;
+ const emptyHtml=qTasks.length?"":`<div class="queueempty"><div class="empty-c"><h3>${T("emptyTaskT")}</h3></div></div>`;
  viewEl.innerHTML=`${headHtml()}<div class="stage q" id="stage"><div class="qvp"><div class="qtrack" id="qtrack"></div></div>${emptyHtml}<div class="qfade t"></div><div class="qfade b"></div>${slotHtml(ctx)}</div>`;
  stageEl=viewEl.querySelector("#stage");qtrackEl=viewEl.querySelector("#qtrack");
  TITLE_W=Math.max(104,(qtrackEl.clientWidth-36)-(ctx==="circle"?154:122));
@@ -1299,7 +1317,7 @@ function renderCircleSheet(){
 function renderManageSheet(){const c=curC();if(!c)return;if(!c.code){c.code=newCircleCode();save()}const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody"),members=orderedCircleMembers(c);head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
  <button class="rbtn identity-setting" data-act="circle-identity-edit"><span class="mlead"><span class="mrank">${c.emoji||"✨"}</span><span><b class="identity-label-text">끼리</b><em class="identity-value">${esc(c.name)}</em></span></span><span>편집 ›</span></button>
  <button class="rbtn identity-setting" data-act="profile-identity-edit" style="margin-top:8px"><span class="mlead"><span class="mrank">${myProfile(c).emoji}</span><span><b class="identity-label-text">내 프로필</b><em class="identity-value">${esc(myProfile(c).name)}</em></span></span><span>편집 ›</span></button>
- <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span><em>내 화면에서만 적용</em></div><div class="member-order-list" id="memberOrderList">
+ <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span></div><div class="member-order-list" id="memberOrderList">
  ${members.map(k=>{const m=circlePerson(c,k),cnt=c.tasks.filter(t=>(t.assignees||[]).includes(k)&&!t.done).length;return `<div class="suprow member-order-row" data-member="${k}"><span class="who" style="background:${m.color};width:30px;height:30px;font-size:12.5px">${m.ini}</span><span class="smid"><b>${m[state.lang]}${k==="me"?" ("+T("meTag")+")":""}</b><span>${T("taskCnt",{n:cnt})}</span></span>${k==="me"?`<span class="member-handle self">고정</span>`:`<button class="member-handle" aria-label="담당자 순서 변경">${I.grip}</button>`}</div>`}).join("")}</div>
  <div class="mdiv"></div><button class="rbtn" data-act="circle-leave">${T("leaveCircle")}<span>›</span></button><button class="rbtn danger" data-act="circle-del" style="margin-top:8px">${T("circleDel")}<em>${T("ownerOnly")}</em></button>`;wireMemberOrder(c)}
 function wireMemberOrder(c){const list=document.getElementById("memberOrderList");if(!list)return;let row=null,pid=null;const finish=()=>{if(!row)return;row.classList.remove("dragging");const order=[...list.querySelectorAll(".member-order-row")].map(x=>x.dataset.member);setPersonalMemberOrder(c,order);row=null;pid=null;renderView()};list.addEventListener("pointerdown",e=>{const h=e.target.closest(".member-handle:not(.self)");if(!h)return;e.preventDefault();row=h.closest(".member-order-row");pid=e.pointerId;row.classList.add("dragging");try{h.setPointerCapture(pid)}catch{}vibe(8)});list.addEventListener("pointermove",e=>{if(!row||e.pointerId!==pid)return;e.preventDefault();const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(".member-order-row");if(!target||target===row||target.dataset.member==="me")return;const r=target.getBoundingClientRect();list.insertBefore(row,e.clientY<r.top+r.height/2?target:target.nextSibling)});list.addEventListener("pointerup",finish);list.addEventListener("pointercancel",finish)}
@@ -1315,14 +1333,14 @@ function buildCircleSearch(){
  viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><input class="field" id="cq" value="${esc(circleSearch||"")}" placeholder="${T("searchPh")}" autocomplete="off"/><div id="cres" class="list">${circleSearchResults()}</div></div></div></div>`;
  const cq=viewEl.querySelector("#cq");cq.addEventListener("input",e=>{circleSearch=e.target.value;viewEl.querySelector("#cres").innerHTML=circleSearchResults()});setTimeout(()=>cq.focus(),80);wireCircleTitleStream();wireCircleSearchButton();setNavActive()}
 function circleSearchResults(){const q=(circleSearch||"").trim(),all=ciActive(),done=ciCompleted();
- if(!q)return `<div class="empty"><div class="empty-c"><h3>${T("emptySearchT")}</h3><p>${T("emptySearchP")}</p></div></div>`;
+ if(!q)return `<div class="empty"><div class="empty-c"><h3>${T("emptySearchT")}</h3></div></div>`;
  const act=all.map((t,i)=>({t,i})).filter(x=>x.t.title.toLowerCase().includes(q.toLowerCase()));const fin=done.filter(t=>t.title.toLowerCase().includes(q.toLowerCase()));
  if(!act.length&&!fin.length)return `<div class="empty"><div class="empty-c"><h3>${T("searchNone")}</h3><p>“${esc(q)}”</p></div></div>`;
  let h=act.map(x=>`<button class="srow" data-act="search-go" data-id="${x.t.id}"><span class="rankc">#${x.i+1}</span><span class="stt">${hl(x.t.title,q)}</span></button>`).join("");
  if(fin.length)h+=`<div class="ghead"><span>${T("searchDone")} · ${fin.length}</span></div>`+fin.map(t=>`<button class="srow donem" data-act="search-go" data-done="1" data-id="${t.id}"><span class="rankc">#${(t.doneAt??0)+1}</span><span class="stt">${hl(t.title,q)}</span><span class="dtime">${fmt(t.completedAt)}</span></button>`).join("");return h}
 function searchResults(){
  const q=(homeSearch||"").trim();
- if(!q)return `<div class="empty"><div class="empty-c"><h3>${T("emptySearchT")}</h3><p>${T("emptySearchP")}</p></div></div>`;
+ if(!q)return `<div class="empty"><div class="empty-c"><h3>${T("emptySearchT")}</h3></div></div>`;
  const act=active().map((t,i)=>({t,i})).filter(x=>x.t.title.toLowerCase().includes(q.toLowerCase()));
  const done=completed().filter(t=>t.title.toLowerCase().includes(q.toLowerCase()));
  if(!act.length&&!done.length)return `<div class="empty"><div class="empty-c"><h3>${T("searchNone")}</h3><p>“${esc(q)}”</p></div></div>`;
@@ -1506,7 +1524,7 @@ app.addEventListener("click",e=>{
  if(act==="empty-all"){state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;buildQueue("circle");return}
  if(act==="modal-cancel"){closeModal();return}
  if(act==="modal-ok"){const v=document.getElementById("modalIn")?.value;const cb=modalOkCb;closeModal();cb&&cb(v);return}
- if(act==="modal-clear-confirm"){const ids=[...document.querySelectorAll(".clrow input:checked")].map(i=>i.dataset.id);closeModal();if(ids.length)sheetClear(ids.join(","));return}
+ if(act==="modal-clear-confirm"){const ids=el.dataset.ids||"";closeModal();if(ids)sheetClear(ids);return}
  if(act==="lang"){setLang(el.dataset.lang);return}
  if(act==="stub"){toast(T("tSoon"));return}
  if(act==="edit-cancel"){cancelEdit();return}
@@ -1533,7 +1551,7 @@ function askPrompt(title,placeholder,cb,dflt){modalOkCb=cb;
  openModal(`<h3>${esc(title)}</h3><form id="modalForm" autocomplete="off"><input id="modalIn" placeholder="${esc(placeholder||"")}" value="${esc(dflt||"")}"/><div class="mrow"><button type="button" class="mbtn" data-act="modal-cancel">${T("cancel")}</button><button type="button" class="mbtn primary" data-act="modal-ok">${T("create")}</button></div></form>`);
  setTimeout(()=>{const mi=document.getElementById("modalIn");if(!mi)return;mi.focus();mi.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();const v=mi.value,cb=modalOkCb;closeModal();cb&&cb(v)}})},60)}
 function openClearModal(arr){
- openModal(`<h3>${T("clearModalT")}</h3><div class="clist">${arr.map(t=>`<label class="clrow"><input type="checkbox" checked data-id="${t.id}"/><span>${esc(t.title)}</span></label>`).join("")}</div><div class="mrow"><button type="button" class="mbtn" data-act="modal-cancel">${T("cancel")}</button><button type="button" class="mbtn danger" data-act="modal-clear-confirm">${T("clear")}</button></div>`)}
+ openModal(`<p class="confirm-copy">${T("clearAllConfirm")}</p><div class="mrow"><button type="button" class="mbtn" data-act="modal-cancel">${T("cancel")}</button><button type="button" class="mbtn danger" data-act="modal-clear-confirm" data-ids="${arr.map(t=>t.id).join(",")}">${T("clear")}</button></div>`)}
 window.addEventListener("resize",()=>{moveInd();if(document.querySelector('[contenteditable="true"]')||slotOpen||selecting)return;if(state.tab==="more")buildMoreQueue();else if(isQueue())buildQueue(state.tab==="circle"?"circle":"home",true)});
 mount();
 </script>
