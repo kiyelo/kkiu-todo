@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon, CheckIcon } from './Icons.jsx'
 
-export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, selecting, selected, onSelect, onLongPress, showRank = true }) {
+export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, selecting, selected, onSelect, onLongPress, showRank = true }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(task.title)
   const inputRef = useRef(null)
@@ -31,7 +31,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   }
 
   return (
-    <article className={`${editing ? 'task-card editing' : 'task-card'}${task.done ? ' task-done' : ''}${showRank ? '' : ' no-rank'}${selected ? ' selected-card' : ''}`} onPointerDown={startHold} onPointerMove={moveHold} onPointerUp={clearHold} onPointerCancel={clearHold} onClickCapture={(event) => { if (longPressedRef.current) { longPressedRef.current = false; event.preventDefault(); event.stopPropagation() } }}>
+    <article data-task-id={task.id} className={`${editing ? 'task-card editing' : 'task-card'}${task.done ? ' task-done' : ''}${showRank ? '' : ' no-rank'}${selected ? ' selected-card' : ''}${dragging ? ' dragging-card' : ''}`} onPointerDown={startHold} onPointerMove={moveHold} onPointerUp={clearHold} onPointerCancel={clearHold} onClickCapture={(event) => { if (longPressedRef.current) { longPressedRef.current = false; event.preventDefault(); event.stopPropagation() } }}>
       <button className={selected ? 'check selected-check' : task.done ? 'check checked' : 'check'} onClick={() => selecting ? onSelect(task.id) : onComplete(task.id)} aria-label={selecting ? `${task.title} 선택` : `${task.title} ${task.done ? '복원' : '완료'}`}><CheckIcon /></button>
       {showRank && <span className={index < 3 ? `rank top rank-${index + 1}` : 'rank'}>#{index + 1}</span>}
       <div className="task-main">
@@ -42,7 +42,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
           }} />
         ) : <button className="task-title" onClick={() => selecting ? onSelect(task.id) : !task.done && setEditing(true)}>{task.title}</button>}
       </div>
-      {editing ? <button className="save-button" onClick={save} aria-label="수정 저장"><ArrowIcon /></button> : selecting ? null : <div className="card-actions">{circle && <span className="assignee-emoji">{members.find((member) => member.id === task.assignee)?.emoji}</span>}{!task.done && showRank && <div className="reorder-actions"><button disabled={index === 0} onClick={() => onMove(task.id, -1)} aria-label="한 칸 위로">↑</button><button onClick={() => onMove(task.id, 1)} aria-label="한 칸 아래로">↓</button></div>}</div>}
+      {editing ? <button className="save-button" onClick={save} aria-label="수정 저장"><ArrowIcon /></button> : selecting ? null : <div className="card-actions">{circle && <span className="assignee-emoji">{members.find((member) => member.id === task.assignee)?.emoji}</span>}{!task.done && showRank && reorderable && <button className="drag-handle" aria-label="누른 채 위아래로 움직여 순서 변경" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onDragStart(task.id) }} onPointerMove={onDragMove} onPointerUp={(event) => { try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {} onDragEnd() }} onPointerCancel={onDragEnd} onKeyDown={(event) => { if (event.key === 'ArrowUp') { event.preventDefault(); onMove(task.id, -1) } if (event.key === 'ArrowDown') { event.preventDefault(); onMove(task.id, 1) } }}>⋮⋮</button>}</div>}
       {editing && circle && (
         <div className="assignee-row">
           {members.map((member) => <button key={member.id} className={task.assignee === member.id ? 'assignee-chip selected' : 'assignee-chip'} onClick={() => onAssignee(task.id, member.id)}><span>{member.emoji}</span>{member.name}</button>)}

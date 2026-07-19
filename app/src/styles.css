@@ -69,9 +69,9 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .task-main textarea { width: 100%; min-height: 58px; max-height: 110px; resize: vertical; border: 0; border-bottom: 2px solid var(--accent); outline: 0; padding: 3px 2px; background: transparent; font-weight: 620; line-height: 1.4; }
 .assignee-emoji { width: 34px; text-align: center; font-size: 22px; }
 .card-actions { display: flex; align-items: center; gap: 2px; }
-.reorder-actions { display: flex; flex-direction: column; gap: 2px; }
-.reorder-actions button { width: 27px; height: 23px; display: grid; place-items: center; border-radius: 7px; background: #f1ece3; color: #8d8579; font-size: 13px; }
-.reorder-actions button:disabled { opacity: .25; }
+.drag-handle { width: 30px; height: 38px; display: grid; place-items: center; border-radius: 9px; color: #a49c90; font-size: 18px; letter-spacing: -5px; touch-action: none; cursor: grab; }
+.drag-handle:active { cursor: grabbing; background: #f1ece3; color: var(--accent); }
+.task-card.dragging-card { z-index: 30; transform: scale(1.018); opacity: .9; box-shadow: 0 18px 38px rgba(70,50,20,.22); }
 .save-button { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: var(--accent); color: #fff; box-shadow: 0 5px 12px rgba(224, 137, 74, .3); }
 .save-button:active { transform: scale(.94); }
 .assignee-row { grid-column: 1 / -1; width: 100%; display: flex; gap: 7px; overflow-x: auto; padding: 6px 1px 1px; scrollbar-width: none; touch-action: pan-x; }
@@ -144,11 +144,15 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .emoji-grid button.selected { background: #fff; box-shadow: inset 0 0 0 2px var(--accent); }
 .primary-sheet-action { min-height: 50px; margin-top: 4px; border-radius: 15px; background: var(--accent); color: #fff; font-weight: 780; }
 .delete-circle { min-height: 44px; border-radius: 14px; color: #b24f43; background: #f6e4e1; font-weight: 700; }
-.selection-bar { position: absolute; z-index: 70; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); min-height: 54px; display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 7px; padding: 7px; border-radius: 18px; background: rgba(35,31,25,.94); color: #fff; box-shadow: 0 14px 34px rgba(30,25,18,.28); backdrop-filter: blur(14px); }
+.selection-bar { position: absolute; z-index: 70; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); min-height: 54px; display: flex; align-items: center; gap: 6px; padding: 7px; border-radius: 18px; background: rgba(35,31,25,.94); color: #fff; box-shadow: 0 14px 34px rgba(30,25,18,.28); backdrop-filter: blur(14px); }
 .selection-bar button { min-width: 48px; height: 40px; padding: 0 10px; border-radius: 12px; color: #fff; background: rgba(255,255,255,.1); font-size: 12px; font-weight: 700; }
-.selection-bar b { text-align: center; font-size: 13px; }
+.selection-bar b { flex: 1; text-align: center; font-size: 13px; }
 .selection-bar .danger { background: #c95649; }
 .selection-bar button:disabled { opacity: .4; }
+.bulk-assignee { position: absolute; z-index: 69; left: 18px; right: 18px; bottom: calc(132px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 6px; overflow-x: auto; padding: 9px; border-radius: 16px; background: rgba(255,255,255,.96); box-shadow: 0 14px 34px rgba(30,25,18,.2); scrollbar-width: none; }
+.bulk-assignee::-webkit-scrollbar { display: none; }
+.bulk-assignee button { flex: none; min-width: 70px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; border-radius: 12px; background: #f1ece3; font-size: 12px; font-weight: 700; }
+.bulk-assignee span { font-size: 19px; }
 .switch { position: relative; width: 42px; height: 25px; border-radius: 99px; background: #d8d1c6; }
 .switch u { position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(40,30,20,.18); transition: .18s; }
 .switch.on { background: var(--accent); }

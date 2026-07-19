@@ -5,17 +5,13 @@ import MoreScreen from './components/MoreScreen.jsx'
 import QueueScreen from './components/QueueScreen.jsx'
 import { CircleEditor, CirclePicker, CompletedSheet } from './components/Sheets.jsx'
 import { members, starterData } from './data.js'
+import { localRepository } from './services/localRepository.js'
 
-const STORAGE_KEY = 'kkiu-react-0.1'
 const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-
-function loadData() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || starterData } catch { return starterData }
-}
 
 export default function App() {
   const [tab, setTab] = useState('home')
-  const [data, setData] = useState(loadData)
+  const [data, setData] = useState(() => localRepository.load(starterData))
   const [circleId, setCircleId] = useState(data.circles[0]?.id)
   const [query, setQuery] = useState(null)
   const [filter, setFilter] = useState(null)
@@ -24,7 +20,7 @@ export default function App() {
   const [circleEditorOpen, setCircleEditorOpen] = useState(null)
   const [selected, setSelected] = useState(() => new Set())
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) }, [data])
+  useEffect(() => { localRepository.save(data) }, [data])
 
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
   const activeMembers = members.map((member) => member.id === 'me' && circle?.profile ? { ...member, name: circle.profile.name, emoji: circle.profile.emoji } : member)
@@ -57,11 +53,23 @@ export default function App() {
     next.splice(to, 0, moved)
     return [...next, ...completedItems]
   })
+  const moveTaskTo = (sourceId, targetId) => updateTasks((current) => {
+    const active = current.filter((task) => !task.done)
+    const completedItems = current.filter((task) => task.done)
+    const from = active.findIndex((task) => task.id === sourceId)
+    const to = active.findIndex((task) => task.id === targetId)
+    if (from < 0 || to < 0 || from === to) return current
+    const next = [...active]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    return [...next, ...completedItems]
+  })
   const toggleSelect = (id) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next })
   const startSelect = (id) => setSelected(new Set([id]))
   const cancelSelect = () => setSelected(new Set())
   const selectAll = () => setSelected(new Set(tasks.filter((task) => !task.done).map((task) => task.id)))
   const deleteSelected = () => { updateTasks((current) => current.filter((task) => !selected.has(task.id))); cancelSelect() }
+  const assignSelected = (assignee) => { updateTasks((current) => current.map((task) => selected.has(task.id) ? { ...task, assignee } : task)); cancelSelect() }
 
   const switchTab = (next) => { setTab(next); setQuery(null); setFilter(null); setCompletedOpen(false); cancelSelect() }
   const selectCircle = (id) => {
@@ -96,7 +104,7 @@ export default function App() {
   return <div className={`app-shell${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}`}>
     <section className="phone">
       <Header tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
-      {tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onCancelSelect={cancelSelect} />}
+      {tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} />}
       <BottomNav tab={tab} unread={unread} onChange={switchTab} />
       {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onClear={clearCompleted} onClose={() => setCompletedOpen(false)} />}
