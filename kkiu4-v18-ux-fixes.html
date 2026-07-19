@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.25</title>
+<title>Kkiu To Do — v18.2.26</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
   :root{
@@ -202,6 +202,7 @@
   .pcard p{margin:0;font-size:12.5px;line-height:1.6;font-weight:560;color:var(--sub);word-break:keep-all}
   .field{width:100%;background:var(--surface);border:0;border-radius:14px;padding:13px 15px;font-size:15px;font-weight:560;outline:0;box-shadow:var(--sh-card)}
   .field:focus{box-shadow:0 0 0 2px var(--accent),var(--sh-card)}
+  .join-row{display:flex;gap:8px;margin-top:11px}.join-row .field{min-width:0;height:44px;padding:0 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.04em}.join-row .mbtn{flex:none;height:44px;padding:0 14px}
   textarea.field{min-height:100px;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:500}
   .rbtn{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--surface);border-radius:14px;padding:14px 16px;font-size:14px;font-weight:600;box-shadow:var(--sh-card);color:var(--ink);transition:.15s}
   .rbtn span{color:var(--faint)}.rbtn:hover{color:var(--accent-ink)}.rbtn:active{transform:scale(.98)}.rbtn.danger:hover{color:var(--danger)}
@@ -519,6 +520,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   .phone{background:linear-gradient(180deg,#f8fbff,#eff4fa)}
   .head,.selhead{padding-top:calc(34px + env(safe-area-inset-top,0px))}
 }
+/* Compact headers are the only header state across Queue, Circle, and More. */
+.head{padding-top:calc(34px + env(safe-area-inset-top,0px))!important;padding-bottom:10px!important}
+.home-head .ttl,.circle-head .circle-title-text,.more-head .ttl{font-size:25px!important;line-height:1.12!important}
 @media(prefers-color-scheme:dark){
   :root{--paper:#17191d;--surface:rgba(39,42,48,.72);--ink:#f7f8fb;--ink2:#d5d8df;--sub:rgba(235,239,247,.62);--faint:rgba(235,239,247,.38);--hair:rgba(255,255,255,.09);--accent:#0a84ff;--accent-soft:rgba(10,132,255,.19);--accent-ink:#69b7ff;--sh-card:0 1px 0 rgba(255,255,255,.09) inset,0 8px 24px rgba(0,0,0,.18)}
   html{background:#0d1015}body{background:radial-gradient(circle at 15% 0,rgba(0,112,220,.34),transparent 34%),radial-gradient(circle at 90% 20%,rgba(105,55,180,.25),transparent 30%),linear-gradient(160deg,#121821,#080b10)}
@@ -543,13 +547,19 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.25</p>
+  <p class="note">끼우 목업 · v18.2.31</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.25";
+const BUILD="v18.2.31";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.31",date:"2026.07.19",ko:["끼리 긴 제목의 실제 텍스트 폭을 기준으로 스트리밍 거리를 다시 계산해 흐름 표시가 멈추지 않도록 수정"],en:["Recalculated Circle-title streaming from the true text width so long names animate reliably"]},
+ {version:"v18.2.30",date:"2026.07.19",ko:["끼리 전환 시트에 초대 코드 입력·참여 흐름 추가","현재 브라우저에 저장된 끼리 코드를 찾아 해당 끼리로 이동하도록 목업 동작 연결"],en:["Added invite-code entry and join flow to the Circle switcher","Mockup now opens the locally stored Circle matching the entered code"]},
+ {version:"v18.2.29",date:"2026.07.19",ko:["끼리 검색 버튼 터치 뒤 발생하던 끼리 전환 바텀시트 오작동 수정"],en:["Prevented Circle search taps from opening the Circle switcher sheet"]},
+ {version:"v18.2.28",date:"2026.07.19",ko:["더보기에 초기 데이터 복원·전체 데이터 제거·모든 안읽음 뱃지 생성용 테스트 도구 추가","전체 데이터 제거 후에도 빈 화면 상태가 유지되도록 저장 데이터 처리 보완"],en:["Added More-page test tools for starter-data reset, full data removal, and unread-badge creation","Preserved empty-state data after reload"]},
+ {version:"v18.2.27",date:"2026.07.19",ko:["더보기 플로팅 UI가 터치 스크롤 끝에서도 최상단·최하단 메뉴 앵커까지 도달하도록 경계 판정 보완"],en:["Made the More floating UI reach the first and last menu anchors when touch scrolling stops slightly short of an edge"]},
+ {version:"v18.2.26",date:"2026.07.19",ko:["끼우·끼리·더보기 헤더를 확대 상태 없이 축소형 크기 하나로 고정"],en:["Fixed Queue, Circle, and More headers to one compact size without expanded states"]},
  {version:"v18.2.25",date:"2026.07.19",ko:["끼리·내 프로필 설정 항목을 좌측 정렬하고 라벨은 굵게, 현재 값은 작고 옅게 표시"],en:["Left-aligned Circle and My profile settings, using bold labels and smaller muted current values"]},
  {version:"v18.2.24",date:"2026.07.19",ko:["더보기의 모든 메뉴·입력 영역·구분선 전후에 플로팅 UI가 들어갈 수 있도록 위치 앵커를 촘촘하게 구성"],en:["Added insertion anchors around every More menu, input area, and both sides of the divider"]},
  {version:"v18.2.23",date:"2026.07.19",ko:["더보기 플로팅 UI를 메뉴 앵커를 따라 이동하지 않고 끼우처럼 화면 높이의 고정 위치에 유지"],en:["Kept the More floating UI at a fixed viewport position like Queue instead of moving it between menu anchors"]},
@@ -646,7 +656,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  selNone:"항목을 선택하세요",selCnt:"{n}개 선택됨",selAll:"전체 선택",selUnall:"선택 해제",selCancel:"취소",selDel:"삭제",
  cancel:"취소",create:"만들기",clearModalT:"삭제할 항목을 선택하세요",
  circlePickT:"끼리 전환",circleNew:"새 끼리 만들기",circleNewPrompt:"새 끼리 이름",circleNewPh:"예: 우리집, 강릉 여행",tCircleNew:"'{n}' 끼리를 만들었어요 — 관리에서 멤버를 초대하세요",
- manageT:"끼리 관리",inviteT:"초대 코드",inviteP:"이 코드를 공유하면 멤버가 들어올 수 있어요. (데모: 복사만 동작)",inviteCopy:"코드 복사",tInvite:"초대 코드 {n} 복사했어요",
+ manageT:"끼리 관리",inviteT:"초대 코드",inviteP:"이 코드를 공유하면 멤버가 들어올 수 있어요. (데모: 복사만 동작)",inviteCopy:"코드 복사",tInvite:"초대 코드 {n} 복사했어요",joinT:"초대 코드로 들어가기",joinP:"받은 코드를 입력해 참여 흐름을 확인하세요. 이 목업에서는 현재 브라우저에 저장된 끼리 코드만 찾을 수 있어요.",joinPh:"예: KKIU-ABCD",joinBtn:"참여",tJoin:"'{n}' 끼리로 들어왔어요",tJoinBad:"일치하는 초대 코드를 찾지 못했어요",
  membersT:"멤버 {n}명",meTag:"나",taskCnt:"진행 중 {n}개",leaveCircle:"나가기",leaveConfirm:"'{n}' 끼리에서 나갈까요?",tLeave:"'{n}' 끼리에서 나갔어요",ownerOnly:" · 개설자만 가능(데모)",
  circleDel:"이 끼리 삭제",circleDelConfirm:"'{n}' 끼리와 모든 할 일을 삭제할까요?",tCircleDel:"끼리를 삭제했어요",
  emptyCircleT:"아직 끼리가 없어요",emptyCircleP:"가족·연인·친구와 함께 쓰는 공유 큐를 만들어 보세요.",
@@ -690,7 +700,7 @@ en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  selNone:"Select items",selCnt:"{n} selected",selAll:"Select all",selUnall:"Deselect",selCancel:"Cancel",selDel:"Delete",
  cancel:"Cancel",create:"Create",clearModalT:"Select items to delete",
  circlePickT:"Switch circle",circleNew:"New circle",circleNewPrompt:"Name your circle",circleNewPh:"e.g. Home, Trip",tCircleNew:"Created '{n}' — invite members in Manage",
- manageT:"Manage circle",inviteT:"Invite code",inviteP:"Share this code to let members join. (Demo: copy only)",inviteCopy:"Copy code",tInvite:"Copied invite code {n}",
+ manageT:"Manage circle",inviteT:"Invite code",inviteP:"Share this code to let members join. (Demo: copy only)",inviteCopy:"Copy code",tInvite:"Copied invite code {n}",joinT:"Join with an invite code",joinP:"Enter a received code to test the join flow. This mockup can find codes stored in this browser only.",joinPh:"e.g. KKIU-ABCD",joinBtn:"Join",tJoin:"Joined '{n}'",tJoinBad:"No matching invite code found",
  membersT:"{n} members",meTag:"me",taskCnt:"{n} active",leaveCircle:"Leave circle",leaveConfirm:"Leave '{n}'?",tLeave:"Left '{n}'",ownerOnly:" · owner only (demo)",
  circleDel:"Delete this circle",circleDelConfirm:"Delete '{n}' and all of its to-dos?",tCircleDel:"Circle deleted",
  emptyCircleT:"No circles yet",emptyCircleP:"Create a shared queue with family, partners, or friends.",
@@ -728,7 +738,7 @@ let measCtx=null;
 
 function load(){const base={tasks:seedTasks(),circles:seedCircles(),ci:0,doneLog:seedLog(),tab:"home",insertIndex:3,ciInsertIndex:0,ciFilter:null,lang:"ko",suggestions:[]};
  try{const r=localStorage.getItem(KEY);if(!r)return base;const p=JSON.parse(r);
-  return{tasks:Array.isArray(p.tasks)&&p.tasks.length?p.tasks:base.tasks,
+  return{tasks:Array.isArray(p.tasks)?p.tasks:base.tasks,
    circles:Array.isArray(p.circles)?p.circles:base.circles,
    ci:Number.isInteger(p.ci)?p.ci:0,
    doneLog:Array.isArray(p.doneLog)?p.doneLog:base.doneLog,
@@ -883,15 +893,17 @@ function renderView(){
 function wireCircleTitleStream(){
  const win=viewEl.querySelector(".circle-title-window"),text=viewEl.querySelector(".circle-title-text");
  if(!win||!text)return;
- const sync=()=>{const distance=Math.max(0,text.getBoundingClientRect().width-win.getBoundingClientRect().width);text.style.setProperty("--stream-distance",`${-distance}px`);text.classList.toggle("stream",distance>2)};
+ const sync=()=>{text.style.width="max-content";const available=win.clientWidth||Math.round(win.getBoundingClientRect().width),natural=Math.max(text.scrollWidth,Math.round(text.getBoundingClientRect().width)),distance=Math.max(0,natural-available);text.style.setProperty("--stream-distance",`${-Math.max(0,distance)}px`);text.classList.toggle("stream",distance>1)};
  sync();requestAnimationFrame(sync);setTimeout(sync,140);document.fonts?.ready?.then(sync);
 }
 function wireCircleSearchButton(){
  const btn=viewEl.querySelector('.circle-head [data-act="csearch"]');
  if(!btn)return;
- const toggle=e=>{e.preventDefault();e.stopPropagation();circleSearch=circleSearch===null?"":null;if(circleSearch===null)renderView();else buildCircleSearch()};
+ // Do not replace the header while the same touch is still producing its click.
+ // Otherwise the delayed click can land on the Circle-title button underneath and open its sheet.
+ const toggle=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.switching)return;btn.dataset.switching="1";circleSearch=circleSearch===null?"":null;setTimeout(()=>{if(circleSearch===null)renderView();else buildCircleSearch()},0)};
  btn.addEventListener("pointerup",toggle,{passive:false});
- btn.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation()});
+ btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()});
 }
 function buildQueue(ctx,preserve){
  if(ctx==="circle"&&!curC()){renderView();return}
@@ -1170,11 +1182,20 @@ function renderSheet(){
 
 function openCircleSheet(){renderCircleSheet();document.getElementById("sheetwrap").classList.add("on")}
 function openManageSheet(){renderManageSheet();document.getElementById("sheetwrap").classList.add("on")}
+function joinCircleByCode(){const input=document.getElementById("joinCode"),code=(input?.value||"").trim().toUpperCase().replace(/\s+/g,"");if(!code){input?.focus();return}const i=state.circles.findIndex(c=>(c.code||"").toUpperCase()===code);if(i<0){toast(T("tJoinBad"));input?.focus();return}state.ci=i;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;markCircleSeen(state.circles[i]);save();closeSheet();state.tab="circle";renderView();setNavActive();moveInd();toast(T("tJoin",{n:state.circles[i].name}))}
 function renderCircleSheet(){
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  head.innerHTML=`<b>${T("circlePickT")}</b>`;
  const mineLabel=state.lang==="en"?"My tasks":"내 할일";
  body.innerHTML=state.circles.map((c,i)=>`<div class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></div>`).join("")+`<button class="featins" data-act="circle-new" style="margin-top:8px"><span class="p">+</span>${T("circleNew")}</button>`}
+function renderCircleSheet(){
+ const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
+ head.innerHTML=`<b>${T("circlePickT")}</b>`;
+ const mineLabel=state.lang==="en"?"My tasks":"내 할일";
+ const joinBox=`<div class="pcard" style="margin-bottom:12px"><h3>${T("joinT")}</h3><p>${T("joinP")}</p><div class="join-row"><input class="field" id="joinCode" autocomplete="off" autocapitalize="characters" placeholder="${T("joinPh")}"/><button type="button" class="mbtn primary" data-act="invite-join">${T("joinBtn")}</button></div></div>`;
+ const circles=state.circles.map((c,i)=>`<div class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></div>`).join("");
+ body.innerHTML=joinBox+circles+`<button class="featins" data-act="circle-new" style="margin-top:8px"><span class="p">+</span>${T("circleNew")}</button>`;
+}
 function renderManageSheet(){const c=curC();if(!c)return;
  // Migrate demo circles created before invite codes were persisted.
  if(!c.code){c.code=newCircleCode();save()}
@@ -1272,6 +1293,11 @@ function moreView(){
    ${row(I.arrow,T("mImport"),"import","⇧")}
    ${row(I.x,T("mReset"),"reset","⟲")}
   </div></section>
+  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"TEST TOOLS":"테스트 도구"}</p><div class="more-group">
+   ${row("↺",state.lang==="en"?"Reset to starter data":"초기 데이터로 리셋","test-seed","⟲")}
+   ${row("⌫",state.lang==="en"?"Remove all data (empty-state test)":"모든 데이터 제거 (엠티케이스 확인용)","test-empty","!")}
+   ${row(I.bell,state.lang==="en"?"Create all unread badges":"모든 안읽음 뱃지 생성","test-unread","•")}
+  </div></section>
   <div class="more-anchor"></div><button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
   <div class="more-anchor"></div><div style="height:54px"></div>
  </div></div>
@@ -1284,6 +1310,10 @@ function importJson(){const ta=document.getElementById("io");if(!ta)return;
   if(Array.isArray(p.doneLog))state.doneLog=p.doneLog;
   reindex();state.tab="home";homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tImportOk"))}catch{toast(T("tImportBad"))}}
 function resetAll(){askConfirm(T("mReset"),T("confirmReset"),T("mReset"),()=>{localStorage.removeItem(KEY);state=load();state.ciGhosts=false;state.ciExpanded=null;homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tReset"))},true)}
+function resetTestUi(){selecting=false;selected.clear();editingId=null;slotOpen=false;homeSearch=null;circleSearch=null;ciDoneFilter=null;expandedDoneId=null;state.ciGhosts=false;state.ciExpanded=null;state.ciFilter=null;state.insertIndex=0;state.ciInsertIndex=0}
+function resetToStarterData(){const lang=state.lang;localStorage.removeItem(KEY);state=load();state.lang=lang;state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Starter data restored":"초기 데이터로 되돌렸어요")}
+function removeAllDataForTest(){const title=state.lang==="en"?"Remove all data":"모든 데이터 제거",msg=state.lang==="en"?"This removes personal tasks, completed tasks, Circles, and all test badges so you can inspect empty states.":"개인 할 일·완료 목록·끼리·모든 테스트 뱃지를 비워 엠티케이스를 확인합니다.";askConfirm(title,msg,state.lang==="en"?"Remove":"제거",()=>{const lang=state.lang;state={tasks:[],circles:[],ci:0,doneLog:[],tab:"more",insertIndex:0,ciInsertIndex:0,ciFilter:null,lang,suggestions:[]};resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"All data removed":"모든 데이터를 비웠어요")},true)}
+function createUnreadBadgesForTest(){if(!state.circles.length){state.circles=seedCircles();state.ci=0}state.circles.forEach((c,i)=>{c.unread=i+3;c.unreadDone=2;c.memberUnread={};(c.members||["me"]).forEach((k,j)=>c.memberUnread[k]=j===0?3:1)});state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Unread badges created":"안읽음 뱃지를 모두 만들었어요")}
 
 function setNavActive(){document.querySelectorAll("#nav .nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===state.tab));const badge=document.querySelector("#nav .nbadge");if(badge){const n=circleUnreadTotal();badge.textContent=n>99?"99+":n;badge.hidden=!n}}
 function moveInd(){if(selecting)return;const nav=document.getElementById("nav");if(!nav)return;const ind=document.getElementById("navInd");const btn=nav.querySelector(`.nb[data-tab="${state.tab}"]`);if(btn&&ind){ind.style.left=btn.offsetLeft+"px";ind.style.width=btn.offsetWidth+"px"}}
@@ -1353,6 +1383,7 @@ app.addEventListener("click",e=>{
  if(act==="bundle"){expandBundle(el.dataset.key);return}
  if(act==="collapse"){collapseBundle(el.dataset.key);return}
  if(act==="circle-pick"){openCircleSheet();return}
+ if(act==="invite-join"){joinCircleByCode();return}
  if(act==="circle-manage"){openManageSheet();return}
  if(act==="circle-identity-edit"){openIdentityEditor("group");return}
  if(act==="profile-identity-edit"){openIdentityEditor("profile");return}
@@ -1390,7 +1421,7 @@ app.addEventListener("click",e=>{
  if(selecting&&e.target.closest(".card")){toggleSelect(id);return}
  if(act==="complete")complete(id);else if(act==="fav")favorite(id);
  else if(act==="sel-delete")deleteSelected();else if(act==="sel-cancel")cancelSelect();else if(act==="sel-all")selectAll();
- else if(act==="export")exportJson();else if(act==="import")importJson();else if(act==="reset")resetAll();
+ else if(act==="export")exportJson();else if(act==="import")importJson();else if(act==="reset")resetAll();else if(act==="test-seed")resetToStarterData();else if(act==="test-empty")removeAllDataForTest();else if(act==="test-unread")createUnreadBadgesForTest();
  else if(act==="link")toast(T("tLink"))});
 function submitAdd(){const si=viewEl.querySelector("#si");if(!si)return;const v=si.value;si.value="";autoGrowSi(si);state.tab==="circle"?ciAdd(v):addTask(v)}
 function submitFeat(){const w=viewEl.querySelector("#moreSlotWrap"),ta=w?.querySelector("#msi"),v=(ta?.value||"").trim();if(!v){w?.classList.remove("open");return}
@@ -1420,6 +1451,10 @@ function askPrompt(title,placeholder,cb,dflt){modalOkCb=cb;
 function openClearModal(arr){
  openModal(`<h3>${T("clearModalT")}</h3><div class="clist">${arr.map(t=>`<label class="clrow"><input type="checkbox" checked data-id="${t.id}"/><span>${esc(t.title)}</span></label>`).join("")}</div><div class="mrow"><button type="button" class="mbtn" data-act="modal-cancel">${T("cancel")}</button><button type="button" class="mbtn danger" data-act="modal-clear-confirm">${T("clear")}</button></div>`)}
 window.addEventListener("resize",()=>{moveInd();if(document.querySelector('[contenteditable="true"]'))return;if(isQueue()&&!slotOpen&&!selecting)buildQueue(state.tab==="circle"?"circle":"home",true)});
+// Keep the floating More-page card reachable at both scroll edges. Touch scrolling
+// often stops a few pixels short of the mathematical maximum, so use a forgiving
+// edge threshold instead of requiring an exact 8px boundary.
+wireMoreSlot=function(){const sc=viewEl.querySelector(".scroller"),slot=viewEl.querySelector("#moreSlotWrap");if(!sc||!slot)return;const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const max=Math.max(0,sc.scrollHeight-sc.clientHeight),edge=Math.max(24,Math.round(sc.clientHeight*.06)),atTop=sc.scrollTop<=edge,atBottom=max-sc.scrollTop<=edge,desired=sc.scrollTop+sc.clientHeight*.54;let best=atTop?anchors[0]:atBottom?anchors[anchors.length-1]:anchors[0],dist=Infinity;if(!atTop&&!atBottom)anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop,d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});const changed=!best.classList.contains("active");anchors.forEach(a=>a.classList.toggle("active",a===best));slot.style.top=Math.round(sc.clientHeight*.54)+"px";slot.style.transform="translateY(-50%)";viewEl.classList.toggle("compact-head",sc.scrollTop>44);if(changed){const q=viewEl.querySelector("#quipTxt"),a=state.lang==="en"?["One thing at a time","A tiny win counts","Leave room for later","You can stop here","Queue magic, quietly"]:["한 번에 하나씩","작은 진척도 진척","나중의 나를 위한 자리","여기서 잠깐 쉬어도 돼요","조용히 끼워졌어요"];if(q){moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex]}}};sc.addEventListener("scroll",place,{passive:true});window.addEventListener("resize",place,{passive:true});requestAnimationFrame(place)};
 mount();
 </script>
 </body>
