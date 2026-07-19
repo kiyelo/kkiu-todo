@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon, CheckIcon } from './Icons.jsx'
 
-export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee }) {
+export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, showRank = true }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(task.title)
   const inputRef = useRef(null)
@@ -17,16 +17,16 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   }
 
   return (
-    <article className={editing ? 'task-card editing' : 'task-card'}>
-      <button className="check" onClick={() => onComplete(task.id)} aria-label={`${task.title} 완료`}><CheckIcon /></button>
-      <span className={index < 3 ? `rank top rank-${index + 1}` : 'rank'}>#{index + 1}</span>
+    <article className={`${editing ? 'task-card editing' : 'task-card'}${task.done ? ' task-done' : ''}${showRank ? '' : ' no-rank'}`}>
+      <button className={task.done ? 'check checked' : 'check'} onClick={() => onComplete(task.id)} aria-label={`${task.title} ${task.done ? '복원' : '완료'}`}><CheckIcon /></button>
+      {showRank && <span className={index < 3 ? `rank top rank-${index + 1}` : 'rank'}>#{index + 1}</span>}
       <div className="task-main">
         {editing ? (
           <textarea ref={inputRef} value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() }
             if (event.key === 'Escape') { setValue(task.title); setEditing(false) }
           }} />
-        ) : <button className="task-title" onClick={() => setEditing(true)}>{task.title}</button>}
+        ) : <button className="task-title" onClick={() => !task.done && setEditing(true)}>{task.title}</button>}
       </div>
       {editing ? <button className="save-button" onClick={save} aria-label="수정 저장"><ArrowIcon /></button> : circle && <span className="assignee-emoji">{members.find((member) => member.id === task.assignee)?.emoji}</span>}
       {editing && circle && (
