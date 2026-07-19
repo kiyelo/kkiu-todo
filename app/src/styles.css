@@ -55,9 +55,11 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .task-card.no-rank { grid-template-columns: 38px minmax(0, 1fr) auto; }
 .task-card.task-done .task-title { color: var(--muted); text-decoration: line-through; }
 .task-card.task-done { background: rgba(255,255,255,.72); }
+.task-card.selected-card { box-shadow: inset 0 0 0 2px var(--accent), 0 8px 22px rgba(224,137,74,.16); }
 .check { width: 32px; height: 32px; display: grid; place-items: center; border: 2px solid #d8d0c2; border-radius: 11px; color: transparent; }
 .check:hover { border-color: var(--accent); color: var(--accent); }
 .check.checked { border-color: var(--accent); background: var(--accent); color: #fff; }
+.check.selected-check { border-color: var(--accent); background: var(--accent); color: #fff; }
 .check svg { width: 18px; height: 18px; stroke-width: 2.5; }
 .rank { font-size: 13px; font-weight: 750; color: #aaa295; text-align: center; }
 .rank.top { padding: 4px 2px; border-radius: 9px; background: var(--accent-soft); color: #a65f2d; }
@@ -66,6 +68,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .task-title { width: 100%; padding: 4px 2px; overflow: hidden; text-align: left; font-size: 15.5px; font-weight: 620; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .task-main textarea { width: 100%; min-height: 58px; max-height: 110px; resize: vertical; border: 0; border-bottom: 2px solid var(--accent); outline: 0; padding: 3px 2px; background: transparent; font-weight: 620; line-height: 1.4; }
 .assignee-emoji { width: 34px; text-align: center; font-size: 22px; }
+.card-actions { display: flex; align-items: center; gap: 2px; }
+.reorder-actions { display: flex; flex-direction: column; gap: 2px; }
+.reorder-actions button { width: 27px; height: 23px; display: grid; place-items: center; border-radius: 7px; background: #f1ece3; color: #8d8579; font-size: 13px; }
+.reorder-actions button:disabled { opacity: .25; }
 .save-button { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: var(--accent); color: #fff; box-shadow: 0 5px 12px rgba(224, 137, 74, .3); }
 .save-button:active { transform: scale(.94); }
 .assignee-row { grid-column: 1 / -1; width: 100%; display: flex; gap: 7px; overflow-x: auto; padding: 6px 1px 1px; scrollbar-width: none; touch-action: pan-x; }
@@ -126,6 +132,30 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .completed-card > i { font-size: 22px; font-style: normal; }
 .sheet-empty { min-height: 180px; display: grid; place-items: center; color: var(--muted); }
 .clear-completed { min-height: 48px; margin-top: 5px; border-radius: 15px; background: #f6e4e1; color: #b24f43; font-size: 14px; font-weight: 750; }
+.circle-editor { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding: 4px 1px; }
+.circle-editor label { display: flex; flex-direction: column; gap: 7px; }
+.circle-editor label > span { padding-left: 4px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.identity-field { display: grid; grid-template-columns: 52px 1fr; gap: 8px; }
+.identity-field input { min-width: 0; height: 52px; padding: 0 14px; border: 1px solid var(--line); border-radius: 15px; outline: 0; background: #fff; font-weight: 650; }
+.identity-field input:focus { border-color: var(--accent); }
+.emoji-current { height: 52px; display: grid; place-items: center; border-radius: 15px; background: var(--accent-soft); font-size: 26px; }
+.emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding: 7px; border-radius: 16px; background: #eee8de; }
+.emoji-grid button { aspect-ratio: 1; display: grid; place-items: center; border-radius: 11px; font-size: 22px; }
+.emoji-grid button.selected { background: #fff; box-shadow: inset 0 0 0 2px var(--accent); }
+.primary-sheet-action { min-height: 50px; margin-top: 4px; border-radius: 15px; background: var(--accent); color: #fff; font-weight: 780; }
+.delete-circle { min-height: 44px; border-radius: 14px; color: #b24f43; background: #f6e4e1; font-weight: 700; }
+.selection-bar { position: absolute; z-index: 70; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); min-height: 54px; display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 7px; padding: 7px; border-radius: 18px; background: rgba(35,31,25,.94); color: #fff; box-shadow: 0 14px 34px rgba(30,25,18,.28); backdrop-filter: blur(14px); }
+.selection-bar button { min-width: 48px; height: 40px; padding: 0 10px; border-radius: 12px; color: #fff; background: rgba(255,255,255,.1); font-size: 12px; font-weight: 700; }
+.selection-bar b { text-align: center; font-size: 13px; }
+.selection-bar .danger { background: #c95649; }
+.selection-bar button:disabled { opacity: .4; }
+.switch { position: relative; width: 42px; height: 25px; border-radius: 99px; background: #d8d1c6; }
+.switch u { position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(40,30,20,.18); transition: .18s; }
+.switch.on { background: var(--accent); }
+.switch.on u { transform: translateX(17px); }
+.compact-mode .task-card { min-height: 54px; padding-top: 6px; padding-bottom: 6px; }
+.compact-mode .queue-list { gap: 5px; }
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 
 .bottom-nav { flex: none; height: calc(68px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px 14px env(safe-area-inset-bottom, 0px); border-top: 1px solid rgba(220, 210, 195, .72); background: rgba(251, 248, 242, .94); backdrop-filter: blur(18px); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #9c9488; font-size: 11px; font-weight: 650; }
