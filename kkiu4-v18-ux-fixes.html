@@ -637,18 +637,50 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 .edit-save:active{transform:scale(.9)}
 .edit-save svg{width:19px;height:19px;pointer-events:none}
 
+/* v18.4.8 — structured Circle/profile identity editor. */
+.modal:has(.identity-editor){width:min(354px,calc(100vw - 24px));max-height:min(720px,88vh);padding:0;overflow:hidden;border-radius:24px;border:1px solid rgba(255,255,255,.72);background:var(--surface)}
+.identity-editor{display:flex;flex-direction:column;max-height:min(720px,88vh);min-height:0}
+.identity-editor-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 18px 14px;border-bottom:1px solid var(--hair)}
+.identity-editor-head-copy{min-width:0}
+.identity-editor-kicker{display:block;margin-bottom:3px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--accent-ink)}
+.identity-editor-head h3{margin:0;font-size:18px;font-weight:820;letter-spacing:-.025em}
+.identity-close{flex:none;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:rgba(70,55,30,.055);color:var(--ink2)}
+.identity-close svg{width:18px;height:18px}.identity-close:active{transform:scale(.92)}
+.identity-editor-body{min-height:0;overflow-y:auto;padding:16px 18px 14px;overscroll-behavior:contain}
+.identity-field-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:760;color:var(--sub)}
+.identity-name-wrap{display:flex;align-items:center;gap:10px;height:50px;padding:0 12px;border:1px solid var(--hair);border-radius:15px;background:rgba(70,55,30,.04)}
+.identity-name-preview{flex:none;width:30px;height:30px;display:grid;place-items:center;font-size:24px;line-height:1}
+.identity-name-wrap .field{height:46px;margin:0;padding:0;border:0!important;background:transparent!important;box-shadow:none!important;font-size:15px;font-weight:680}
+.identity-emoji-section{margin-top:17px}
+.identity-selected{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--faint)}
+.identity-selected .identity-current{font-size:25px}
+.identity-search-wrap{height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--hair);border-radius:14px;background:rgba(70,55,30,.04)}
+.identity-search-wrap svg{flex:none;width:17px;height:17px;color:var(--faint)}
+.identity-search-wrap .field{height:42px;margin:0;padding:0;border:0!important;background:transparent!important;box-shadow:none!important;font-size:13.5px}
+.identity-search-hint{margin:7px 2px 10px!important;font-size:10.5px!important;line-height:1.35!important;color:var(--faint)!important}
+.identity-emoji-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;max-height:236px;min-height:98px;overflow-y:auto;padding:3px 2px 8px;overscroll-behavior:contain}
+.identity-emoji-grid .asgc{width:100%!important;height:42px!important;padding:0!important;justify-content:center;border-radius:12px;font-size:21px!important;box-shadow:none}
+.identity-emoji-grid .asgc.on{background:var(--accent-soft);box-shadow:0 0 0 1.5px var(--accent) inset}
+.identity-empty{grid-column:1/-1;display:grid;place-items:center;min-height:88px;color:var(--sub);font-size:12px;text-align:center}
+.identity-actions{flex:none;display:grid;grid-template-columns:1fr 1.3fr;gap:9px;margin:0;padding:12px 18px calc(16px + var(--safe));border-top:1px solid var(--hair);background:var(--surface)}
+.identity-actions .seltxt{height:46px;padding:0 14px;border-radius:14px;text-align:center;background:rgba(70,55,30,.06);font-size:13.5px;font-weight:780;color:var(--ink2)}
+.identity-actions .identity-save{background:var(--accent);color:#fff;box-shadow:0 7px 15px rgba(10,132,255,.22)}
+@media(max-width:350px){.modal:has(.identity-editor){width:calc(100vw - 18px);max-height:90vh}.identity-editor{max-height:90vh}.identity-editor-head{padding:15px 15px 12px}.identity-editor-body{padding:13px 15px 11px}.identity-actions{padding:10px 15px calc(13px + var(--safe))}.identity-emoji-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;max-height:190px}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
- <p class="note">끼우 목업 · v18.4.6</p>
+ <p class="note">끼우 목업 · v18.4.8</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.4.6";
+const BUILD="v18.4.8";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.4.8",date:"2026.07.19",ko:["끼리·내 프로필 설정 모달을 헤더·스크롤 본문·고정 하단 액션 구조로 정돈","랜덤·저장 버튼을 이모지 목록 아래 모달 최하단에 고정해 긴 목록에서도 항상 노출","이름 입력·현재 이모지·검색·이모지 그리드의 시각 계층과 모바일 간격 개선","한국어·영어 키워드와 이모지 문자로 검색 가능한 이모지 검색 색인 추가"],en:["Reorganized Circle and profile settings into a clear header, scrollable body, and fixed bottom action bar","Pinned Random and Save to the bottom of the modal so they stay visible with long emoji lists","Improved hierarchy and mobile spacing for the name, selected emoji, search, and emoji grid","Added emoji search indexing for Korean and English keywords as well as direct emoji characters"]},
+ {version:"v18.4.7",date:"2026.07.19",ko:["끼리 입력 카드 바로 아래 할 일을 수정할 때 담당자 선택 칩이 입력 카드 뒤로 들어가던 스태킹 컨텍스트 문제 수정","수정 중에는 큐 이동을 transform 대신 동등한 top 좌표로 렌더링해 수정 카드만 입력 카드보다 앞에 표시"],en:["Fixed the stacking-context issue that placed edit assignee chips behind the Circle entry card when editing the task directly below it","Rendered the queue at the same top offset instead of a transform while editing so only the active edit card can layer above the entry card"]},
  {version:"v18.4.6",date:"2026.07.19",ko:["끼리 할 일 수정 담당자 칩을 카드 내부 인라인 배치에서 기존 카드 상단 플로팅 가로 목록으로 복원","수정 진입 즉시 카드의 담당자 표시 이모지와 순서 변경 핸들을 제거해 제목 입력 폭 확대","수정 저장 버튼을 새 할 일 입력 버튼과 동일한 44px 원형 화살표 버튼으로 통일","담당자 칩 선택 상태를 목록 내부에서만 중앙 정렬해 큐의 세로 위치가 움직이지 않도록 보완"],en:["Restored Circle edit assignee chips from the inline card row to the original floating horizontal strip above the card","Removed the assignee display emoji and reorder handle on edit entry to widen the title field","Matched the edit save control to the same 44px circular arrow button used for new-task entry","Centered the selected assignee only within the horizontal strip without moving the queue vertically"]},
  {version:"v18.4.5",date:"2026.07.19",ko:["할 일 수정 모드의 X 버튼을 입력 카드와 같은 저장 버튼으로 교체","끼리 수정 중에는 카드 안의 담당자 이모지를 제거하고 활성 담당자 칩을 인라인으로 항상 표시"],en:["Replaced the task-edit X button with the same save control used by task entry","Removed the duplicate Circle assignee emoji during editing and kept the active assignee chips visible inline"]},
  {version:"v18.4.4",date:"2026.07.19",ko:["끼리 엠티케이스 헤더 행에도 44px 최소 높이를 적용해 더보기와 상단 UI 높이를 일치"],en:["Applied the same 44px minimum header-row height to the no-Circle state so it matches More"]},
@@ -844,7 +876,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨  🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀  🐶  🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚  🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰  🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣  🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶  📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ").filter(Boolean);
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨  🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀  🐶  🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚  🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰  🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣  🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶  📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ").filter(e=>e&&e!=="️");
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -1075,7 +1107,9 @@ function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":state.tab==="more"?"
  if(!Q||!qtrackEl)return;
  viewEl.classList.remove("compact-head");
  const si=nearestSlotIdx(qOffset);
- qtrackEl.style.transform=`translateY(${qTT-qOffset}px)`;
+ const queueShift=qTT-qOffset;
+ if(editingId){qtrackEl.style.transform="none";qtrackEl.style.top=queueShift+"px";qtrackEl.style.willChange="auto"}
+ else{qtrackEl.style.top="0px";qtrackEl.style.willChange="transform";qtrackEl.style.transform=`translateY(${queueShift}px)`}
  if(si!==qPrevSI){
   const sy=Q.slots[si].y;
   qRows.forEach(el=>{if(el.classList.contains("lift"))return;const ry=+el.dataset.y;el.style.transform=`translateY(${ry>=sy?GAP:0}px)`});
@@ -1445,7 +1479,7 @@ function navHtml(){const n=circleUnreadTotal();return `<div class="nav-ind" id="
 function setLang(l){if(state.lang===l)return;state.lang=l;save();document.getElementById("nav").innerHTML=navHtml();renderView();setNavActive();requestAnimationFrame(moveInd)}
 
 function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)return;if(editingId&&editingId!==id)cancelEdit();editingId=id;editingOriginal=t.title;
- const cardEl=el.closest(".card");cardEl?.classList.add("editing");
+ const cardEl=el.closest(".card");cardEl?.classList.add("editing");apply(state.tab);
  const actsEl=cardEl?.querySelector(".acts");if(actsEl){actsEl.querySelectorAll(".who,.whos,.grip").forEach(node=>node.remove());if(!actsEl.querySelector(".edit-save"))actsEl.insertAdjacentHTML("beforeend",`<button class="save edit-save" aria-label="${state.lang==="en"?"Save changes":"수정 저장"}" data-act="edit-save" data-id="${id}">${I.arrow}</button>`)}
  const rest=el.parentElement.querySelector(".t-rest");if(rest)rest.style.display="none";
  el.setAttribute("contenteditable","true");el.textContent=t.title;el.focus();
@@ -1555,9 +1589,17 @@ app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
 });
-function drawIdentityEmojiGrid(q){const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q)),grid=document.getElementById("identityEmojiGrid");if(!grid)return;const current=document.getElementById("identityEmojiCurrent");if(current)current.textContent=identityEditEmoji;grid.innerHTML=arr.map(e=>`<button class="asgc ${identityEditEmoji===e?"on":""}" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px" data-act="identity-emoji-pick" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"}
-function openIdentityEditor(kind){const c=curC();if(!c)return;identityEditKind=kind;const profile=kind==="profile"?myProfile(c):null;identityEditEmoji=profile?.emoji||c.emoji||"✨";identityEditBaseName=profile?.name||c.name||"";openModal(`<h3>${kind==="profile"?"내 프로필 설정":"끼리 설정"}</h3><div class="identity-block" style="margin-top:10px"><label class="identity-label" for="identityName">이름</label><input class="field" id="identityName" value="${esc(identityEditBaseName)}" placeholder="${kind==="profile"?"프로필 이름":"끼리 이름"}"/></div><div class="identity-block"><div class="identity-label"><span>이모지</span><span class="identity-current" id="identityEmojiCurrent">${identityEditEmoji}</span></div><label class="identity-search-label" for="identityEmojiSearch">찾기</label><input class="field" id="identityEmojiSearch" placeholder="이모지 검색"/><div class="identity-actions"><button class="seltxt" data-act="identity-random">🎲 랜덤</button><button class="seltxt identity-save" data-act="identity-save">저장</button></div><div id="identityEmojiGrid" style="display:flex;gap:6px;flex-wrap:wrap;max-height:300px;overflow:auto;margin-top:12px"></div></div>`);drawIdentityEmojiGrid("");setTimeout(()=>document.getElementById("identityEmojiSearch")?.addEventListener("input",e=>drawIdentityEmojiGrid(e.target.value)),0)}
-function openEmojiPicker(kind){const draw=q=>{const arr=EMOJI_LIBRARY.filter(e=>!q||e.includes(q));const grid=document.getElementById("emojiGrid");if(grid)grid.innerHTML=arr.map(e=>`<button class="asgc" style="width:42px;padding:0;justify-content:center" data-act="emoji-library-pick" data-kind="${kind}" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"};openModal(`<h3>이모지 선택</h3><input class="field" id="emojiSearch" placeholder="이모지 검색"/><button class="rbtn" data-act="emoji-library-random" data-kind="${kind}" style="margin:10px 0">🎲 랜덤으로 고르기</button><div id="emojiGrid" style="display:flex;gap:7px;flex-wrap:wrap;max-height:280px;overflow:auto"></div>`);draw("");setTimeout(()=>document.getElementById("emojiSearch")?.addEventListener("input",e=>draw(e.target.value)),0)}
+const EMOJI_SEARCH_GROUPS=[
+ ["강아지 개 멍멍이 dog puppy pet","🐶 🐕"],["고양이 냥이 cat kitten pet","😺 😸 😹 😻 😼 😽 🙀 😿 😾 🐈"],["토끼 rabbit bunny","🐰 🐇"],["곰 bear panda","🐻 🐼"],["여우 fox","🦊"],["개구리 frog","🐸"],["새 bird","🐦 🐤 🐔 🐧 🦆 🦅 🦉 🕊️"],["물고기 바다동물 fish sea animal","🐠 🐟 🐡 🐬 🐳 🦈 🐙 🦑 🦀"],["동물 애완동물 animal pet","🐶 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🦋 🐢 🐍 🦖 🐙 🐠 🐬 🐳 🦈 🐘 🦒 🦘 🐕 🐈"],
+ ["꽃 flower blossom","🌸 🌹 🌺 🌻 🌼 💐 🪻"],["나무 tree forest","🌴 🌳 🌲"],["잎 풀 식물 자연 leaf plant nature","🍀 🌿 🍃 🍂 🍁 🌱 🌵 🪴"],["달 밤 moon night","🌙 🌌"],["해 태양 맑음 sun sunny","☀️ 🌤️"],["불 불꽃 fire flame","🔥 ❤️‍🔥"],["물 바다 파도 water sea ocean wave","🌊 💧 💦"],["날씨 비 눈 구름 weather rain snow cloud","☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ ⚡ 🌈"],
+ ["집 홈 home house","🏠 🏡"],["학교 school","🏫"],["병원 hospital","🏥 🚑"],["차 자동차 교통 car vehicle transport","🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 ✈️ 🚀"],["여행 travel trip","🗺️ ✈️ 🚗 🏕️ ⛺ 🏖️ 🏝️"],
+ ["과일 fruit","🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝"],["채소 야채 vegetable","🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄"],["음식 밥 food meal","🍞 🥐 🥖 🧀 🥚 🍳 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 🥟"],["커피 음료 drink coffee","☕ 🫖 🧃 🥤 🧋 🍺 🍷"],["케이크 디저트 dessert cake","🍦 🍧 🍨 🍩 🍪 🎂 🍰 🍫 🍬 🍭"],
+ ["운동 스포츠 sport exercise","🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🏓 🏸 ⛳ 🏹 🎣 🥊 🥋 🛹 🏆 🥇"],["게임 놀이 game play","🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩"],["음악 노래 music song","🎤 🎧 🎼 🎵 🎶"],["미술 그림 art paint","🎨 🖍️ 🖌️"],["공부 책 study book","📖 📝 ✏️"],["일 업무 work office","📝 📌 📎 🗓️ 💼 ⚙️"],["사진 카메라 photo camera","📷 📸"],["검색 찾기 search find","🔍"],["아이디어 전구 idea light","💡"],["일정 달력 calendar schedule","🗓️ ⏰"],["완료 체크 done check","✅ 👍 💯"],["선물 축하 파티 gift celebrate party","🎁 🎈 🎉 🎊 🎀 🥳"],["사랑 하트 love heart","🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥"],["별 반짝 sparkle star","✨ 🌟 💫"],["잠 수면 sleep","😴 💤 🌙"],["랜덤 주사위 random dice","🎲"]
+];
+function searchEmojiLibrary(q){const term=(q||"").trim().toLocaleLowerCase();if(!term)return EMOJI_LIBRARY;const found=new Set(EMOJI_LIBRARY.filter(e=>e.includes(term)));EMOJI_SEARCH_GROUPS.forEach(([keys,values])=>{const tokens=keys.toLocaleLowerCase().split(/\s+/);if(tokens.some(k=>k===term||k.startsWith(term)||term.startsWith(k)))values.split(/\s+/).forEach(e=>found.add(e))});return EMOJI_LIBRARY.filter(e=>found.has(e))}
+function drawIdentityEmojiGrid(q){const arr=searchEmojiLibrary(q),grid=document.getElementById("identityEmojiGrid");if(!grid)return;document.querySelectorAll("#identityEmojiCurrent,#identityNamePreview").forEach(el=>el.textContent=identityEditEmoji);grid.innerHTML=arr.map(e=>`<button type="button" class="asgc ${identityEditEmoji===e?"on":""}" aria-label="이모지 ${e}" data-act="identity-emoji-pick" data-e="${e}">${e}</button>`).join("")||`<div class="identity-empty"><span>“${esc(q)}” 검색 결과가 없어요</span></div>`}
+function openIdentityEditor(kind){const c=curC();if(!c)return;identityEditKind=kind;const profile=kind==="profile"?myProfile(c):null;identityEditEmoji=profile?.emoji||c.emoji||"✨";identityEditBaseName=profile?.name||c.name||"";const title=kind==="profile"?"내 프로필 설정":"끼리 설정",placeholder=kind==="profile"?"프로필 이름":"끼리 이름";openModal(`<div class="identity-editor"><header class="identity-editor-head"><div class="identity-editor-head-copy"><span class="identity-editor-kicker">${kind==="profile"?"MY PROFILE":"CIRCLE"}</span><h3>${title}</h3></div><button type="button" class="identity-close" data-act="modal-cancel" aria-label="닫기">${I.x}</button></header><div class="identity-editor-body"><section><label class="identity-field-label" for="identityName"><span>이름</span></label><div class="identity-name-wrap"><span class="identity-name-preview" id="identityNamePreview">${identityEditEmoji}</span><input class="field" id="identityName" value="${esc(identityEditBaseName)}" placeholder="${placeholder}" maxlength="${kind==="profile"?16:20}"/></div></section><section class="identity-emoji-section"><div class="identity-field-label"><span>이모지</span><span class="identity-selected">선택됨 <b class="identity-current" id="identityEmojiCurrent">${identityEditEmoji}</b></span></div><label class="identity-search-wrap" for="identityEmojiSearch">${I.search}<input class="field" id="identityEmojiSearch" placeholder="강아지, 꽃, moon, food" autocomplete="off"/></label><p class="identity-search-hint">한국어·영어 키워드 또는 이모지로 검색할 수 있어요.</p><div class="identity-emoji-grid" id="identityEmojiGrid"></div></section></div><footer class="identity-actions"><button type="button" class="seltxt" data-act="identity-random">🎲 랜덤</button><button type="button" class="seltxt identity-save" data-act="identity-save">저장</button></footer></div>`);drawIdentityEmojiGrid("");setTimeout(()=>document.getElementById("identityEmojiSearch")?.addEventListener("input",e=>drawIdentityEmojiGrid(e.target.value)),0)}
+function openEmojiPicker(kind){const draw=q=>{const arr=searchEmojiLibrary(q),grid=document.getElementById("emojiGrid");if(grid)grid.innerHTML=arr.map(e=>`<button class="asgc" style="width:42px;padding:0;justify-content:center" data-act="emoji-library-pick" data-kind="${kind}" data-e="${e}">${e}</button>`).join("")||"<p style=\"color:var(--sub)\">결과가 없어요</p>"};openModal(`<h3>이모지 선택</h3><input class="field" id="emojiSearch" placeholder="강아지, 꽃, moon, food"/><button class="rbtn" data-act="emoji-library-random" data-kind="${kind}" style="margin:10px 0">🎲 랜덤으로 고르기</button><div id="emojiGrid" style="display:flex;gap:7px;flex-wrap:wrap;max-height:280px;overflow:auto"></div>`);draw("");setTimeout(()=>document.getElementById("emojiSearch")?.addEventListener("input",e=>draw(e.target.value)),0)}
 function openModal(html){document.getElementById("modal").innerHTML=html;document.getElementById("modalwrap").classList.add("on")}
 function closeModal(){document.getElementById("modalwrap").classList.remove("on");modalOkCb=null}
 function askConfirm(title,msg,okLabel,cb,danger){modalOkCb=cb;
