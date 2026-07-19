@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.26</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<title>Kkiu To Do — v18.2.39</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -36,7 +35,7 @@
   .hicons{display:flex;gap:8px;margin-top:5px}
   .hbtn{position:relative;width:36px;height:36px;border-radius:12px;background:rgba(70,55,30,.05);display:grid;place-items:center;color:var(--ink2);transition:.15s}
   .hbtn:active{transform:scale(.92)} .hbtn svg{width:18px;height:18px}
-  .hbadge{position:absolute;top:-4px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
+  .hbadge{position:absolute;top:1px;right:1px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
   .mini-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 6px;margin-left:5px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:10.5px;font-weight:800;vertical-align:1px}
   .chips{flex:none;display:flex;gap:7px;padding:2px 24px 10px;flex-wrap:wrap}
   .chip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 6px;border-radius:999px;background:var(--surface);box-shadow:var(--sh-card);font-size:12.5px;font-weight:700;color:var(--sub);transition:.15s}
@@ -91,10 +90,8 @@
   .card.editing .t-rest{display:none}
   .card.editing .acts{align-self:start;padding-top:2px}
   .card.editing .mid{min-width:0;padding-bottom:2px}
-  .editasg{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
-  .editasg .asgc{height:28px;padding:0 9px 0 4px;font-size:11.5px;box-shadow:none;background:rgba(70,55,30,.06)}
-  .editasg .asgc.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1.5px var(--accent) inset}
-  .editasg .asgc .av{width:26px;height:26px;font-size:18px}
+  .asgrow.edit-assignee-picker{position:absolute;left:7px;right:7px;bottom:calc(100% + 10px);width:auto;max-width:none;margin:0;padding:2px 0 3px;box-shadow:none}
+  .edit-assignee-picker .asgc{background:var(--paper);box-shadow:var(--sh-card)}
   .sub{margin-top:2px;font-size:11px;font-weight:560;color:var(--faint)}
   .acts{display:flex;align-items:center;gap:1px}
   .ico{width:32px;height:32px;border-radius:9px;color:var(--faint);display:grid;place-items:center;opacity:.7;transition:.14s}
@@ -157,6 +154,30 @@
   .devins:active{transform:scale(.98)}
   #moreSlotWrap{position:absolute;z-index:40;pointer-events:none;transition:top .2s cubic-bezier(.2,.7,.3,1)}
   #moreSlotWrap .quip{pointer-events:auto}
+  .emoji-slot-btn{justify-content:center;padding:0 44px 0 14px;overflow:visible}
+  .emoji-reels{display:flex;align-items:center;justify-content:center;gap:5px}
+  .emoji-reel{width:34px;height:30px;display:grid;place-items:center;border-radius:10px;background:rgba(10,132,255,.055);box-shadow:0 1px 0 rgba(255,255,255,.86) inset;font-size:19px;font-style:normal;transform-origin:center;will-change:transform,filter}
+  .slot-mode{position:absolute;right:12px;top:50%;translate:0 -50%;width:24px;height:24px;display:grid;place-items:center;border-radius:8px;background:rgba(70,55,30,.055);font-size:11px;color:var(--sub)}
+  .emoji-slot-btn.locked .slot-mode{background:var(--accent-soft);color:var(--accent-ink)}
+  .emoji-slot-btn.combo-mixed .emoji-reel{animation:slot-float 2.4s ease-in-out infinite}.emoji-slot-btn.combo-mixed .emoji-reel:nth-child(2){animation-delay:-.7s}.emoji-slot-btn.combo-mixed .emoji-reel:nth-child(3){animation-delay:-1.4s}
+  .emoji-slot-btn.combo-pair .emoji-reel.matched{animation:slot-pair 1.25s ease-in-out infinite}.emoji-slot-btn.combo-pair .emoji-reel:not(.matched){animation:slot-dim 1.8s ease-in-out infinite}
+  .emoji-slot-btn.combo-triple{box-shadow:0 0 0 1px rgba(10,132,255,.24),0 8px 28px rgba(10,132,255,.20),var(--sh-slot)}
+  .emoji-slot-btn.combo-triple .emoji-reel{animation:slot-triple 1.05s cubic-bezier(.3,.8,.3,1) infinite}.emoji-slot-btn.combo-triple .emoji-reel:nth-child(2){animation-delay:-.18s}.emoji-slot-btn.combo-triple .emoji-reel:nth-child(3){animation-delay:-.36s}
+  .emoji-slot-btn.symbol-fire.combo-triple .emoji-reel{animation-name:slot-fire}.emoji-slot-btn.symbol-moon.combo-triple .emoji-reel{animation-name:slot-moon}
+  .emoji-slot-btn.rolling .emoji-reel{animation:slot-roll .18s cubic-bezier(.2,.8,.3,1)!important}
+  @keyframes slot-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes slot-pair{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.12);filter:brightness(1.14)}}
+  @keyframes slot-dim{0%,100%{opacity:.8}50%{opacity:.52}}
+  @keyframes slot-triple{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 2px rgba(10,132,255,.25))}50%{transform:translateY(-3px) scale(1.13);filter:drop-shadow(0 0 8px rgba(10,132,255,.65))}}
+  @keyframes slot-fire{0%,100%{transform:translateY(0) rotate(-2deg);filter:drop-shadow(0 0 2px #ff8a3d)}35%{transform:translateY(-4px) rotate(3deg);filter:drop-shadow(0 0 9px #ff5f28)}70%{transform:translateY(-1px) rotate(-1deg)}}
+  @keyframes slot-moon{0%,100%{transform:translateX(-2px) rotate(-4deg);filter:drop-shadow(0 0 2px #78a9ff)}50%{transform:translateX(2px) rotate(4deg);filter:drop-shadow(0 0 9px #9fc4ff)}}
+  @keyframes slot-roll{0%{transform:translateY(-7px) scale(.75);opacity:.25}75%{transform:translateY(2px) scale(1.1);opacity:1}100%{transform:none;opacity:1}}
+  .member-order-list{display:flex;flex-direction:column;gap:8px}.member-order-row{margin:0!important;touch-action:none}.member-order-row.dragging{opacity:.58;box-shadow:0 10px 28px rgba(30,65,105,.18)}
+  .member-handle{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--faint);cursor:grab;touch-action:none}.member-handle:active{cursor:grabbing;background:rgba(70,55,30,.05)}.member-handle svg{width:17px;height:17px}.member-handle.self{font-size:12px;cursor:default;color:var(--sub)}
+  .task-title-row{display:flex;align-items:center;min-width:0}.task-title-row .t-title{flex:1;min-width:0}
+  .source-unread-dot{display:inline-block;flex:none;width:7px;height:7px;margin:0 2px 0 7px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--surface),0 1px 5px rgba(255,69,58,.32)}
+  .drow .source-unread-dot{margin:0 4px 0 2px}
+
   .more-anchor{height:0;pointer-events:none;transition:height .2s cubic-bezier(.2,.7,.3,1)}
   .more-anchor.active{height:44px}
   .more-version{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px 0 8px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--faint)}
@@ -175,6 +196,12 @@
   .more-lang.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent) inset}
   .more-divider{height:1px;margin:4px 4px 18px;background:var(--hair)}
   .more-anchor{height:0;margin:0;pointer-events:none}
+  .more-qtrack>*{position:absolute!important;left:18px;right:18px;margin:0!important;transition:transform .19s cubic-bezier(.2,.7,.3,1)}
+  .more-qitem{min-width:0}
+  .more-qitem>.rbtn,.more-qitem>.field,.more-qitem>.more-version{margin:0}
+  .more-qsection .more-section-label{margin:0 4px 8px}
+  .more-qsection .pcard{margin:0}
+  .more-qdivider{margin:8px 4px!important}
   .history-entry{padding:15px 16px;border-radius:16px;background:var(--surface);box-shadow:var(--sh-card)}
   .history-entry+.history-entry{margin-top:9px}.history-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
   .history-meta b{font-size:15px;letter-spacing:-.02em}.history-meta span{font-size:11px;font-weight:650;color:var(--faint)}
@@ -354,14 +381,14 @@
   .nb svg{width:21px;height:21px;transition:transform .2s}
   .nb:active{transform:scale(.93)}
   .nb.on{color:var(--accent-ink)}.nb.on svg{transform:translateY(-1px)}
-  .nbadge{position:absolute;top:5px;left:calc(50% + 8px);min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:850;display:grid;place-items:center;border:2px solid var(--paper);font-variant-numeric:tabular-nums}
+  .nbadge{position:absolute;top:7px;left:calc(50% + 7px);min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:850;display:grid;place-items:center;border:2px solid var(--paper);font-variant-numeric:tabular-nums}
   .nbadge[hidden]{display:none!important}
   .circle-badge{flex:none;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--danger);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:850;font-variant-numeric:tabular-nums}
   .inline-alert{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:10px;font-weight:850;vertical-align:1px}
   .inline-alert.done{background:rgba(69,135,100,.13);color:#397550}
-  .alert-dot,.chip-dot{display:block;width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 1px 4px rgba(255,69,58,.3)}
-  .ttlbtn .alert-dot{position:absolute;top:-1px;right:-8px;border:2px solid var(--paper)}
-  .hbadge.dot{min-width:9px;width:9px;height:9px;padding:0;top:2px;right:2px;border:2px solid var(--paper)}
+  .alert-dot,.chip-dot{display:block;width:7px;height:7px;border-radius:50%;background:var(--danger);box-shadow:0 1px 4px rgba(255,69,58,.3)}
+  .ttlbtn .alert-dot{position:absolute;top:2px;right:2px;border:2px solid var(--paper)}
+  .hbadge.dot{min-width:8px;width:8px;height:8px;padding:0;top:4px;right:4px;border:2px solid var(--paper)}
   .card.search-hit{animation:searchhit 1.35s ease 2}
   @keyframes searchhit{0%,100%{box-shadow:var(--sh-card);filter:none}35%,62%{box-shadow:0 0 0 3px var(--accent),0 12px 28px rgba(224,137,74,.3);filter:brightness(1.05)}}
   .circle-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
@@ -370,12 +397,18 @@
   .more-head .headrow{align-items:center;min-height:38px}
   .home-head .hicons,.circle-head .hicons{margin-top:0;gap:6px}
   .home-head .hbtn,.circle-head .hbtn{background:var(--surface);box-shadow:var(--sh-card)}
-  .chip{position:relative}.chip-dot{position:absolute;top:-2px;right:-1px;border:2px solid var(--paper)}
+  .chip{position:relative}.chip-dot{position:absolute;top:1px;right:2px;border:2px solid var(--paper)}
 
   .toast{position:absolute;left:50%;bottom:96px;z-index:80;transform:translate(-50%,14px);opacity:0;pointer-events:none;max-width:calc(100% - 40px);padding:11px 17px;border-radius:999px;background:rgba(28,26,23,.94);color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.2s;backdrop-filter:blur(10px)}
   .toast.on{opacity:1;transform:translate(-50%,0)}
   .note{margin:13px auto 0;max-width:416px;text-align:center;font-size:12px;line-height:1.5;font-weight:560;color:rgba(70,55,30,.5);word-break:keep-all}
   @media(max-width:460px){html,body{height:100dvh}body{padding:0;background:var(--paper)}.wrap{width:100%}.phone{height:100dvh;min-height:100dvh;border-radius:0;border:0;box-shadow:none}.phone::before,.note{display:none}.head,.selhead{padding-top:calc(30px + var(--safe))}}
+
+/* Initial-paint budget: closed overlays do not need expensive backdrop compositing. */
+.sheetwrap:not(.on) .scrim,.sheetwrap:not(.on) .sheet,.modalwrap:not(.on) .scrim,.modalwrap:not(.on) .modal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.nav{backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%)}
+body:not(.motion-ready) .emoji-reel{animation:none!important}
+@media(prefers-reduced-motion:reduce){.emoji-reel{animation:none!important}.qtrack>*{transition:none!important}}
 </style>
 <style>
 /* KKIU v17 — Apple-inspired Liquid Glass redesign */
@@ -520,9 +553,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   .phone{background:linear-gradient(180deg,#f8fbff,#eff4fa)}
   .head,.selhead{padding-top:calc(34px + env(safe-area-inset-top,0px))}
 }
-/* Compact headers are the only header state across Queue, Circle, and More. */
-.head{padding-top:calc(34px + env(safe-area-inset-top,0px))!important;padding-bottom:10px!important}
-.home-head .ttl,.circle-head .circle-title-text,.more-head .ttl{font-size:25px!important;line-height:1.12!important}
+/* Queue, Circle, and More keep one fixed header geometry while content moves. */
+.head,.vpage.compact-head .head{padding-top:calc(34px + env(safe-area-inset-top,0px))!important;padding-bottom:10px!important}
+.home-head .ttl,.circle-head .circle-title-text,.more-head .ttl,.vpage.compact-head .ttl{font-size:25px!important;line-height:1.12!important}
+.headrow{min-width:0}
+.home-head .hicons,.circle-head .hicons,.more-head .hicons{flex:none}
+.circle-head .ttlbtn{overflow:hidden;touch-action:manipulation}
+.circle-head .circle-title-window{display:block;max-width:100%}
 @media(prefers-color-scheme:dark){
   :root{--paper:#17191d;--surface:rgba(39,42,48,.72);--ink:#f7f8fb;--ink2:#d5d8df;--sub:rgba(235,239,247,.62);--faint:rgba(235,239,247,.38);--hair:rgba(255,255,255,.09);--accent:#0a84ff;--accent-soft:rgba(10,132,255,.19);--accent-ink:#69b7ff;--sh-card:0 1px 0 rgba(255,255,255,.09) inset,0 8px 24px rgba(0,0,0,.18)}
   html{background:#0d1015}body{background:radial-gradient(circle at 15% 0,rgba(0,112,220,.34),transparent 34%),radial-gradient(circle at 90% 20%,rgba(105,55,180,.25),transparent 30%),linear-gradient(160deg,#121821,#080b10)}
@@ -547,13 +584,21 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.31</p>
+  <p class="note">끼우 목업 · v18.2.39</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.31";
+const BUILD="v18.2.39";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.39",date:"2026.07.19",ko:["끼리 할일 수정 시 담당자 선택 UI를 입력 UI와 동일한 화면 폭으로 확장","담당자 칩의 가로 스크롤 범위와 좌우 여백을 입력 상태와 정확히 통일"],en:["Expanded the Circle edit assignee picker to the same viewport width as task entry","Matched horizontal scrolling and side insets between edit and input states"]},
+ {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 ��컬 설정으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·��은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["앱 톤과 맞지 않던 젬을 제거하고 파란 점·선·파동으로 구성된 키네틱 포인트 적용","알림 뱃지 위치를 아이콘과 콘텐츠 내부 기준으로 통일","끼리 원본 진행 할일과 완료 할일에 최초 확인용 빨간 점 표시 추가","중복 렌더러·구형 더보기 스크롤·미사용 입력 로직을 제거하고 공용 큐 엔진 중심으로 리팩토링"],en:["Replaced the mismatched gem with a minimal kinetic point made of a blue dot, lines, and ripple","Normalized notification badge placement","Added first-view red source dots to original active and completed Circle tasks","Removed duplicate renderers, legacy More scrolling, and unused input logic around the shared queue engine"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI의 문구·슬롯머신·당첨 상태 제거","스크롤 방향과 속도에 반응하고 스냅 시 튀며 방치 중 숨 쉬고 깜빡이는 살아 있는 젬 적용","젬을 직접 누르면 잠깐 찌그러졌다 복원되는 무기능 이스터에그 추가"],en:["Removed copy, slot-machine results, and winning states","Added a living gem that reacts to scrolling, hops on snap, breathes, and blinks","Added an intentionally functionless poke reaction"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI에 무의미한 이스터에그 끼우 젬 추가","메뉴 사이를 이동할 때마다 이모지 3개와 가짜 생산성·운세·미스터리 문구를 무작위 표시","같은 이모지 3개가 나오면 젬 발광·파티클·특수 햅틱 효과 실행","플로팅 UI를 탭해 직접 다시 굴릴 수 있도록 지원"],en:["Added the intentionally useless Kkiu Gem easter egg to the More floating UI","Randomized three emoji and playful fake productivity, fortune, or mystery copy on every menu-gap move","Triggered glow, particles, and special haptics on triple matches","Allowed tapping the floating UI to reroll manually"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["더보기의 별도 스크롤·앵커 보정 로직을 제거","끼우·끼리와 동일한 qtrack 이동·슬롯 스냅·관성·햅틱 엔진을 더보기에 직접 적용","카드 렌더링만 다르고 UI 흐름은 동일한 공용 구조로 통합"],en:["Removed the separate More scroll and anchor compensation","Applied the exact Queue/Circle qtrack, slot snap, momentum, and haptics engine to More","Unified the interaction engine while keeping only card rendering different"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI를 끼리 화면과 동일하게 화면의 고정 위치에 유지","메뉴 목록의 앞뒤 스크롤 여백을 동적으로 확보해 모든 메뉴 사이가 고정 플로팅 UI를 통과하도록 수정","메뉴 사이 삽입 위치가 바뀔 때 햅틱 피드백 유지"],en:["Fixed the More floating UI to the same viewport position used in Circle","Added dynamic leading and trailing scroll space so every menu gap can pass through the fixed floating UI","Kept haptic feedback when the insertion gap changes"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["긴 끼리 타이틀이 실제 넘침 폭만큼 안정적으로 흐르도록 수정","끼리 검색 진입이 이중 토글되어 즉시 목록으로 돌아가던 문제 수정","더보기 플로팅 UI가 전체 앵커를 이동하며 위치 변경 시 햅틱 피드백을 주도록 개선","끼우·끼리·더보기 헤더 높이와 타이틀 크기를 스크롤과 무관하게 고정"],en:["Made long Circle titles stream reliably by their measured overflow","Removed the double toggle that immediately closed Circle search","Let the More floating UI travel across all anchors with haptic feedback","Kept Queue, Circle, and More header geometry fixed while scrolling"]},
  {version:"v18.2.31",date:"2026.07.19",ko:["끼리 긴 제목의 실제 텍스트 폭을 기준으로 스트리밍 거리를 다시 계산해 흐름 표시가 멈추지 않도록 수정"],en:["Recalculated Circle-title streaming from the true text width so long names animate reliably"]},
  {version:"v18.2.30",date:"2026.07.19",ko:["끼리 전환 시트에 초대 코드 입력·참여 흐름 추가","현재 브라우저에 저장된 끼리 코드를 찾아 해당 끼리로 이동하도록 목업 동작 연결"],en:["Added invite-code entry and join flow to the Circle switcher","Mockup now opens the locally stored Circle matching the entered code"]},
  {version:"v18.2.29",date:"2026.07.19",ko:["끼리 검색 버튼 터치 뒤 발생하던 끼리 전환 바텀시트 오작동 수정"],en:["Prevented Circle search taps from opening the Circle switcher sheet"]},
@@ -575,12 +620,12 @@ const CHANGE_HISTORY=[
  {version:"v18.2.13",date:"2026.07.19",ko:["끼리 담당자 필터를 좌우로 스크롤하는 동안 페이지 전환 제스처가 시작되지 않도록 터치 영역을 분리"],en:["Isolated the Circle assignee filter touch area so horizontal scrolling never starts page navigation"]},
  {version:"v18.2.12",date:"2026.07.19",ko:["더보기 화면을 계정·환경·데이터 섹션 중심으로 전면 재구축하고 끼우·끼리와 같은 플로팅 삽입 구조로 정리"],en:["Rebuilt More around Account, Preferences, and Data sections with the same floating insertion behavior as Queue and Circle"]},
  {version:"v18.2.11",date:"2026.07.19",ko:["끼리·프로필 편집창의 이름과 이모지 라벨을 간결한 카드형 구조로 정리하고 저장 동작을 명확하게 개선"],en:["Simplified the Circle and profile editor into a clear card layout with concise labels and an obvious save action"]},
- {version:"v18.2.10",date:"2026.07.19",ko:["끼리 상단 이모지를 고정하고 긴 그룹명이 말줄임표 없이 전체 흐름 표시되도록 개선"],en:["Fixed the Circle header emoji in place and streamed the full group name without ellipsis"]},
+ {version:"v18.2.10",date:"2026.07.19",ko:["끼리 상단 이모지를 고정하고 긴 그룹명이 말줄임표 없이 전체 흐름 표시되도록 개���"],en:["Fixed the Circle header emoji in place and streamed the full group name without ellipsis"]},
  {version:"v18.2.9",date:"2026.07.19",ko:["끼리 이름·대표 이모지와 내 프로필 이름·이모지를 각각 한 화면에서 함께 편집하도록 통합","빠른 선택 이모지 칩을 제거하고 대량 이모지 목록·검색·랜덤 선택을 제공"],en:["Combined Circle name and emoji editing, and profile name and emoji editing, into one screen each","Removed quick emoji chips and added a large searchable emoji list with random selection"]},
  {version:"v18.2.8",date:"2026.07.19",ko:["끼우·끼리·더보기 상단을 동일한 headrow 높이와 제목 기준선으로 통일"],en:["Unified Queue, Circle, and More headers with the same headrow height and title baseline"]},
  {version:"v18.2.7",date:"2026.07.19",ko:["상단 버튼 공통 스타일이 다른 보정 규칙에 덮어쓰이지 않도록 최종 정렬·간격·배경을 고정"],en:["Locked the final shared header button alignment, spacing, and surface styling against later overrides"]},
  {version:"v18.2.6",date:"2026.07.19",ko:["끼우와 끼리의 상단 버튼 크기·모서리·간격·아이콘 정렬을 공통 스타일로 통일"],en:["Unified Queue and Circle header button size, corners, spacing, and icon alignment"]},
- {version:"v18.2.5",date:"2026.07.19",ko:["끼리 상단을 끼우와 같은 한 줄 구조로 통일하고 그룹명·우측 아이콘을 같은 행에 배치","그룹명이 길어도 두 줄로 늘어나지 않도록 흐름 표시를 유지"],en:["Unified the Circle header into the same single-row layout as Queue with the title and actions aligned","Kept long Circle names on one line with streaming instead of expanding to two lines"]},
+ {version:"v18.2.5",date:"2026.07.19",ko:["끼리 상단을 끼우와 같은 한 줄 구조로 통일하고 그룹명·우측 아이콘을 ��은 행에 배치","그룹명이 길어도 두 줄로 늘어나지 않도록 흐름 표시를 유지"],en:["Unified the Circle header into the same single-row layout as Queue with the title and actions aligned","Kept long Circle names on one line with streaming instead of expanding to two lines"]},
  {version:"v18.2.4",date:"2026.07.19",ko:["할 일 수정 중 취소 버튼과 Escape 취소를 추가","다른 UI를 누르면 수정 모드가 자동 해제되도록 수정"],en:["Added a cancel button and Escape-to-cancel while editing a task","Automatically exits edit mode when another UI element is selected"]},
  {version:"v18.2.3",date:"2026.07.19",ko:["끼리 설정에 전체 이모지 선택 진입점을 명확히 표시","더보기 플로팅 요소가 목록 첫·마지막 위치까지 이동하도록 수정","할 일 수정 완료 뒤 현재 스크롤 위치를 유지하도록 보완"],en:["Made the full emoji picker entry points explicit in Circle settings","Allowed the More floating element to reach the first and last list positions","Preserved the current scroll position after finishing a task edit"]},
  {version:"v18.2.2",date:"2026.07.19",ko:["낮은 모바일 화면에서 상단이 잘리던 문제를 수정하고, 끼리 제목·아이콘 터치 영역을 분리","긴 끼리 이름 흐름 표시와 수정 이력의 닫기 버튼을 보완"],en:["Fixed clipped headers on short mobile screens and separated Circle title and icon touch targets","Fixed long Circle-name streaming and added an explicit close button to update history"]},
@@ -619,7 +664,7 @@ const I={
 const STR={
 ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  hHome:"할일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
- hCircle:"끼리",hCircleSub:"가족·연인·친구와 함께 끼우기",
+ hCircle:"끼리",hCircleSub:"가���·연인·친구와 함께 끼우기",
  hStats:"통계",hStatsSub:"끼우가 잘 작동하고 있나요?",
  hMore:"더보기",hMoreSub:"설정 · 후원 · 데이터",
  slotLabel:"<b>{n}</b>번째에 할일 끼우기",placeholder:"할 일을 입력하고 끼우기",
@@ -641,7 +686,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  stWeek:"최근 7일 완료",
  stOld:"오래 기다린 할 일",stOldP:"가장 먼저 끼운 뒤 아직 완료하지 않은 항목이에요",
  stPos:"어디에 끼웠나요?",stPosP:"새 할 일을 끼운 위치 분포",posTop:"상단",posMid:"중단",posBot:"하단",
- stAcc:"우선순위 정확도",stAccP:"완료된 일 중 당시 상위 3순위 비율 — 높을수록 “위치=우선순위”가 잘 작동 중",
+ stAcc:"우선순위 정확도",stAccP:"완료된 일 중 당시 상위 3순위 비율 — 높을���록 “위치=우선순위”가 잘 작동 중",
  stAvoid:"회피 패턴",stAvoidP:"오래 밀린 할 일 탐지 · 운영 지표로도 활용",
  lockNeed:"완료 {n}개부터 열려요 · 현재 {c}개",
  mAccount:"계정 관리",mNoti:"알림 설정",mTerms:"이용약관 · 개인정보",mContact:"문의하기",soon:"예정",
@@ -660,7 +705,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  membersT:"멤버 {n}명",meTag:"나",taskCnt:"진행 중 {n}개",leaveCircle:"나가기",leaveConfirm:"'{n}' 끼리에서 나갈까요?",tLeave:"'{n}' 끼리에서 나갔어요",ownerOnly:" · 개설자만 가능(데모)",
  circleDel:"이 끼리 삭제",circleDelConfirm:"'{n}' 끼리와 모든 할 일을 삭제할까요?",tCircleDel:"끼리를 삭제했어요",
  emptyCircleT:"아직 끼리가 없어요",emptyCircleP:"가족·연인·친구와 함께 쓰는 공유 큐를 만들어 보세요.",
- mFeatSlot:"여기에 원하는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
+ mFeatSlot:"여기에 원���는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
 en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  hHome:"Queue",hHomeSub:"{a} to-dos · {d} done",
  hCircle:"Circle",hCircleSub:"A queue you share with your circle",
@@ -714,12 +759,12 @@ const hoursAgo=h=>new Date(Date.now()-h*3600e3).toISOString();
 const SEED_TITLES=["프로젝트 킥오프 안건 정리","디자인 시스템 컬러 토큰 검토","이번 주 회고 메모 작성","장보기 — 우유, 달걀, 커피, 휴지, 세제, 고양이 모래까지 잊지 말고 한 번에 사오기","30분 운동하기","부모님께 안부 전화","여행 숙소 후보 비교하고 가격·위치·후기까지 표로 정리해서 공유하기","읽을 아티클 모아두기","세금 서류 제출","자전거 라이트 교체","도서관 책 반납","블로그 초안 퇴고","화분 물주기","주간 회의 안건 공유"];
 function seedTasks(){return SEED_TITLES.map((title,i)=>({id:uid(),title,favorite:i===0,done:false,order:i,createdAt:hoursAgo(90),completedAt:null,insertAt:Math.min(i,3),listAt:8,doneAt:null}))}
 const CIRCLE_SEED=[["주말 장보기 리스트 확정",["me"]],["세탁소에 코트 맡기기",["su"]],["공과금 이체",["da"]],["거실 전구 교체",["jh"]],["분리수거 버리기",["ha"]],["에어컨 필터 청소",["jw"]],["약국에서 영양제 사오기",["sy"]],["주말 데이트 식당 예약",["mj","yu"]],["화장실 수건 교체",["yu"]],["베란다 화분 분갈이",["dy"]],["차량 정기점검 예약",["su"]],["부모님 생신 선물 고르기",["me"]]];
-function seedCircle(){return CIRCLE_SEED.map(([title,assignees],i)=>({id:uid(),title,assignees:[assignees[0]||"me"],favorite:false,done:false,order:i,createdAt:hoursAgo(60),completedAt:null}))}
+function seedCircle(){return CIRCLE_SEED.map(([title,assignees],i)=>{const done=i===CIRCLE_SEED.length-1;return{id:uid(),title,assignees:[assignees[0]||"me"],favorite:false,done,order:i,createdAt:hoursAgo(60),completedAt:done?hoursAgo(2):null,doneAt:done?i:null,sourceUnread:i===1||i===4||done}})}
 const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]],["렌터카 비교해서 예약",["su"]],["짐 체크리스트 만들기",["da"]],["첫날 저녁 횟집 예약",["me","da"]]];
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 🍙 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 🧁 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 📚 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 🍙 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 ��� 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ���️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 ���� 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -728,7 +773,7 @@ function seedLog(){const mk=(idxC,lead,insA,daysAgo)=>({id:uid(),completedAt:new
  return[mk(0,5,1,0),mk(2,26,2,1),mk(1,3,0,1),mk(4,49,6,3),mk(0,2,1,5)]}
 
 let state=load(), selecting=false, selected=new Set(), ciAssignees=new Set(), ciAssigneesTouched=false, modalOkCb=null, editingId=null, editingOriginal="", identityEditKind=null, identityEditEmoji="✨", identityEditBaseName="";
-let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,expandedDoneId=null,moreTarget="home",moreQuipIndex=0;
+let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter=null,expandedDoneId=null,moreOffset=0;
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
@@ -736,29 +781,37 @@ let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
 
-function load(){const base={tasks:seedTasks(),circles:seedCircles(),ci:0,doneLog:seedLog(),tab:"home",insertIndex:3,ciInsertIndex:0,ciFilter:null,lang:"ko",suggestions:[]};
+function load(){const base={tasks:seedTasks(),circles:seedCircles(),ci:0,doneLog:seedLog(),tab:"home",insertIndex:3,ciInsertIndex:0,ciFilter:null,lang:"ko",suggestions:[],userPrefs:{memberOrderByCircle:{},slotMachine:{locked:false,symbols:["🌙","🍊","🌿"]}}};
  try{const r=localStorage.getItem(KEY);if(!r)return base;const p=JSON.parse(r);
   return{tasks:Array.isArray(p.tasks)?p.tasks:base.tasks,
    circles:Array.isArray(p.circles)?p.circles:base.circles,
    ci:Number.isInteger(p.ci)?p.ci:0,
    doneLog:Array.isArray(p.doneLog)?p.doneLog:base.doneLog,
    tab:TABS.includes(p.tab)?p.tab:"home",insertIndex:Number.isInteger(p.insertIndex)?p.insertIndex:0,
-   ciInsertIndex:Number.isInteger(p.ciInsertIndex)?p.ciInsertIndex:0,ciFilter:p.ciFilter||null,lang:p.lang==="en"?"en":"ko",suggestions:Array.isArray(p.suggestions)?p.suggestions:base.suggestions}}
+   ciInsertIndex:Number.isInteger(p.ciInsertIndex)?p.ciInsertIndex:0,ciFilter:p.ciFilter||null,lang:p.lang==="en"?"en":"ko",suggestions:Array.isArray(p.suggestions)?p.suggestions:base.suggestions,userPrefs:p.userPrefs&&typeof p.userPrefs==="object"?p.userPrefs:base.userPrefs}}
  catch{return base}}
-function save(){localStorage.setItem(KEY,JSON.stringify({tasks:state.tasks,circles:state.circles,ci:state.ci,doneLog:state.doneLog,tab:state.tab,insertIndex:state.insertIndex,ciInsertIndex:state.ciInsertIndex,ciFilter:state.ciFilter,lang:state.lang,suggestions:state.suggestions||[]}))}
+let saveTimer=0;
+function save(){clearTimeout(saveTimer);localStorage.setItem(KEY,JSON.stringify({tasks:state.tasks,circles:state.circles,ci:state.ci,doneLog:state.doneLog,tab:state.tab,insertIndex:state.insertIndex,ciInsertIndex:state.ciInsertIndex,ciFilter:state.ciFilter,lang:state.lang,suggestions:state.suggestions||[],userPrefs:state.userPrefs}))}
+function scheduleSave(delay=220){clearTimeout(saveTimer);saveTimer=setTimeout(save,delay)}
+state.userPrefs=state.userPrefs&&typeof state.userPrefs==="object"?state.userPrefs:{};state.userPrefs.memberOrderByCircle=state.userPrefs.memberOrderByCircle&&typeof state.userPrefs.memberOrderByCircle==="object"?state.userPrefs.memberOrderByCircle:{};state.userPrefs.slotMachine=state.userPrefs.slotMachine&&typeof state.userPrefs.slotMachine==="object"?state.userPrefs.slotMachine:{locked:false,symbols:["🌙","🍊","🌿"]};
 state.ciGhosts=false;state.ciExpanded=null;state.ci=clamp(state.ci||0,0,Math.max(0,state.circles.length-1));
-state.circles.forEach((c,i)=>{c.members=Array.isArray(c.members)&&c.members.length?c.members:["me"];c.tasks=Array.isArray(c.tasks)?c.tasks:[];if(!Number.isFinite(c.unread))c.unread=i===0?0:3;if(!c.memberUnread||typeof c.memberUnread!=="object")c.memberUnread={};if(!Object.keys(c.memberUnread).length&&Number.isFinite(c.unreadMine)&&c.unreadMine)c.memberUnread.me=c.unreadMine;if(!Object.keys(c.memberUnread).length&&i===0)c.memberUnread={me:2,su:1};if(!Number.isFinite(c.unreadDone))c.unreadDone=i===0?1:0;c.tasks.forEach(t=>{const a=Array.isArray(t.assignees)?t.assignees[0]:t.assignees;t.assignees=[c.members.includes(a)?a:c.members[0]]})});
+state.circles.forEach((c,i)=>{c.members=Array.isArray(c.members)&&c.members.length?c.members:["me"];c.tasks=Array.isArray(c.tasks)?c.tasks:[];if(!Number.isFinite(c.unread))c.unread=i===0?0:3;if(!c.memberUnread||typeof c.memberUnread!=="object")c.memberUnread={};if(!Object.keys(c.memberUnread).length&&Number.isFinite(c.unreadMine)&&c.unreadMine)c.memberUnread.me=c.unreadMine;if(!Object.keys(c.memberUnread).length&&i===0)c.memberUnread={me:2,su:1};if(!Number.isFinite(c.unreadDone))c.unreadDone=i===0?1:0;c.tasks.forEach(t=>{const a=Array.isArray(t.assignees)?t.assignees[0]:t.assignees;t.assignees=[c.members.includes(a)?a:c.members[0]];t.sourceUnread=!!t.sourceUnread});if(!c.tasks.some(t=>t.sourceUnread)&&(c.unread||c.unreadDone)){c.tasks.filter(t=>!t.done).slice(0,Math.max(0,c.unread||0)).forEach(t=>t.sourceUnread=true);c.tasks.filter(t=>t.done).slice(0,Math.max(0,c.unreadDone||0)).forEach(t=>t.sourceUnread=true)}});
 function myProfile(c){const m=MEMBERS.me;return c?.myProfile||{name:m[state.lang],emoji:m.ini}}
 function circlePerson(c,k){const m=MEMBERS[k]||MEMBERS.me;if(k!=="me")return m;const p=myProfile(c);return {...m,ko:p.name,en:p.name,ini:p.emoji}}
 const active=()=>state.tasks.filter(t=>!t.done).sort((a,b)=>a.order-b.order);
 const completed=()=>state.tasks.filter(t=>t.done).sort((a,b)=>new Date(b.completedAt||0)-new Date(a.completedAt||0));
 const curC=()=>state.circles[state.ci]||null;
+function orderedCircleMembers(c=curC()){if(!c)return[];const all=c.members.filter(k=>MEMBERS[k]),self=all.includes("me")?["me"]:[],others=all.filter(k=>k!=="me"),saved=state.userPrefs.memberOrderByCircle[c.id]||[],ordered=saved.filter(k=>others.includes(k));return self.concat(ordered,others.filter(k=>!ordered.includes(k)))}
+function setPersonalMemberOrder(c,order){if(!c)return;state.userPrefs.memberOrderByCircle[c.id]=order.filter(k=>k!=="me"&&c.members.includes(k));scheduleSave()}
 const ciActive=()=>{const c=curC();return c?c.tasks.filter(t=>!t.done).sort((a,b)=>a.order-b.order):[]};
 const ciCompleted=()=>{const c=curC();return c?c.tasks.filter(t=>t.done).sort((a,b)=>new Date(b.completedAt||0)-new Date(a.completedAt||0)):[]};
 const ciMine=c=>(c?.tasks||[]).filter(t=>!t.done&&(t.assignees||[])[0]==="me").length;
 const circleUnreadTotal=()=>state.circles.reduce((n,c)=>n+Math.max(0,c.unread||0),0);
 const hasOtherCircleUpdates=()=>state.circles.some((c,i)=>i!==state.ci&&(c.unread||0)>0);
 function markCircleSeen(c=curC()){if(c&&(c.unread||0)){c.unread=0;save()}}
+function sourceUnreadDot(t){return t?.sourceUnread?`<i class="source-unread-dot" aria-label="처음 확인하는 업데이트"></i>`:""}
+function refreshCircleUnread(c){if(!c)return;const activeUnread=c.tasks.filter(t=>!t.done&&t.sourceUnread),doneUnread=c.tasks.filter(t=>t.done&&t.sourceUnread);c.unread=activeUnread.length;c.unreadDone=doneUnread.length;c.memberUnread={};activeUnread.forEach(t=>(t.assignees||[]).forEach(k=>c.memberUnread[k]=(c.memberUnread[k]||0)+1))}
+function markSourcesSeenLater(tasks,kind){const c=curC(),ids=tasks.filter(t=>t?.sourceUnread).map(t=>t.id);if(!c||!ids.length)return;setTimeout(()=>{let changed=false;c.tasks.forEach(t=>{if(ids.includes(t.id)&&t.sourceUnread){t.sourceUnread=false;changed=true}});if(!changed)return;refreshCircleUnread(c);save();setNavActive();if(kind==="done")document.querySelector(".circle-head .hbadge.dot")?.remove()},650)}
 function reindex(){active().forEach((t,i)=>t.order=i)}
 function ciReindex(){ciActive().forEach((t,i)=>t.order=i)}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -775,7 +828,7 @@ function splitTitle(text,w){if(!measCtx)measCtx=document.createElement("canvas")
 const isAdBefore=i=>i===AD_FIRST||(i>AD_FIRST&&(i-AD_FIRST)%AD_EVERY===0);
 </script>
 <script>
-const isQueue=()=>((state.tab==="home"&&homeSearch===null)||state.tab==="circle")&&!selecting;
+const isQueue=()=>((state.tab==="home"&&homeSearch===null)||state.tab==="circle"||state.tab==="more")&&!selecting;
 
 function buildQueueModel(tasks,opts={}){
  const rows=[],slots=[];let y=0;
@@ -831,9 +884,10 @@ function cardHtml(t,idx,o={}){
  const lead=`<button class="ck" data-act="complete" data-id="${t.id}"></button>`;
  const rank=o.rank?`<div class="rank ${topN?"top":""}">${idx+1}</div>`:"";
  let mid;
+ const unread=o.ctx==="circle"?sourceUnreadDot(t):"";
  if(o.rank){const w=Math.max(104,TITLE_W);const[l1,l2]=splitTitle(t.title,w);
-  mid=`<p class="t-title" data-act="title" data-id="${t.id}">${esc(l1)}</p>${l2?`<p class="t-rest">${esc(l2)}</p>`:""}`}
- else mid=`<p class="t-title" data-act="title" data-id="${t.id}">${esc(t.title)}</p>`;
+  mid=`<div class="task-title-row"><p class="t-title" data-act="title" data-id="${t.id}">${esc(l1)}</p>${unread}</div>${l2?`<p class="t-rest">${esc(l2)}</p>`:""}`}
+ else mid=`<div class="task-title-row"><p class="t-title" data-act="title" data-id="${t.id}">${esc(t.title)}</p>${unread}</div>`;
  const ms=o.ctx==="circle"?(t.assignees||["me"]).map(k=>circlePerson(curC(),k)).filter(Boolean):[];
  const whoHtml=!ms.length?"":ms.length===1?`<span class="who" style="background:${ms[0].color}">${ms[0].ini}</span>`:`<span class="whos">${ms.slice(0,3).map(m=>`<span class="who" style="background:${m.color}">${m.ini}</span>`).join("")}${ms.length>3?`<span class="who more">+${ms.length-3}</span>`:""}</span>`;
  // Keep Kkiu's basic queue controls in Kkiri too; filtering only disables reordering.
@@ -856,25 +910,20 @@ function weekDone(){const wk=Date.now()-7*864e5;return completed().filter(t=>new
 function chipsHtml(){
  const c=curC();
  const mk=(id,label,ini,color,on)=>`<button class="chip ${on?"on":""}" data-act="chip" data-m="${id||""}"><span class="av" style="background:${color||"#b9b1a1"}">${ini}</span>${label}${id&&c?.memberUnread?.[id]?`<i class="chip-dot"></i>`:""}</button>`;
- return `<div class="chips">${mk(null,T("chipAll"),"☰",null,!state.ciFilter)}${(c?.members||[]).filter(k=>MEMBERS[k]).map(k=>{const m=circlePerson(c,k);return mk(k,m[state.lang],m.ini,m.color,state.ciFilter===k)}).join("")}</div>`}
+ return `<div class="chips">${mk(null,T("chipAll"),"☰",null,!state.ciFilter)}${orderedCircleMembers(c).map(k=>{const m=circlePerson(c,k);return mk(k,m[state.lang],m.ini,m.color,state.ciFilter===k)}).join("")}</div>`}
 function headHtml(){
  const a=active().length,d=completed().length;
  if(state.tab==="home"){
   return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="검색" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}${d?`<span class="hbadge">${d}</span>`:""}</button>`:""}</div></div></div>`}
  if(state.tab==="circle"){const cc=curC();
   if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1><p class="head-sub">${T("hCircleSub")}</p></div>`;
-  const cd=ciCompleted().length;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
   return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><span class="circle-emoji" aria-hidden="true">${ce}</span><span class="circle-title-window"><span class="circle-title-text${cc.name.length>10?" stream":""}">${esc(cc.name)}</span></span><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
  return `<div class="head more-head"><div class="headrow"><h1 class="ttl">${T("hMore")}</h1><div class="hicons" aria-hidden="true"></div></div></div>`}
-function asgRowHtml(){const c=curC();if(!c)return"";
- const valid=c.members.filter(k=>MEMBERS[k]);
- const cur=[...ciAssignees][0];
- if(!valid.includes(cur)){ciAssignees=new Set([valid.includes(state.ciFilter)?state.ciFilter:"me"])}
- const sel=[...ciAssignees][0];
- return `<div class="asgrow" aria-label="담당자 선택">${valid.map(k=>{const m=circlePerson(c,k);return `<button type="button" class="asgc ${k===sel?"on":""}" data-act="asg-pick" data-m="${k}" title="${esc(m[state.lang])}"><span class="av">${m.ini}</span>${m[state.lang]}</button>`}).join("")}</div>`}
+function assigneePickerHtml(c,selected,mode="input",taskId=""){const act=mode==="edit"?"edit-asg-pick":"asg-pick",extra=mode==="edit"?" edit-assignee-picker":"";return `<div class="asgrow${extra}" aria-label="담당자 선택">${orderedCircleMembers(c).map(k=>{const m=circlePerson(c,k);return `<button type="button" class="asgc ${selected===k?"on":""}" data-act="${act}" data-m="${k}" ${taskId?`data-id="${taskId}"`:""} title="${esc(m[state.lang])}"><span class="av">${m.ini}</span>${m[state.lang]}</button>`}).join("")}</div>`}
+function asgRowHtml(){const c=curC();if(!c)return"";const valid=orderedCircleMembers(c),cur=[...ciAssignees][0];if(!valid.includes(cur))ciAssignees=new Set([valid.includes(state.ciFilter)?state.ciFilter:"me"]);return assigneePickerHtml(c,[...ciAssignees][0])}
 function slotHtml(ctx){const n=ctx==="home"?active().length:ciActive().length;
  const gi=clamp(ctx==="home"?state.insertIndex:state.ciInsertIndex,0,n);
  return `<div class="slotwrap" id="slotwrap">
@@ -887,24 +936,25 @@ function renderView(){
  if(selecting&&(state.tab==="home"||state.tab==="circle")){renderSelect();return}
  if(state.tab==="home"){homeSearch===null?buildQueue("home"):buildSearch();return}
  if(state.tab==="circle"){if(!curC()){viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list"><div class="empty"><div class="empty-c"><h3>${T("emptyCircleT")}</h3><p>${T("emptyCircleP")}</p></div></div><button class="featins" data-act="circle-new"><span class="p">+</span>${T("circleNew")}</button></div></div></div>`;wireCircleTitleStream();setNavActive();return}circleSearch===null?buildQueue("circle"):buildCircleSearch();return}
- viewEl.innerHTML=`${headHtml()}<div class="stage">${moreView()}</div>`;
- if(state.tab==="more")wireMoreSlot();
- wireCircleTitleStream();setNavActive()}
+ if(state.tab==="more"){buildMoreQueue();return}}
 function wireCircleTitleStream(){
  const win=viewEl.querySelector(".circle-title-window"),text=viewEl.querySelector(".circle-title-text");
  if(!win||!text)return;
- const sync=()=>{text.style.width="max-content";const available=win.clientWidth||Math.round(win.getBoundingClientRect().width),natural=Math.max(text.scrollWidth,Math.round(text.getBoundingClientRect().width)),distance=Math.max(0,natural-available);text.style.setProperty("--stream-distance",`${-Math.max(0,distance)}px`);text.classList.toggle("stream",distance>1)};
- sync();requestAnimationFrame(sync);setTimeout(sync,140);document.fonts?.ready?.then(sync);
+ const sync=()=>{
+  text.classList.remove("stream");
+  text.style.width="max-content";
+  text.style.transform="translateX(0)";
+  const available=Math.floor(win.getBoundingClientRect().width);
+  const natural=Math.ceil(text.scrollWidth);
+  const distance=Math.max(0,natural-available);
+  text.style.setProperty("--stream-distance",`${-distance}px`);
+  if(distance>1){void text.offsetWidth;text.classList.add("stream")}
+ };
+ requestAnimationFrame(sync);
 }
-function wireCircleSearchButton(){
- const btn=viewEl.querySelector('.circle-head [data-act="csearch"]');
- if(!btn)return;
- // Do not replace the header while the same touch is still producing its click.
- // Otherwise the delayed click can land on the Circle-title button underneath and open its sheet.
- const toggle=e=>{e.preventDefault();e.stopPropagation();if(btn.dataset.switching)return;btn.dataset.switching="1";circleSearch=circleSearch===null?"":null;setTimeout(()=>{if(circleSearch===null)renderView();else buildCircleSearch()},0)};
- btn.addEventListener("pointerup",toggle,{passive:false});
- btn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()});
-}
+// Circle search uses only the delegated click handler below. A second pointer-up
+// handler previously toggled search twice and immediately returned to the queue.
+function wireCircleSearchButton(){}
 function buildQueue(ctx,preserve){
  if(ctx==="circle"&&!curC()){renderView();return}
  cancelAnimationFrame(raf);
@@ -921,7 +971,7 @@ function buildQueue(ctx,preserve){
  qtrackEl.style.height=Q.totalH+"px";
  qtrackEl.innerHTML=Q.rows.map(r=>rowHtml(r,ctx)).join("");
  qRows=[...qtrackEl.children];
- qRows.forEach(el=>{const id=el.dataset.id,t=id&&findTask(id),mid=el.querySelector(".mid");if(!t||!mid||!el.classList.contains("hasrank"))return;const [l1,l2]=splitTitle(t.title,Math.max(80,mid.clientWidth-3));const title=mid.querySelector(".t-title");if(title)title.textContent=l1;let rest=mid.querySelector(".t-rest");if(l2){if(!rest){rest=document.createElement("p");rest.className="t-rest";mid.appendChild(rest)}rest.textContent=l2}else rest?.remove()});
+ const titleLayouts=qRows.map(el=>{const id=el.dataset.id,t=id&&findTask(id),mid=el.querySelector(".mid");if(!t||!mid||!el.classList.contains("hasrank"))return null;return{mid,parts:splitTitle(t.title,Math.max(80,mid.clientWidth-3))}});titleLayouts.forEach(x=>{if(!x)return;const [l1,l2]=x.parts,title=x.mid.querySelector(".t-title");if(title)title.textContent=l1;let rest=x.mid.querySelector(".t-rest");if(l2){if(!rest){rest=document.createElement("p");rest.className="t-rest";x.mid.appendChild(rest)}rest.textContent=l2}else rest?.remove()});
  const H=stageEl.clientHeight,line=Math.round(H*LINE);
  qTT=line-GAP/2;slotCenter=line;
  const sw=viewEl.querySelector("#slotwrap");sw.style.top=line+"px";sw.style.transform="translateY(-50%)";
@@ -935,11 +985,12 @@ function buildQueue(ctx,preserve){
  si.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();submitAdd()}});
  si.addEventListener("blur",()=>setTimeout(()=>{if(slotOpen&&document.activeElement!==si&&!document.activeElement?.closest("#slotwrap")&&!si.value.trim())closeSlot()},160));
  if(slotOpen){sw.classList.add("open");stageEl.classList.add("adding");si.value=inputVal;autoGrowSi(si);si.focus({preventScroll:true});onVV()}
+ if(ctx==="circle")markSourcesSeenLater(Q.rows.filter(r=>r.kind==="task").map(r=>r.task),"active");
  wireCircleTitleStream();wireCircleSearchButton();setNavActive()}
 function nearestSlotIdx(y){let bi=0,bd=1e9;for(let i=0;i<Q.slots.length;i++){const d=Math.abs(Q.slots[i].y-y);if(d<bd){bd=d;bi=i}}return bi}
-function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":"home");
+function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":state.tab==="more"?"more":"home");
  if(!Q||!qtrackEl)return;
- viewEl.classList.toggle("compact-head",qOffset>54&&!slotOpen);
+ viewEl.classList.remove("compact-head");
  const si=nearestSlotIdx(qOffset);
  qtrackEl.style.transform=`translateY(${qTT-qOffset}px)`;
  if(si!==qPrevSI){
@@ -948,8 +999,11 @@ function apply(ctx){ctx=ctx||(state.tab==="circle"?"circle":"home");
   qInsertGi=Q.slots[si].gi;
   const a=viewEl.querySelector("#sposT");if(a)a.innerHTML=T("slotLabel",{n:qInsertGi+1});
   const b=viewEl.querySelector("#sposN2");if(b)b.textContent=qInsertGi+1;
-  if(qPrevSI!==null)vibe(9);qPrevSI=si;
-  if(ctx==="home")state.insertIndex=qInsertGi;else state.ciInsertIndex=qInsertGi}}
+  const changedAfterInit=qPrevSI!==null;
+  if(changedAfterInit)vibe(9);qPrevSI=si;
+  if(ctx==="more"&&changedAfterInit)rollSlotMachine();
+  if(ctx==="home")state.insertIndex=qInsertGi;else if(ctx==="circle")state.ciInsertIndex=qInsertGi}
+ if(ctx==="more")moreOffset=qOffset}
 
 function refreshHome(){if(state.tab==="home"&&!selecting){homeSearch===null?buildQueue("home",true):buildSearch()}}
 function addTask(v){v=v.trim();if(!v){toast(T("tEmpty"));viewEl.querySelector("#si")?.focus();return}
@@ -1088,7 +1142,7 @@ function momentum(){cancelAnimationFrame(raf);let last=performance.now();
   if(Math.abs(vel)>0.015&&qOffset>0&&qOffset<qMaxY)raf=requestAnimationFrame(tick);else snap()})(last)}
 function snap(){cancelAnimationFrame(raf);if(!Q)return;const target=Q.slots[nearestSlotIdx(qOffset)].y,start=qOffset,t0=performance.now(),dur=200;
  (function st(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);qOffset=start+(target-start)*e;apply();
-  if(k<1)raf=requestAnimationFrame(st);else{qOffset=target;apply();save()}})(t0)}
+  if(k<1)raf=requestAnimationFrame(st);else{qOffset=target;apply();if(state.tab!=="more")scheduleSave()}})(t0)}
 function svMomentum(){if(!svEl)return;cancelAnimationFrame(raf);let last=performance.now();
  (function tick(t){const dt=Math.min(34,t-last);last=t;if(!svEl)return;svEl.scrollTop+=vel*dt;vel*=Math.pow(0.94,dt/16);
   if(Math.abs(vel)>0.02&&svEl.scrollTop>0&&svEl.scrollTop<svEl.scrollHeight-svEl.clientHeight)raf=requestAnimationFrame(tick)})(last)}
@@ -1168,7 +1222,7 @@ function renderSheet(){
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  const week=list.filter(t=>new Date(t.completedAt).getTime()>Date.now()-7*864e5).length;
  head.innerHTML=`<b>${isCircle?scopeName+" · ":""}✓ ${T("doneTitle")} ${list.length}</b><div class="mini">${T("doneWeek",{n:week})} · ${T("doneAll",{n:list.length})}</div>`;
- const filters=!isCircle?"":`<div class="donechips"><button class="donechip ${!ciDoneFilter?"on":""}" data-act="done-filter" data-m="">전체</button>${(curC()?.members||[]).filter(k=>MEMBERS[k]).map(k=>`<button class="donechip ${ciDoneFilter===k?"on":""}" data-act="done-filter" data-m="${k}"><span class="av">${MEMBERS[k].ini}</span>${MEMBERS[k][state.lang]}</button>`).join("")}</div>`;
+ const filters=!isCircle?"":`<div class="donechips"><button class="donechip ${!ciDoneFilter?"on":""}" data-act="done-filter" data-m="">전체</button>${orderedCircleMembers(curC()).map(k=>`<button class="donechip ${ciDoneFilter===k?"on":""}" data-act="done-filter" data-m="${k}"><span class="av">${MEMBERS[k].ini}</span>${MEMBERS[k][state.lang]}</button>`).join("")}</div>`;
  if(!list.length){body.innerHTML=filters+`<div class="empty"><div class="empty-c"><h3>${T("emptyDoneT")}</h3><p>${T("emptyDoneP")}</p></div></div>`;return}
  const d0=new Date();d0.setHours(0,0,0,0);const today=d0.getTime(),yest=today-864e5,wk=today-6*864e5;
  const gs={t:[],y:[],w:[],o:[]};
@@ -1177,8 +1231,8 @@ function renderSheet(){
  const grp=(key,arr)=>arr.length?`<div class="ghead"><span>${T(key)} · ${arr.length}</span><button data-act="sheet-clear" data-ids="${arr.map(t=>t.id).join(",")}">${T("clear")}</button></div>${arr.map(t=>{
    const m=isCircle?circlePerson(curC(),(t.assignees||[])[0]):null;
    const who=m?`<span class="who" title="${esc(m[state.lang])}">${m.ini}</span>`:"";
-   return `<div class="drow ${expandedDoneId===t.id?"expanded":""}" data-act="sheet-expand" data-id="${t.id}"><button class="ck on" data-act="restore" data-id="${t.id}">${I.check}</button><span class="rankc">#${(t.doneAt??0)+1}</span><span class="dtitle">${esc(t.title)}</span>${who}<span class="dtime">${fmt(t.completedAt)}</span><button class="dx" data-act="sheet-del" data-id="${t.id}">${I.x}</button></div>`}).join("")}`:"";
- body.innerHTML=filters+grp("gToday",gs.t)+grp("gYest",gs.y)+grp("gWeek",gs.w)+grp("gOld",gs.o)}
+   return `<div class="drow ${expandedDoneId===t.id?"expanded":""}" data-act="sheet-expand" data-id="${t.id}"><button class="ck on" data-act="restore" data-id="${t.id}">${I.check}</button><span class="rankc">#${(t.doneAt??0)+1}</span><span class="dtitle">${esc(t.title)}</span>${isCircle?sourceUnreadDot(t):""}${who}<span class="dtime">${fmt(t.completedAt)}</span><button class="dx" data-act="sheet-del" data-id="${t.id}">${I.x}</button></div>`}).join("")}`:"";
+ body.innerHTML=filters+grp("gToday",gs.t)+grp("gYest",gs.y)+grp("gWeek",gs.w)+grp("gOld",gs.o);if(isCircle)markSourcesSeenLater(list,"done")}
 
 function openCircleSheet(){renderCircleSheet();document.getElementById("sheetwrap").classList.add("on")}
 function openManageSheet(){renderManageSheet();document.getElementById("sheetwrap").classList.add("on")}
@@ -1187,29 +1241,17 @@ function renderCircleSheet(){
  const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
  head.innerHTML=`<b>${T("circlePickT")}</b>`;
  const mineLabel=state.lang==="en"?"My tasks":"내 할일";
- body.innerHTML=state.circles.map((c,i)=>`<div class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></div>`).join("")+`<button class="featins" data-act="circle-new" style="margin-top:8px"><span class="p">+</span>${T("circleNew")}</button>`}
-function renderCircleSheet(){
- const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
- head.innerHTML=`<b>${T("circlePickT")}</b>`;
- const mineLabel=state.lang==="en"?"My tasks":"내 할일";
  const joinBox=`<div class="pcard" style="margin-bottom:12px"><h3>${T("joinT")}</h3><p>${T("joinP")}</p><div class="join-row"><input class="field" id="joinCode" autocomplete="off" autocapitalize="characters" placeholder="${T("joinPh")}"/><button type="button" class="mbtn primary" data-act="invite-join">${T("joinBtn")}</button></div></div>`;
  const circles=state.circles.map((c,i)=>`<div class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></div>`).join("");
  body.innerHTML=joinBox+circles+`<button class="featins" data-act="circle-new" style="margin-top:8px"><span class="p">+</span>${T("circleNew")}</button>`;
 }
-function renderManageSheet(){const c=curC();if(!c)return;
- // Migrate demo circles created before invite codes were persisted.
- if(!c.code){c.code=newCircleCode();save()}
- const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody");
- head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;
- body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
+function renderManageSheet(){const c=curC();if(!c)return;if(!c.code){c.code=newCircleCode();save()}const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody"),members=orderedCircleMembers(c);head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
  <button class="rbtn identity-setting" data-act="circle-identity-edit"><span class="mlead"><span class="mrank">${c.emoji||"✨"}</span><span><b class="identity-label-text">끼리</b><em class="identity-value">${esc(c.name)}</em></span></span><span>편집 ›</span></button>
  <button class="rbtn identity-setting" data-act="profile-identity-edit" style="margin-top:8px"><span class="mlead"><span class="mrank">${myProfile(c).emoji}</span><span><b class="identity-label-text">내 프로필</b><em class="identity-value">${esc(myProfile(c).name)}</em></span></span><span>편집 ›</span></button>
- <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span></div>
- ${c.members.map(k=>{const m=circlePerson(c,k);if(!m)return"";const cnt=c.tasks.filter(t=>(t.assignees||[]).includes(k)&&!t.done).length;
-  return `<div class="suprow" style="margin-bottom:8px"><span class="who" style="background:${m.color};width:30px;height:30px;font-size:12.5px">${m.ini}</span><span class="smid"><b>${m[state.lang]}${k==="me"?" ("+T("meTag")+")":""}</b><span>${T("taskCnt",{n:cnt})}</span></span></div>`}).join("")}
- <div class="mdiv"></div>
- <button class="rbtn" data-act="circle-leave">${T("leaveCircle")}<span>›</span></button>
- <button class="rbtn danger" data-act="circle-del" style="margin-top:8px">${T("circleDel")}<em>${T("ownerOnly")}</em></button>`}
+ <div class="ghead"><span>${T("membersT",{n:c.members.length})}</span><em>내 화면에서만 적용</em></div><div class="member-order-list" id="memberOrderList">
+ ${members.map(k=>{const m=circlePerson(c,k),cnt=c.tasks.filter(t=>(t.assignees||[]).includes(k)&&!t.done).length;return `<div class="suprow member-order-row" data-member="${k}"><span class="who" style="background:${m.color};width:30px;height:30px;font-size:12.5px">${m.ini}</span><span class="smid"><b>${m[state.lang]}${k==="me"?" ("+T("meTag")+")":""}</b><span>${T("taskCnt",{n:cnt})}</span></span>${k==="me"?`<span class="member-handle self">고정</span>`:`<button class="member-handle" aria-label="담당자 순서 변경">${I.grip}</button>`}</div>`}).join("")}</div>
+ <div class="mdiv"></div><button class="rbtn" data-act="circle-leave">${T("leaveCircle")}<span>›</span></button><button class="rbtn danger" data-act="circle-del" style="margin-top:8px">${T("circleDel")}<em>${T("ownerOnly")}</em></button>`;wireMemberOrder(c)}
+function wireMemberOrder(c){const list=document.getElementById("memberOrderList");if(!list)return;let row=null,pid=null;const finish=()=>{if(!row)return;row.classList.remove("dragging");const order=[...list.querySelectorAll(".member-order-row")].map(x=>x.dataset.member);setPersonalMemberOrder(c,order);row=null;pid=null;renderView()};list.addEventListener("pointerdown",e=>{const h=e.target.closest(".member-handle:not(.self)");if(!h)return;e.preventDefault();row=h.closest(".member-order-row");pid=e.pointerId;row.classList.add("dragging");try{h.setPointerCapture(pid)}catch{}vibe(8)});list.addEventListener("pointermove",e=>{if(!row||e.pointerId!==pid)return;e.preventDefault();const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(".member-order-row");if(!target||target===row||target.dataset.member==="me")return;const r=target.getBoundingClientRect();list.insertBefore(row,e.clientY<r.top+r.height/2?target:target.nextSibling)});list.addEventListener("pointerup",finish);list.addEventListener("pointercancel",finish)}
 
 function buildSearch(){
  viewEl.innerHTML=`${headHtml()}<div class="stage"><div class="scroller"><div class="list">
@@ -1272,36 +1314,39 @@ function statsView(){
  ${old.length?`<div class="statcard"><h4>${T("stOld")}</h4><p>${T("stOldP")}</p>${old.map(t=>`<div class="oldrow"><span class="oldtitle">${esc(t.title)}</span><span class="oldbadge">D+${Math.max(0,Math.floor((Date.now()-new Date(t.createdAt))/864e5))}</span></div>`).join("")}</div>`:""}
  </div></div>`}
 
-function moreView(){
- const segBtn=(l,label)=>`<button class="more-lang ${state.lang===l?"on":""}" data-act="lang" data-lang="${l}">${label}</button>`;
- const row=(icon,label,action="stub",tail="›")=>`<div class="more-anchor"></div><button class="rbtn more-row" data-act="${action}"><span class="mlead"><span class="mrank">${icon}</span><span>${label}</span></span><span>${tail}</span></button>`;
- return `<div class="scroller more-scroller"><div class="list more-list">
-  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"ACCOUNT":"계정"}</p><div class="more-group">
-   ${row(I.user,T("mAccount"),"stub",`<em>${T("soon")}</em> ›`)}
-   ${row(I.bell,T("mNoti"),"stub",`<em>${T("soon")}</em> ›`)}
-  </div></section>
-  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"PREFERENCES":"환경"}</p><div class="more-group">
-   <div class="more-anchor"></div><div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${segBtn("ko","한국어")}${segBtn("en","English")}</div></div>
-   ${row(I.shield,T("mTerms"),"stub")}
-   ${row(I.mail,T("mContact"),"stub")}
-  </div></section>
-  <div class="more-anchor"></div><div class="more-divider"></div><div class="more-anchor"></div>
-  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"DATA":"데이터"}</p><div class="more-group">
-   <div class="more-anchor"></div><div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>
-   ${row(I.arrow,T("mExport"),"export","⇩")}
-   <div class="more-anchor"></div><textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>
-   ${row(I.arrow,T("mImport"),"import","⇧")}
-   ${row(I.x,T("mReset"),"reset","⟲")}
-  </div></section>
-  <section class="more-section"><p class="more-section-label">${state.lang==="en"?"TEST TOOLS":"테스트 도구"}</p><div class="more-group">
-   ${row("↺",state.lang==="en"?"Reset to starter data":"초기 데이터로 리셋","test-seed","⟲")}
-   ${row("⌫",state.lang==="en"?"Remove all data (empty-state test)":"모든 데이터 제거 (엠티케이스 확인용)","test-empty","!")}
-   ${row(I.bell,state.lang==="en"?"Create all unread badges":"모든 안읽음 뱃지 생성","test-unread","•")}
-  </div></section>
-  <div class="more-anchor"></div><button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>
-  <div class="more-anchor"></div><div style="height:54px"></div>
- </div></div>
- <div class="slotwrap" id="moreSlotWrap"><button type="button" class="ins quip" data-act="quip-next"><span class="p">🎲</span><span id="quipTxt">${state.lang==="en"?"Tap for a small thought":"눌러서 작은 생각 하나"}</span></button></div>`}
+const SLOT_SYMBOLS=["🌙","🍊","🌿","🔥","🐈","🧦","🐸"];
+let slotRollTimer=0;
+function slotPrefs(){const p=state.userPrefs.slotMachine||(state.userPrefs.slotMachine={locked:false,symbols:["🌙","🍊","🌿"]});if(!Array.isArray(p.symbols)||p.symbols.length!==3)p.symbols=["🌙","🍊","🌿"];return p}
+function slotCombo(symbols){const counts={};symbols.forEach(x=>counts[x]=(counts[x]||0)+1);const max=Math.max(...Object.values(counts));return max===3?"triple":max===2?"pair":"mixed"}
+function renderSlotMachine(rolling=false){const btn=viewEl?.querySelector(".emoji-slot-btn");if(!btn)return;const p=slotPrefs(),combo=slotCombo(p.symbols),counts={};p.symbols.forEach(x=>counts[x]=(counts[x]||0)+1);btn.className=`ins quip emoji-slot-btn combo-${combo}${p.locked?" locked":""}${rolling?" rolling":""}${combo==="triple"&&p.symbols[0]==="🔥"?" symbol-fire":""}${combo==="triple"&&p.symbols[0]==="🌙"?" symbol-moon":""}`;btn.setAttribute("aria-label",p.locked?"슬롯머신 고정 해제":"슬롯머신 고정");btn.querySelectorAll(".emoji-reel").forEach((el,i)=>{el.textContent=p.symbols[i];el.classList.toggle("matched",counts[p.symbols[i]]>1)});const mode=btn.querySelector(".slot-mode");if(mode)mode.textContent=p.locked?"🔒":"↻"}
+function rollSlotMachine(force=false){const p=slotPrefs();if(p.locked&&!force)return;p.symbols=[0,1,2].map(()=>SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);renderSlotMachine(true);clearTimeout(slotRollTimer);slotRollTimer=setTimeout(()=>renderSlotMachine(false),220)}
+function toggleSlotLock(){const p=slotPrefs();p.locked=!p.locked;if(!p.locked)rollSlotMachine(true);else{renderSlotMachine(false);scheduleSave()}vibe(p.locked?[10,16,10]:8)}
+
+function moreQueueItems(){
+ const seg=(l,label)=>`<button class="more-lang ${state.lang===l?"on":""}" data-act="lang" data-lang="${l}">${label}</button>`;
+ const row=(icon,label,action="stub",tail="›")=>`<button class="rbtn more-row" data-act="${action}"><span class="mlead"><span class="mrank">${icon}</span><span>${label}</span></span><span>${tail}</span></button>`;
+ const section=(label,html)=>`<div class="more-qsection"><p class="more-section-label">${label}</p>${html}</div>`;
+ return[
+  section(state.lang==="en"?"ACCOUNT":"계정",row(I.user,T("mAccount"),"stub",`<em>${T("soon")}</em> ›`)),
+  row(I.bell,T("mNoti"),"stub",`<em>${T("soon")}</em> ›`),
+  section(state.lang==="en"?"PREFERENCES":"환경",`<div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${seg("ko","한국어")}${seg("en","English")}</div></div>`),
+  row(I.shield,T("mTerms"),"stub"),row(I.mail,T("mContact"),"stub"),`<div class="more-divider more-qdivider"></div>`,
+  section(state.lang==="en"?"DATA":"데이터",`<div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>`),
+  row(I.arrow,T("mExport"),"export","⇩"),`<textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>`,row(I.arrow,T("mImport"),"import","⇧"),row(I.x,T("mReset"),"reset","⟲"),
+  section(state.lang==="en"?"TEST TOOLS":"테스트 도구",row("↺",state.lang==="en"?"Reset to starter data":"초기 데이터로 리셋","test-seed","⟲")),
+  row("⌫",state.lang==="en"?"Remove all data (empty-state test)":"모든 데이터 제거 (엠티케이스 확인용)","test-empty","!"),row(I.bell,state.lang==="en"?"Create all unread badges":"모든 안읽음 뱃지 생성","test-unread","•"),
+  `<button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>`]
+}
+function buildMoreQueue(){
+ cancelAnimationFrame(raf);
+ viewEl.innerHTML=`${headHtml()}<div class="stage q more-qstage" id="stage"><div class="qvp"><div class="qtrack more-qtrack" id="qtrack"></div></div><div class="qfade t"></div><div class="qfade b"></div><div class="slotwrap" id="moreSlotWrap"><button type="button" class="ins quip emoji-slot-btn" data-act="quip-next" aria-label="슬롯머신 고정"><span class="emoji-reels" aria-hidden="true"><i class="emoji-reel"></i><i class="emoji-reel"></i><i class="emoji-reel"></i></span><span class="slot-mode" aria-hidden="true">↻</span></button></div></div>`;
+ stageEl=viewEl.querySelector("#stage");qtrackEl=viewEl.querySelector("#qtrack");
+ qtrackEl.innerHTML=moreQueueItems().map((html,i)=>`<div class="more-qitem" data-more-index="${i}">${html}</div>`).join("");qRows=[...qtrackEl.children];
+ let y=0;const rows=[],slots=[],heights=qRows.map(el=>Math.ceil(el.offsetHeight));qRows.forEach((el,i)=>{slots.push({y,gi:i});const h=heights[i];el.dataset.y=y;el.style.top=y+"px";rows.push({kind:"more",y,h,gi:i});y+=h+10});slots.push({y,gi:qRows.length});Q={rows,slots,totalH:y};qtrackEl.style.height=y+"px";
+ const line=Math.round(stageEl.clientHeight*LINE);qTT=line-GAP/2;slotCenter=line;const sw=viewEl.querySelector("#moreSlotWrap");sw.style.top=line+"px";sw.style.transform="translateY(-50%)";
+ qMaxY=y;qPrevSI=null;qOffset=clamp(moreOffset,0,qMaxY);apply("more");renderSlotMachine(false);wireCircleTitleStream();setNavActive()
+}
+
 function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
 function importJson(){const ta=document.getElementById("io");if(!ta)return;
  try{const p=JSON.parse(ta.value);const arr=Array.isArray(p)?p:p.tasks;if(!Array.isArray(arr))throw 0;
@@ -1313,7 +1358,7 @@ function resetAll(){askConfirm(T("mReset"),T("confirmReset"),T("mReset"),()=>{lo
 function resetTestUi(){selecting=false;selected.clear();editingId=null;slotOpen=false;homeSearch=null;circleSearch=null;ciDoneFilter=null;expandedDoneId=null;state.ciGhosts=false;state.ciExpanded=null;state.ciFilter=null;state.insertIndex=0;state.ciInsertIndex=0}
 function resetToStarterData(){const lang=state.lang;localStorage.removeItem(KEY);state=load();state.lang=lang;state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Starter data restored":"초기 데이터로 되돌렸어요")}
 function removeAllDataForTest(){const title=state.lang==="en"?"Remove all data":"모든 데이터 제거",msg=state.lang==="en"?"This removes personal tasks, completed tasks, Circles, and all test badges so you can inspect empty states.":"개인 할 일·완료 목록·끼리·모든 테스트 뱃지를 비워 엠티케이스를 확인합니다.";askConfirm(title,msg,state.lang==="en"?"Remove":"제거",()=>{const lang=state.lang;state={tasks:[],circles:[],ci:0,doneLog:[],tab:"more",insertIndex:0,ciInsertIndex:0,ciFilter:null,lang,suggestions:[]};resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"All data removed":"모든 데이터를 비웠어요")},true)}
-function createUnreadBadgesForTest(){if(!state.circles.length){state.circles=seedCircles();state.ci=0}state.circles.forEach((c,i)=>{c.unread=i+3;c.unreadDone=2;c.memberUnread={};(c.members||["me"]).forEach((k,j)=>c.memberUnread[k]=j===0?3:1)});state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Unread badges created":"안읽음 뱃지를 모두 만들었어요")}
+function createUnreadBadgesForTest(){if(!state.circles.length){state.circles=seedCircles();state.ci=0}state.circles.forEach(c=>{c.tasks.forEach(t=>t.sourceUnread=false);c.tasks.filter(t=>!t.done).slice(0,3).forEach(t=>t.sourceUnread=true);c.tasks.filter(t=>t.done).slice(0,2).forEach(t=>t.sourceUnread=true);refreshCircleUnread(c)});state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Unread source badges created":"원본 항목 안읽음 뱃지를 만들었어요")}
 
 function setNavActive(){document.querySelectorAll("#nav .nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===state.tab));const badge=document.querySelector("#nav .nbadge");if(badge){const n=circleUnreadTotal();badge.textContent=n>99?"99+":n;badge.hidden=!n}}
 function moveInd(){if(selecting)return;const nav=document.getElementById("nav");if(!nav)return;const ind=document.getElementById("navInd");const btn=nav.querySelector(`.nb[data-tab="${state.tab}"]`);if(btn&&ind){ind.style.left=btn.offsetLeft+"px";ind.style.width=btn.offsetWidth+"px"}}
@@ -1333,17 +1378,13 @@ function startEdit(el,id,ev){if(selecting)return;const t=findTask(id);if(!t)retu
   else if(document.caretPositionFromPoint){const p=document.caretPositionFromPoint(ev.clientX,ev.clientY);if(p){range=document.createRange();range.setStart(p.offsetNode,p.offset)}}
   if(range){range.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(range);placed=true}}catch{}
  if(!placed){const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}
- if(state.tab==="circle"&&cardEl){const c=curC();if(c){const row=document.createElement("div");row.className="editasg";
-  row.innerHTML=c.members.filter(k=>MEMBERS[k]).map(k=>`<button type="button" class="asgc ${(t.assignees||[]).includes(k)?"on":""}" data-em="${k}"><span class="av" style="background:${MEMBERS[k].color}">${MEMBERS[k].ini}</span>${MEMBERS[k][state.lang]}</button>`).join("");
-  row.addEventListener("pointerdown",e2=>{e2.preventDefault();e2.stopPropagation();const b=e2.target.closest("[data-em]");if(!b)return;t.assignees=[b.dataset.em];save();row.querySelectorAll(".asgc").forEach(x=>x.classList.toggle("on",x.dataset.em===b.dataset.em))});
-  row.addEventListener("click",e2=>e2.stopPropagation());
-  cardEl.querySelector(".mid")?.appendChild(row)}}
+ if(state.tab==="circle"&&cardEl){const c=curC();if(c)cardEl.insertAdjacentHTML("beforeend",assigneePickerHtml(c,(t.assignees||[])[0],"edit",id))}
  const fin=()=>{const cancelled=editingId!==id;el.removeAttribute("contenteditable");cardEl?.classList.remove("editing");if(!cancelled){editingId=null;editingOriginal="";commitEdit(id,el.textContent)}};
  el.addEventListener("blur",fin,{once:true});
  el.addEventListener("keydown",e2=>{if(e2.key==="Enter"){e2.preventDefault();el.blur()}if(e2.key==="Escape"){e2.preventDefault();cancelEdit()}})}
 
 function mount(){
- if(state.tab==="circle")markCircleSeen();
+ const initialCircle=state.tab==="circle"?curC():null;
  document.title=`Kkiu To Do — ${BUILD}`;
  app.innerHTML=`<div id="viewport"></div>
   <nav class="nav" id="nav">${navHtml()}</nav>
@@ -1362,8 +1403,8 @@ function mount(){
   if(performance.now()-dragEndAt<tapSuppressMs){e.stopPropagation();e.preventDefault()}
  },true);
  const bt=document.getElementById("buildtag");if(bt)bt.textContent=BUILD;
- renderView();setNavActive();requestAnimationFrame(moveInd)}
-app.addEventListener("pointerdown",e=>{if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()});
+ renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))});if(initialCircle){const defer=window.requestIdleCallback||((cb)=>setTimeout(cb,120));defer(()=>markCircleSeen(initialCircle),{timeout:650})}}
+app.addEventListener("pointerdown",e=>{if(e.target.closest(".edit-assignee-picker")){e.preventDefault();return}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()});
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
@@ -1372,7 +1413,7 @@ app.addEventListener("click",e=>{
  if(act==="hsearch"){homeSearch=homeSearch===null?"":null;renderView();return}
  if(act==="csearch"){circleSearch=circleSearch===null?"":null;if(circleSearch===null)renderView();else buildCircleSearch();return}
  if(act==="search-go"){goToSearchResult(id,el.dataset.done==="1");return}
- if(act==="sheet-open"){const c=curC();if(state.tab==="circle"&&c&&(c.unreadDone||0)){c.unreadDone=0;save();renderView()}openSheet();return}
+ if(act==="sheet-open"){openSheet();return}
  if(act==="sheet-close"){closeSheet();return}
  if(act==="history"){openHistorySheet();return}
  if(act==="done-filter"){ciDoneFilter=el.dataset.m||null;renderSheet();return}
@@ -1402,12 +1443,10 @@ app.addEventListener("click",e=>{
  if(act==="invite"){const c=curC();if(!c||!c.code)return;try{navigator.clipboard?.writeText(c.code)}catch{}toast(T("tInvite",{n:c.code}));return}
  if(act==="circle-leave"){const c=curC();if(!c)return;askConfirm(T("leaveCircle"),T("leaveConfirm",{n:c.name}),T("leaveCircle"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tLeave",{n:c.name}))},true);return}
  if(act==="circle-del"){const c=curC();if(!c)return;askConfirm(T("circleDel"),T("circleDelConfirm",{n:c.name}),T("circleDel"),()=>{state.circles.splice(state.ci,1);state.ci=0;state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;save();closeSheet();renderView();toast(T("tCircleDel"))},true);return}
+ if(act==="edit-asg-pick"){const t=findTask(id),k=el.dataset.m;if(!t||!k)return;t.assignees=[k];scheduleSave();el.closest(".edit-assignee-picker")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
  if(act==="asg-pick"){const k=el.dataset.m;ciAssignees=new Set([k]);viewEl.querySelectorAll(".asgrow .asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}
  if(act==="add-submit"){submitAdd();return}
- if(act==="quip-next"){const q=viewEl.querySelector("#quipTxt");if(q){const a=state.lang==="en"?["One thing at a time","Tiny progress still counts","Leave a little room for later","Today can stay unfinished","A queue is not a verdict"]:["한 번에 하나씩이면 충분해요","작은 진척도 진척이에요","나중의 나를 위한 빈자리","오늘이 덜 끝나도 괜찮아요","줄은 평가표가 아니에요"];moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex];vibe(8)}return}
- if(act==="mslot-open"){return}
- if(act==="quick-target"){moreTarget=el.dataset.target;viewEl.querySelectorAll("#mIbar [data-act='quick-target']").forEach(b=>b.classList.toggle("on",b.dataset.target===moreTarget));return}
- if(act==="mfeat-submit"){submitFeat();return}
+ if(act==="quip-next"){toggleSlotLock();return}
  if(act==="chip"){ciAssignees=new Set();state.ciFilter=el.dataset.m||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(el.dataset.m){const c=curC();if(c?.memberUnread)c.memberUnread[el.dataset.m]=0}save();buildQueue("circle");return}
  if(act==="empty-all"){state.ciFilter=null;state.ciGhosts=false;state.ciExpanded=null;buildQueue("circle");return}
  if(act==="modal-cancel"){closeModal();return}
@@ -1424,16 +1463,6 @@ app.addEventListener("click",e=>{
  else if(act==="export")exportJson();else if(act==="import")importJson();else if(act==="reset")resetAll();else if(act==="test-seed")resetToStarterData();else if(act==="test-empty")removeAllDataForTest();else if(act==="test-unread")createUnreadBadgesForTest();
  else if(act==="link")toast(T("tLink"))});
 function submitAdd(){const si=viewEl.querySelector("#si");if(!si)return;const v=si.value;si.value="";autoGrowSi(si);state.tab==="circle"?ciAdd(v):addTask(v)}
-function submitFeat(){const w=viewEl.querySelector("#moreSlotWrap"),ta=w?.querySelector("#msi"),v=(ta?.value||"").trim();if(!v){w?.classList.remove("open");return}
- if(moreTarget==="circle"&&curC()){
-  const c=curC();c.tasks.filter(t=>!t.done).forEach(t=>t.order++);c.tasks.push({id:uid(),title:v.slice(0,120),assignees:["me"],favorite:false,done:false,order:0,createdAt:now(),completedAt:null});ciReindex()
- }else{
-  state.tasks.filter(t=>!t.done).forEach(t=>t.order++);state.tasks.push({id:uid(),title:v.slice(0,120),favorite:false,done:false,order:0,createdAt:now(),completedAt:null,insertAt:0,listAt:active().length,doneAt:null});reindex()
- }
- save();if(ta)ta.value="";w?.classList.remove("open");vibe([10,16,10]);toast(state.lang==="en"?"Kkiu'd it at the top":"맨 앞에 끼웠어요");if(state.tab==="more")renderView()}
-function wireMoreSlot(){const sc=viewEl.querySelector(".scroller"),slot=viewEl.querySelector("#moreSlotWrap");if(!sc||!slot)return;
- const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const max=Math.max(0,sc.scrollHeight-sc.clientHeight),atTop=sc.scrollTop<=8,atBottom=sc.scrollTop>=max-8,desired=sc.scrollTop+sc.clientHeight*.54;let best=atTop?anchors[0]:atBottom?anchors[anchors.length-1]:anchors[0],dist=Infinity;if(!atTop&&!atBottom)anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop;const d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});const changed=!best.classList.contains("active");anchors.forEach(a=>a.classList.toggle("active",a===best));slot.style.top=Math.round(sc.clientHeight*.54)+"px";slot.style.transform="translateY(-50%)";viewEl.classList.toggle("compact-head",sc.scrollTop>44);if(changed){const q=viewEl.querySelector("#quipTxt"),a=state.lang==="en"?["One thing at a time","A tiny win counts","Leave room for later","You can stop here","Queue magic, quietly"]:["한 번에 하나씩","작은 진척도 진척","나중의 나를 위한 자리","여기서 잠깐 쉬어도 돼요","조용히 끼워졌어요"];if(q){moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex]}requestAnimationFrame(()=>{slot.style.top=Math.round(sc.clientHeight*.54)+"px"})}};
- sc.addEventListener("scroll",place,{passive:true});window.addEventListener("resize",place,{passive:true});requestAnimationFrame(place)}
 app.addEventListener("submit",e=>{
  if(e.target.id==="addForm"){e.preventDefault();submitAdd();return}
  if(e.target.id==="modalForm"){e.preventDefault();const v=document.getElementById("modalIn")?.value||"";const cb=modalOkCb;closeModal();cb&&cb(v);return}
@@ -1450,11 +1479,7 @@ function askPrompt(title,placeholder,cb,dflt){modalOkCb=cb;
  setTimeout(()=>{const mi=document.getElementById("modalIn");if(!mi)return;mi.focus();mi.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();const v=mi.value,cb=modalOkCb;closeModal();cb&&cb(v)}})},60)}
 function openClearModal(arr){
  openModal(`<h3>${T("clearModalT")}</h3><div class="clist">${arr.map(t=>`<label class="clrow"><input type="checkbox" checked data-id="${t.id}"/><span>${esc(t.title)}</span></label>`).join("")}</div><div class="mrow"><button type="button" class="mbtn" data-act="modal-cancel">${T("cancel")}</button><button type="button" class="mbtn danger" data-act="modal-clear-confirm">${T("clear")}</button></div>`)}
-window.addEventListener("resize",()=>{moveInd();if(document.querySelector('[contenteditable="true"]'))return;if(isQueue()&&!slotOpen&&!selecting)buildQueue(state.tab==="circle"?"circle":"home",true)});
-// Keep the floating More-page card reachable at both scroll edges. Touch scrolling
-// often stops a few pixels short of the mathematical maximum, so use a forgiving
-// edge threshold instead of requiring an exact 8px boundary.
-wireMoreSlot=function(){const sc=viewEl.querySelector(".scroller"),slot=viewEl.querySelector("#moreSlotWrap");if(!sc||!slot)return;const place=()=>{const anchors=[...viewEl.querySelectorAll(".more-anchor")];if(!anchors.length)return;const max=Math.max(0,sc.scrollHeight-sc.clientHeight),edge=Math.max(24,Math.round(sc.clientHeight*.06)),atTop=sc.scrollTop<=edge,atBottom=max-sc.scrollTop<=edge,desired=sc.scrollTop+sc.clientHeight*.54;let best=atTop?anchors[0]:atBottom?anchors[anchors.length-1]:anchors[0],dist=Infinity;if(!atTop&&!atBottom)anchors.forEach(a=>{const y=a.getBoundingClientRect().top-sc.getBoundingClientRect().top+sc.scrollTop,d=Math.abs(y-desired);if(d<dist){best=a;dist=d}});const changed=!best.classList.contains("active");anchors.forEach(a=>a.classList.toggle("active",a===best));slot.style.top=Math.round(sc.clientHeight*.54)+"px";slot.style.transform="translateY(-50%)";viewEl.classList.toggle("compact-head",sc.scrollTop>44);if(changed){const q=viewEl.querySelector("#quipTxt"),a=state.lang==="en"?["One thing at a time","A tiny win counts","Leave room for later","You can stop here","Queue magic, quietly"]:["한 번에 하나씩","작은 진척도 진척","나중의 나를 위한 자리","여기서 잠깐 쉬어도 돼요","조용히 끼워졌어요"];if(q){moreQuipIndex=(moreQuipIndex+1)%a.length;q.textContent=a[moreQuipIndex]}}};sc.addEventListener("scroll",place,{passive:true});window.addEventListener("resize",place,{passive:true});requestAnimationFrame(place)};
+window.addEventListener("resize",()=>{moveInd();if(document.querySelector('[contenteditable="true"]')||slotOpen||selecting)return;if(state.tab==="more")buildMoreQueue();else if(isQueue())buildQueue(state.tab==="circle"?"circle":"home",true)});
 mount();
 </script>
 </body>
