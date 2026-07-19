@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.41</title>
+<title>Kkiu To Do — v18.2.42</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -584,13 +584,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.41</p>
+  <p class="note">끼우 목업 · v18.2.42</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.41";
+const BUILD="v18.2.42";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.42",date:"2026.07.19",ko:["실제 연속 터치 테스트에서 재현된 관성 스크롤 직후 앱바 click 누락 수정","상·하단 앱바 컨트롤을 pointerdown 시 즉시 실행해 브라우저의 합성 click 취소 여부와 무관하게 첫 터치 보장","담당자 선택·가로 스와이프·수정 중 담당자 필터의 첫 터치 동작 유지"],en:["Fixed missing app-bar clicks after momentum scrolling reproduced with raw touch sequences","Executed top and bottom app-bar controls immediately on pointerdown so first touch no longer depends on a synthetic click","Preserved first-touch assignee selection, horizontal swiping, and member filtering during editing"]},
  {version:"v18.2.41",date:"2026.07.19",ko:["큐 스크롤·관성·스냅 도중 앱바 컨트롤을 누르면 진행 중인 모션을 즉시 정지하고 첫 터치부터 버튼 동작","끼리 입력·수정 담당자 선택 영역의 pointerdown 차단 제거로 최초 터치 선택과 가로 스와이프 지원","수정 중 담당자 필터를 처음 누를 때 편집 카드가 먼저 닫혀 클릭이 소실되던 이벤트 순서 수정","담당자 영역 조작 중 입력창과 수정 제목의 포커스를 안전하게 복원"],en:["Stopped queue motion immediately when app-bar controls are pressed so the first tap works during scrolling","Removed pointerdown blocking from Circle assignee strips for first-touch selection and horizontal swiping","Fixed the event order that discarded the first assignee-filter tap during editing","Safely restored input and edit focus after assignee-strip interaction"]},
  {version:"v18.2.40",date:"2026.07.19",ko:["끼우 탭 한국어 타이틀을 ‘할 일’로 수정하고 완료 아이콘의 숫자 뱃지 제거","끼리 전체 목록에서는 업데이트 뱃지를 유지하고 해당 담당자 필터에서 확인할 때만 읽음 처리","끼리 할 일 수동 순서 변경 시 실제 위치가 달라진 기존 할 일에 업데이트 뱃지 표시","새 할 일 삽입으로 기존 순번이 밀리는 경우에는 재배치 업데이트에서 제외"],en:["Renamed the Korean Queue title to ‘할 일’ and removed the completed-count badge","Kept Circle update badges in the All view and marked them seen only in an assignee filter","Added update badges to existing Circle tasks whose positions changed through manual reordering","Excluded index shifts caused only by inserting a new task"]},
  {version:"v18.2.39",date:"2026.07.19",ko:["끼리 할일 수정 시 담당자 선택 UI를 입력 UI와 동일한 화면 폭으로 확장","담당자 칩의 가로 스크롤 범위와 좌우 여백을 입력 상태와 정확히 통일"],en:["Expanded the Circle edit assignee picker to the same viewport width as task entry","Matched horizontal scrolling and side insets between edit and input states"]},
@@ -1407,7 +1408,7 @@ function mount(){
  const bt=document.getElementById("buildtag");if(bt)bt.textContent=BUILD;
  renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))})}
 function applyCircleFilter(member){ciAssignees=new Set();state.ciFilter=member||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(member){const c=curC();if(c?.memberUnread)c.memberUnread[member]=0}save();buildQueue("circle")}
-app.addEventListener("pointerdown",e=>{const control=e.target.closest(".head button,.nav button,.chips button,.asgrow button,.seldock button,.sheethead button");if(control)stopQueueMotion();const strip=e.target.closest(".asgrow");if(strip){assigneeTouching=true;pendingAssigneeInput=strip.classList.contains("edit-assignee-picker")?null:viewEl.querySelector("#si");return}const chip=e.target.closest('.chips .chip[data-act="chip"]');if(chip&&editingId){document.querySelector('.card.editing .t-title[contenteditable="true"]')?.blur();applyCircleFilter(chip.dataset.m||null);e.preventDefault();e.stopPropagation();return}if(!editingId)return;if(e.target.closest(".chips"))return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
+app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const control=e.target.closest(".chips button,.asgrow button");if(control)stopQueueMotion();const strip=e.target.closest(".asgrow");if(strip){assigneeTouching=true;pendingAssigneeInput=strip.classList.contains("edit-assignee-picker")?null:viewEl.querySelector("#si");return}const chip=e.target.closest('.chips .chip[data-act="chip"]');if(chip&&editingId){document.querySelector('.card.editing .t-title[contenteditable="true"]')?.blur();applyCircleFilter(chip.dataset.m||null);e.preventDefault();e.stopPropagation();return}if(!editingId)return;if(e.target.closest(".chips"))return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
 function finishAssigneeTouch(){if(!assigneeTouching)return;requestAnimationFrame(()=>{assigneeTouching=false;const input=pendingAssigneeInput,edit=pendingEditFocus;pendingAssigneeInput=null;pendingEditFocus=null;if(input?.isConnected&&slotOpen)input.focus({preventScroll:true});if(edit?.el?.isConnected&&editingId===edit.id){edit.el.focus({preventScroll:true});edit.el.addEventListener("blur",edit.fin,{once:true})}})}
 app.addEventListener("pointerup",finishAssigneeTouch,true);app.addEventListener("pointercancel",finishAssigneeTouch,true);
 app.addEventListener("click",e=>{
