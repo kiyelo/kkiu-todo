@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import BottomNav from './components/BottomNav.jsx'
+import AuthScreen from './components/AuthScreen.jsx'
 import Header from './components/Header.jsx'
 import MoreScreen from './components/MoreScreen.jsx'
 import QueueScreen from './components/QueueScreen.jsx'
 import { CircleEditor, CirclePicker, CompletedSheet } from './components/Sheets.jsx'
 import { members, starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
+import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
+import { createPersonalTask, deletePersonalTasks, loadPersonalTasks, updatePersonalPositions, updatePersonalTask } from './services/supabaseRepository.js'
 
 const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 export default function App() {
+  const [session, setSession] = useState(undefined)
+  const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
+  const [syncError, setSyncError] = useState('')
   const [tab, setTab] = useState('home')
   const [data, setData] = useState(() => localRepository.load(starterData))
   const [circleId, setCircleId] = useState(data.circles[0]?.id)
@@ -20,7 +26,32 @@ export default function App() {
   const [circleEditorOpen, setCircleEditorOpen] = useState(null)
   const [selected, setSelected] = useState(() => new Set())
 
-  useEffect(() => { localRepository.save(data) }, [data])
+  useEffect(() => {
+    if (!hasSupabaseConfig) {
+      setSession(null)
+      setRemoteLoading(false)
+      return undefined
+    }
+
+    supabase.auth.getSession().then(({ data: authData }) => setSession(authData.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !session?.user) return
+    setRemoteLoading(true)
+    loadPersonalTasks(session.user.id)
+      .then((personal) => setData((current) => ({ ...current, personal })))
+      .catch((error) => setSyncError(error.message))
+      .finally(() => setRemoteLoading(false))
+  }, [session?.user?.id])
+
+  useEffect(() => {
+    if (!hasSupabaseConfig) localRepository.save(data)
+  }, [data])
+
+  const reportSyncError = (error) => setSyncError(error?.message || '데이터를 저장하지 못했어요.')
 
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
   const activeMembers = members.map((member) => member.id === 'me' && circle?.profile ? { ...member, name: circle.profile.name, emoji: circle.profile.emoji } : member)
@@ -32,43 +63,58 @@ export default function App() {
     return { ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, tasks: updater(item.tasks), unread: 0 } : item) }
   })
 
-  const addTask = (title, assignee = 'me', position) => updateTasks((current) => {
-    const active = current.filter((task) => !task.done)
-    const completed = current.filter((task) => task.done)
+  const addTask = (title, assignee = 'me', position) => {
+    const task = { id: crypto.randomUUID(), title, assignee, done: false, createdAt: Date.now() }
+    const active = tasks.filter((item) => !item.done)
+    const completed = tasks.filter((item) => item.done)
     const next = [...active]
-    next.splice(Math.max(0, Math.min(position, active.length)), 0, { id: makeId(), title, assignee, done: false, createdAt: Date.now() })
-    return [...next, ...completed]
-  })
-  const completeTask = (id) => updateTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done, completedAt: task.done ? null : new Date().toISOString() } : task))
-  const editTask = (id, title) => updateTasks((current) => current.map((task) => task.id === id ? { ...task, title } : task))
+    next.splice(Math.max(0, Math.min(position, active.length)), 0, task)
+    updateTasks(() => [...next, ...completed])
+    if (tab === 'home' && session?.user) {
+      createPersonalTask(session.user.id, task, position)
+        .then(() => updatePersonalPositions(next))
+        .catch(reportSyncError)
+    }
+  }
+  const completeTask = (id) => {
+    const currentTask = tasks.find((task) => task.id === id)
+    updateTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done, completedAt: task.done ? null : new Date().toISOString() } : task))
+    if (tab === 'home' && currentTask) updatePersonalTask(id, { done: !currentTask.done }).catch(reportSyncError)
+  }
+  const editTask = (id, title) => {
+    updateTasks((current) => current.map((task) => task.id === id ? { ...task, title } : task))
+    if (tab === 'home') updatePersonalTask(id, { title }).catch(reportSyncError)
+  }
   const setAssignee = (id, assignee) => updateTasks((current) => current.map((task) => task.id === id ? { ...task, assignee } : task))
-  const moveTask = (id, direction) => updateTasks((current) => {
-    const active = current.filter((task) => !task.done)
-    const completedItems = current.filter((task) => task.done)
+  const moveTask = (id, direction) => {
+    const active = tasks.filter((task) => !task.done)
+    const completedItems = tasks.filter((task) => task.done)
     const from = active.findIndex((task) => task.id === id)
     const to = Math.max(0, Math.min(active.length - 1, from + direction))
-    if (from < 0 || from === to) return current
+    if (from < 0 || from === to) return
     const next = [...active]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
-    return [...next, ...completedItems]
-  })
-  const moveTaskTo = (sourceId, targetId) => updateTasks((current) => {
-    const active = current.filter((task) => !task.done)
-    const completedItems = current.filter((task) => task.done)
+    updateTasks(() => [...next, ...completedItems])
+    if (tab === 'home') updatePersonalPositions(next).catch(reportSyncError)
+  }
+  const moveTaskTo = (sourceId, targetId) => {
+    const active = tasks.filter((task) => !task.done)
+    const completedItems = tasks.filter((task) => task.done)
     const from = active.findIndex((task) => task.id === sourceId)
     const to = active.findIndex((task) => task.id === targetId)
-    if (from < 0 || to < 0 || from === to) return current
+    if (from < 0 || to < 0 || from === to) return
     const next = [...active]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
-    return [...next, ...completedItems]
-  })
+    updateTasks(() => [...next, ...completedItems])
+    if (tab === 'home') updatePersonalPositions(next).catch(reportSyncError)
+  }
   const toggleSelect = (id) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next })
   const startSelect = (id) => setSelected(new Set([id]))
   const cancelSelect = () => setSelected(new Set())
   const selectAll = () => setSelected(new Set(tasks.filter((task) => !task.done).map((task) => task.id)))
-  const deleteSelected = () => { updateTasks((current) => current.filter((task) => !selected.has(task.id))); cancelSelect() }
+  const deleteSelected = () => { const ids = [...selected]; updateTasks((current) => current.filter((task) => !selected.has(task.id))); if (tab === 'home') deletePersonalTasks(ids).catch(reportSyncError); cancelSelect() }
   const assignSelected = (assignee) => { updateTasks((current) => current.map((task) => selected.has(task.id) ? { ...task, assignee } : task)); cancelSelect() }
 
   const switchTab = (next) => { setTab(next); setQuery(null); setFilter(null); setCompletedOpen(false); cancelSelect() }
@@ -80,7 +126,7 @@ export default function App() {
     setQuery(null)
   }
   const completed = tasks.filter((task) => task.done)
-  const clearCompleted = () => { updateTasks((current) => current.filter((task) => !task.done)); setCompletedOpen(false) }
+  const clearCompleted = () => { const ids = completed.map((task) => task.id); updateTasks((current) => current.filter((task) => !task.done)); if (tab === 'home') deletePersonalTasks(ids).catch(reportSyncError); setCompletedOpen(false) }
   const saveCircle = ({ name, emoji, profileName, profileEmoji }) => {
     if (circleEditorOpen === 'create') {
       const id = makeId()
@@ -101,10 +147,14 @@ export default function App() {
   const settingValues = { compact: false, motion: true, notifications: true, ...(data.settings || {}) }
   const toggleSetting = (id) => setData((current) => ({ ...current, settings: { ...settingValues, [id]: !settingValues[id] } }))
 
+  if (hasSupabaseConfig && session === undefined) return <div className="app-shell"><section className="phone loading-screen">끼우를 준비하고 있어요…</section></div>
+  if (hasSupabaseConfig && !session) return <AuthScreen />
+
   return <div className={`app-shell${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}`}>
     <section className="phone">
       <Header tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
-      {tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} />}
+      {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
+      {remoteLoading ? <main className="screen-scroll loading-screen">할 일을 불러오고 있어요…</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase.auth.signOut()} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} />}
       <BottomNav tab={tab} unread={unread} onChange={switchTab} />
       {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onClear={clearCompleted} onClose={() => setCompletedOpen(false)} />}
