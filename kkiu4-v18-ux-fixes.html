@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.44</title>
+<title>Kkiu To Do — v18.3.0</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -418,6 +418,16 @@ body:not(.motion-ready) .emoji-reel{animation:none!important}
 #app.sel-mode .card{grid-template-columns:32px minmax(0,1fr);align-items:center;cursor:pointer;padding-left:14px;padding-right:16px}
 #app.sel-mode .selbox{justify-self:center;align-self:center;margin:0}
 #app.sel-mode .card .mid{align-self:center}
+
+/* v18.3 accessibility and touch-target stabilization */
+.hbtn,.home-head .hbtn,.circle-head .hbtn{width:44px!important;height:44px!important;border-radius:13px!important}
+.home-head .hicons,.circle-head .hicons{gap:6px!important;margin-top:1px!important}
+.chip{height:40px!important;min-height:40px!important}
+.more-lang,.more-version{min-height:44px!important}
+.ck,.selbox,.ico.grip,.dx{position:relative;overflow:visible}
+.ck::after,.selbox::after{content:"";position:absolute;inset:-10px;z-index:1}
+.ico.grip::after,.dx::after{content:"";position:absolute;inset:-6px;z-index:1}
+button:focus-visible,[role="button"]:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 72%,white);outline-offset:2px}
 </style>
 <style>
 /* KKIU v17 — Apple-inspired Liquid Glass redesign */
@@ -588,31 +598,56 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 @media(prefers-reduced-motion:reduce){.circle-head .circle-title-text.stream{animation-duration:9s!important;animation-iteration-count:infinite!important}}
 
+/* Actual 40–44px hit boxes with the original 24px visual controls preserved. */
+.card{grid-template-columns:40px 1fr auto;gap:3px;padding-left:8px}
+.card.hasrank{grid-template-columns:40px 30px 1fr auto;gap:1px;padding-left:7px}
+.ck{width:40px;height:40px;border:0;background:transparent}
+.ck::before{content:"";position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid #ddd6c7;background:transparent;z-index:0;transition:.16s}
+.ck:hover::before{border-color:var(--accent)}
+.ck.on{background:transparent;border-color:transparent;color:#fff}
+.ck.on::before{background:var(--accent);border-color:var(--accent)}
+.ck svg{position:relative;z-index:2}
+.selbox{width:40px;height:40px;border:0;background:transparent}
+.selbox::before{content:"";position:absolute;width:20px;height:20px;border-radius:7px;border:2px solid #ddd6c7;background:transparent;z-index:0;transition:.14s}
+.selbox.on{background:transparent;border-color:transparent;color:#fff}
+.selbox.on::before{background:var(--accent);border-color:var(--accent)}
+.selbox svg{position:relative;z-index:2}
+.ck::after,.selbox::after,.ico.grip::after,.dx::after{content:none}
+.ico.grip,.dx{width:40px;height:40px}
+#app.sel-mode .card{grid-template-columns:40px minmax(0,1fr);column-gap:3px;padding-left:10px}
+@media(max-width:350px){
+  .home-head .hbtn,.circle-head .hbtn{width:40px!important;height:40px!important}
+  .circle-head .hicons{gap:3px!important}
+  .circle-head .ttlbtn{gap:3px!important}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.44</p>
+  <p class="note">끼우 목업 · v18.3.0</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.44";
+const BUILD="v18.3.0";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.3.0",date:"2026.07.19",ko:["모��� 데이터 제거·초기화·복원 시 누락 설정을 자동 보정하는 공용 상태 정규화 계층 추가","슬롯머신·담당자 순서 설정을 방어적으로 복구해 빈 상태 직후 렌더 오류 제거","완료·순서 변경·선택·끼리 검색·완료 목록·관리 버튼에 접근성 이름과 상태 속성 추가","아이콘의 시각 크기는 유지하면서 완료 체크·순서 핸들·선택 체크의 실질 터치 영역 확대","상단 아이콘·담당자 필터·언어·이력 버튼을 40~44px 터치 기준으로 확대","포인터 이벤트 중복 코드를 공용 소비·이동 판정 함수로 정리하고 키보드 활성화 지원 추가"],en:["Added shared state normalization for data removal, reset, restore, and legacy saved data","Defensively restored slot-machine and member-order preferences to eliminate empty-state render failures","Added accessible names and state attributes to completion, reordering, selection, Circle search, completed-list, and management controls","Expanded effective touch targets for completion, reorder, and selection controls without changing visual icon size","Raised header, member-filter, language, and history controls to 40–44px touch targets","Consolidated pointer-event consumption and movement thresholds and added keyboard activation support"]},
+ {version:"v18.2.46",date:"2026.07.19",ko:["끼리 검색 입력창 포커스로 키보드가 열릴 때 resize 핸들러가 할 일 목록을 다시 그리던 문제 수정","끼리 검색 중에는 큐 재배치를 중단하고 검색 페이지와 입력 내용을 유지"],en:["Stopped the resize handler from rebuilding the Circle queue when focusing the search field opens the keyboard","Preserved the Circle search page and query while search mode is active"]},
+ {version:"v18.2.45",date:"2026.07.19",ko:["검색모드 X 버튼이 화면을 다시 그린 뒤 같은 위치의 완료·관리 버튼으로 터치가 관통하는 문제 수정","앱바 즉시 실행 중 발생하는 후속 네이티브 클릭을 해당 터치 시퀀스에서만 차단","검색 종료 직후의 새로운 의도적 터치는 차단하지 않도록 다음 pointerdown에서 잔여 가드 해제"],en:["Stopped the search close button touch from falling through to newly rendered Done or Manage controls","Suppressed the follow-up native click only for the active fast-control touch sequence","Cleared stale guards on the next pointerdown so intentional rapid follow-up taps still work"]},
  {version:"v18.2.44",date:"2026.07.19",ko:["깨진 한글과 손상된 이모지 토큰 정리","더보기의 JSON 백업·가져오기·내보내기 UI와 관련 코드 제거","더보기의 불필요한 설명과 테스트용 괄호 문구 간소화","선택모드 체크박스를 카드 중앙선에 맞추고 카드 전체 탭으로 선택·해제 지원"],en:["Repaired corrupted Korean copy and damaged emoji tokens","Removed JSON backup, import, export UI, and related code","Simplified unnecessary More-page descriptions and test labels","Centered selection checkboxes and enabled whole-card tap toggling"]},
  {version:"v18.2.43",date:"2026.07.19",ko:["담당자 필터·입력 선택·수정 선택을 브라우저 기본 스크롤이 아닌 공용 포인터 제스처로 통합","최초 pointerdown부터 가로 이동량을 직접 반영해 첫 스와이프가 포커스 전환에 소모되지 않도록 수정","짧은 터치는 선택, 일정 거리 이상 이동은 스와이프로 판정해 수정 중 필터가 드래그 시작과 동시에 선택되던 문제 제거","담당자 필터를 단일 행 가로 스크롤 구조로 변경"],en:["Unified member filters and input/edit assignee pickers under one explicit pointer gesture","Applied horizontal movement from the first pointer sequence so focus changes cannot consume the first swipe","Distinguished short taps from drags to stop filters activating at swipe start during editing","Changed member filters to a single-row horizontal scroller"]},
  {version:"v18.2.42",date:"2026.07.19",ko:["실제 연속 터치 테스트에서 재현된 관성 스크롤 직후 앱바 click 누락 수정","상·하단 앱바 컨트롤을 pointerdown 시 즉시 실행해 브라우저의 합성 click 취소 여부와 무관하게 첫 터치 보장","담당자 선택·가로 스와이프·수정 중 담당자 필터의 첫 터치 동작 유지"],en:["Fixed missing app-bar clicks after momentum scrolling reproduced with raw touch sequences","Executed top and bottom app-bar controls immediately on pointerdown so first touch no longer depends on a synthetic click","Preserved first-touch assignee selection, horizontal swiping, and member filtering during editing"]},
  {version:"v18.2.41",date:"2026.07.19",ko:["큐 스크롤·관성·스냅 도중 앱바 컨트롤을 누르면 진행 중인 모션을 즉시 정지하고 첫 터치부터 버튼 동작","끼리 입력·수정 담당자 선택 영역의 pointerdown 차단 제거로 최초 터치 선택과 가로 스와이프 지원","수정 중 담당자 필터를 처음 누를 때 편집 카드가 먼저 닫혀 클릭이 소실되던 이벤트 순서 수정","담당자 영역 조작 중 입력창과 수정 제목의 포커스를 안전하게 복원"],en:["Stopped queue motion immediately when app-bar controls are pressed so the first tap works during scrolling","Removed pointerdown blocking from Circle assignee strips for first-touch selection and horizontal swiping","Fixed the event order that discarded the first assignee-filter tap during editing","Safely restored input and edit focus after assignee-strip interaction"]},
  {version:"v18.2.40",date:"2026.07.19",ko:["끼우 탭 한국어 타이틀을 ‘할 일’로 수정하고 완료 아이콘의 숫자 뱃지 제거","끼리 전체 목록에서는 업데이트 뱃지를 유지하고 해당 담당자 필터에서 확인할 때만 읽음 처리","끼리 할 일 수동 순서 변경 시 실제 위치가 달라진 기존 할 일에 업데이트 뱃지 표시","새 할 일 삽입으로 기존 순번이 밀리는 경우에는 재배치 업데이트에서 제외"],en:["Renamed the Korean Queue title to ‘할 일’ and removed the completed-count badge","Kept Circle update badges in the All view and marked them seen only in an assignee filter","Added update badges to existing Circle tasks whose positions changed through manual reordering","Excluded index shifts caused only by inserting a new task"]},
  {version:"v18.2.39",date:"2026.07.19",ko:["끼리 할일 수정 시 담당자 선택 UI를 입력 UI와 동일한 화면 폭으로 확장","담당자 칩의 가로 스크롤 범위와 좌우 여백을 입력 상태와 정확히 통일"],en:["Expanded the Circle edit assignee picker to the same viewport width as task entry","Matched horizontal scrolling and side insets between edit and input states"]},
- {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 로컬 설정으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·숨은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
+ {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 로컬 설��으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·숨은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["앱 톤과 맞지 않던 젬을 제거하고 파란 점·선·파동으로 구성된 키네틱 포인트 적용","알림 뱃지 위치를 아이콘과 콘텐츠 내부 기준으로 통일","끼리 원본 진행 할일과 완료 할일에 최초 확인용 빨간 점 표시 추가","중복 렌더러·구형 더보기 스크롤·미사용 입력 로직을 제거하고 공용 큐 엔진 중심으로 리팩토링"],en:["Replaced the mismatched gem with a minimal kinetic point made of a blue dot, lines, and ripple","Normalized notification badge placement","Added first-view red source dots to original active and completed Circle tasks","Removed duplicate renderers, legacy More scrolling, and unused input logic around the shared queue engine"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI의 문구·슬롯머신·당첨 상태 제거","스크롤 방향과 속도에 반응하고 스냅 시 튀며 방치 중 숨 쉬고 깜빡이는 살아 있는 젬 적용","젬을 직접 누르면 잠깐 찌그러졌다 복원되는 무기능 이스터에그 추가"],en:["Removed copy, slot-machine results, and winning states","Added a living gem that reacts to scrolling, hops on snap, breathes, and blinks","Added an intentionally functionless poke reaction"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI에 무의미한 이스터에그 끼우 젬 추가","메뉴 사이를 이동할 때마다 이모지 3개와 가짜 생산성·운세·미스터리 문구를 무작위 표시","같은 이모지 3개가 나오면 젬 발광·파티클·특수 햅틱 효과 실행","플로팅 UI를 탭해 직접 다시 굴릴 수 있도록 지원"],en:["Added the intentionally useless Kkiu Gem easter egg to the More floating UI","Randomized three emoji and playful fake productivity, fortune, or mystery copy on every menu-gap move","Triggered glow, particles, and special haptics on triple matches","Allowed tapping the floating UI to reroll manually"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기의 별도 스크롤·앵커 보정 로직을 제거","끼우·끼리와 동일한 qtrack 이동·슬롯 스냅·관성·햅틱 엔진을 더보기에 직접 적용","카드 렌더링만 다르고 UI 흐름은 동일한 공용 구조로 통합"],en:["Removed the separate More scroll and anchor compensation","Applied the exact Queue/Circle qtrack, slot snap, momentum, and haptics engine to More","Unified the interaction engine while keeping only card rendering different"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI를 끼리 화면과 동일하게 화면의 고정 위치에 유지","메뉴 목록의 앞뒤 스크롤 여백을 동적으로 확보해 모든 메뉴 사이가 고정 플로팅 UI를 통과하도록 수정","메뉴 사이 삽입 위치가 바뀔 때 햅틱 피드백 유지"],en:["Fixed the More floating UI to the same viewport position used in Circle","Added dynamic leading and trailing scroll space so every menu gap can pass through the fixed floating UI","Kept haptic feedback when the insertion gap changes"]},
- {version:"v18.2.37",date:"2026.07.19",ko:["긴 끼리 타이틀이 실제 넘침 폭만큼 안정적으로 흐르도록 수정","끼리 검색 진입이 이중 토글되어 즉시 목록으로 돌아가던 문제 수정","더보기 플로팅 UI가 전체 앵커를 이동하며 위치 변경 시 햅틱 피드백을 주도록 개선","끼우·끼리·더보기 헤더 높이와 타이틀 크기를 스크롤과 무관하게 고정"],en:["Made long Circle titles stream reliably by their measured overflow","Removed the double toggle that immediately closed Circle search","Let the More floating UI travel across all anchors with haptic feedback","Kept Queue, Circle, and More header geometry fixed while scrolling"]},
+ {version:"v18.2.37",date:"2026.07.19",ko:["긴 끼리 타이틀이 실제 넘침 폭만큼 안정적으로 흐르도록 수정","끼리 검색 진입이 이중 토글되어 즉시 목록으��� 돌아가던 문제 수정","더보기 플로팅 UI가 전체 앵커를 이동하며 위치 변경 시 햅틱 피드백을 주도록 개선","끼우·끼리·더보기 헤더 높이와 타이틀 크기를 스크롤과 무관하게 고정"],en:["Made long Circle titles stream reliably by their measured overflow","Removed the double toggle that immediately closed Circle search","Let the More floating UI travel across all anchors with haptic feedback","Kept Queue, Circle, and More header geometry fixed while scrolling"]},
  {version:"v18.2.31",date:"2026.07.19",ko:["끼리 긴 제목의 실제 텍스트 폭을 기준으로 스트리밍 거리를 다시 계산해 흐름 표시가 멈추지 않도록 수정"],en:["Recalculated Circle-title streaming from the true text width so long names animate reliably"]},
  {version:"v18.2.30",date:"2026.07.19",ko:["끼리 전환 시트에 초대 코드 입력·참여 흐름 추가","현재 브라우저에 저장된 끼리 코드를 찾아 해당 끼리로 이동하도록 목업 동작 연결"],en:["Added invite-code entry and join flow to the Circle switcher","Mockup now opens the locally stored Circle matching the entered code"]},
  {version:"v18.2.29",date:"2026.07.19",ko:["끼리 검색 버튼 터치 뒤 발생하던 끼리 전환 바텀시트 오작동 수정"],en:["Prevented Circle search taps from opening the Circle switcher sheet"]},
@@ -776,7 +811,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚  🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰  🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶  📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ").filter(Boolean);
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ��� 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 ��� 🐶 ������ 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚  🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰  🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 �� 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶  📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ").filter(Boolean);
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -789,24 +824,27 @@ let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
-let assigneeTouching=false,stripGesture=null,stripSuppressClickUntil=0,selectCardGesture=null,selectSuppressClickUntil=0;
+let assigneeTouching=false,stripGesture=null,stripSuppressClickUntil=0,selectCardGesture=null,selectSuppressClickUntil=0,fastGesturePointer=null,fastGhostUntil=0,fastDispatching=false;
 let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx="home";
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
 
-function load(){const base={tasks:seedTasks(),circles:seedCircles(),ci:0,doneLog:seedLog(),tab:"home",insertIndex:3,ciInsertIndex:0,ciFilter:null,lang:"ko",suggestions:[],userPrefs:{memberOrderByCircle:{},slotMachine:{locked:false,symbols:["🌙","🍊","🌿"]}}};
- try{const r=localStorage.getItem(KEY);if(!r)return base;const p=JSON.parse(r);
-  return{tasks:Array.isArray(p.tasks)?p.tasks:base.tasks,
+function defaultUserPrefs(){return{memberOrderByCircle:{},slotMachine:{locked:false,symbols:["🌙","🍊","🌿"]}}}
+function normalizeStateShape(next){const s=next&&typeof next==="object"?next:{};const defaults=defaultUserPrefs();s.userPrefs=s.userPrefs&&typeof s.userPrefs==="object"?s.userPrefs:{};s.userPrefs.memberOrderByCircle=s.userPrefs.memberOrderByCircle&&typeof s.userPrefs.memberOrderByCircle==="object"?s.userPrefs.memberOrderByCircle:{};const slot=s.userPrefs.slotMachine&&typeof s.userPrefs.slotMachine==="object"?s.userPrefs.slotMachine:{};slot.locked=!!slot.locked;slot.symbols=Array.isArray(slot.symbols)&&slot.symbols.length===3?slot.symbols.slice(0,3):defaults.slotMachine.symbols.slice();s.userPrefs.slotMachine=slot;return s}
+function replaceState(next){state=normalizeStateShape(next);return state}
+function load(){const base={tasks:seedTasks(),circles:seedCircles(),ci:0,doneLog:seedLog(),tab:"home",insertIndex:3,ciInsertIndex:0,ciFilter:null,lang:"ko",suggestions:[],userPrefs:defaultUserPrefs()};
+ try{const r=localStorage.getItem(KEY);if(!r)return normalizeStateShape(base);const p=JSON.parse(r);
+  return normalizeStateShape({tasks:Array.isArray(p.tasks)?p.tasks:base.tasks,
    circles:Array.isArray(p.circles)?p.circles:base.circles,
    ci:Number.isInteger(p.ci)?p.ci:0,
    doneLog:Array.isArray(p.doneLog)?p.doneLog:base.doneLog,
    tab:TABS.includes(p.tab)?p.tab:"home",insertIndex:Number.isInteger(p.insertIndex)?p.insertIndex:0,
-   ciInsertIndex:Number.isInteger(p.ciInsertIndex)?p.ciInsertIndex:0,ciFilter:p.ciFilter||null,lang:p.lang==="en"?"en":"ko",suggestions:Array.isArray(p.suggestions)?p.suggestions:base.suggestions,userPrefs:p.userPrefs&&typeof p.userPrefs==="object"?p.userPrefs:base.userPrefs}}
- catch{return base}}
+   ciInsertIndex:Number.isInteger(p.ciInsertIndex)?p.ciInsertIndex:0,ciFilter:p.ciFilter||null,lang:p.lang==="en"?"en":"ko",suggestions:Array.isArray(p.suggestions)?p.suggestions:base.suggestions,userPrefs:p.userPrefs&&typeof p.userPrefs==="object"?p.userPrefs:base.userPrefs})}
+ catch{return normalizeStateShape(base)}}
 let saveTimer=0;
-function save(){clearTimeout(saveTimer);localStorage.setItem(KEY,JSON.stringify({tasks:state.tasks,circles:state.circles,ci:state.ci,doneLog:state.doneLog,tab:state.tab,insertIndex:state.insertIndex,ciInsertIndex:state.ciInsertIndex,ciFilter:state.ciFilter,lang:state.lang,suggestions:state.suggestions||[],userPrefs:state.userPrefs}))}
+function save(){clearTimeout(saveTimer);normalizeStateShape(state);localStorage.setItem(KEY,JSON.stringify({tasks:state.tasks,circles:state.circles,ci:state.ci,doneLog:state.doneLog,tab:state.tab,insertIndex:state.insertIndex,ciInsertIndex:state.ciInsertIndex,ciFilter:state.ciFilter,lang:state.lang,suggestions:state.suggestions||[],userPrefs:state.userPrefs}))}
 function scheduleSave(delay=220){clearTimeout(saveTimer);saveTimer=setTimeout(save,delay)}
-state.userPrefs=state.userPrefs&&typeof state.userPrefs==="object"?state.userPrefs:{};state.userPrefs.memberOrderByCircle=state.userPrefs.memberOrderByCircle&&typeof state.userPrefs.memberOrderByCircle==="object"?state.userPrefs.memberOrderByCircle:{};state.userPrefs.slotMachine=state.userPrefs.slotMachine&&typeof state.userPrefs.slotMachine==="object"?state.userPrefs.slotMachine:{locked:false,symbols:["🌙","🍊","🌿"]};
+normalizeStateShape(state);
 state.ciGhosts=false;state.ciExpanded=null;state.ci=clamp(state.ci||0,0,Math.max(0,state.circles.length-1));
 state.circles.forEach((c,i)=>{c.members=Array.isArray(c.members)&&c.members.length?c.members:["me"];c.tasks=Array.isArray(c.tasks)?c.tasks:[];if(!Number.isFinite(c.unread))c.unread=i===0?0:3;if(!c.memberUnread||typeof c.memberUnread!=="object")c.memberUnread={};if(!Object.keys(c.memberUnread).length&&Number.isFinite(c.unreadMine)&&c.unreadMine)c.memberUnread.me=c.unreadMine;if(!Object.keys(c.memberUnread).length&&i===0)c.memberUnread={me:2,su:1};if(!Number.isFinite(c.unreadDone))c.unreadDone=i===0?1:0;c.tasks.forEach(t=>{const a=Array.isArray(t.assignees)?t.assignees[0]:t.assignees;t.assignees=[c.members.includes(a)?a:c.members[0]];t.sourceUnread=!!t.sourceUnread});if(!c.tasks.some(t=>t.sourceUnread)&&(c.unread||c.unreadDone)){c.tasks.filter(t=>!t.done).slice(0,Math.max(0,c.unread||0)).forEach(t=>t.sourceUnread=true);c.tasks.filter(t=>t.done).slice(0,Math.max(0,c.unreadDone||0)).forEach(t=>t.sourceUnread=true)}});
 function myProfile(c){const m=MEMBERS.me;return c?.myProfile||{name:m[state.lang],emoji:m.ini}}
@@ -814,7 +852,7 @@ function circlePerson(c,k){const m=MEMBERS[k]||MEMBERS.me;if(k!=="me")return m;c
 const active=()=>state.tasks.filter(t=>!t.done).sort((a,b)=>a.order-b.order);
 const completed=()=>state.tasks.filter(t=>t.done).sort((a,b)=>new Date(b.completedAt||0)-new Date(a.completedAt||0));
 const curC=()=>state.circles[state.ci]||null;
-function orderedCircleMembers(c=curC()){if(!c)return[];const all=c.members.filter(k=>MEMBERS[k]),self=all.includes("me")?["me"]:[],others=all.filter(k=>k!=="me"),saved=state.userPrefs.memberOrderByCircle[c.id]||[],ordered=saved.filter(k=>others.includes(k));return self.concat(ordered,others.filter(k=>!ordered.includes(k)))}
+function orderedCircleMembers(c=curC()){normalizeStateShape(state);if(!c)return[];const all=c.members.filter(k=>MEMBERS[k]),self=all.includes("me")?["me"]:[],others=all.filter(k=>k!=="me"),saved=state.userPrefs.memberOrderByCircle[c.id]||[],ordered=saved.filter(k=>others.includes(k));return self.concat(ordered,others.filter(k=>!ordered.includes(k)))}
 function setPersonalMemberOrder(c,order){if(!c)return;state.userPrefs.memberOrderByCircle[c.id]=order.filter(k=>k!=="me"&&c.members.includes(k));scheduleSave()}
 const ciActive=()=>{const c=curC();return c?c.tasks.filter(t=>!t.done).sort((a,b)=>a.order-b.order):[]};
 const ciCompleted=()=>{const c=curC();return c?c.tasks.filter(t=>t.done).sort((a,b)=>new Date(b.completedAt||0)-new Date(a.completedAt||0)):[]};
@@ -840,7 +878,7 @@ function splitTitle(text,w){if(!measCtx)measCtx=document.createElement("canvas")
 const isAdBefore=i=>i===AD_FIRST||(i>AD_FIRST&&(i-AD_FIRST)%AD_EVERY===0);
 </script>
 <script>
-const isQueue=()=>((state.tab==="home"&&homeSearch===null)||state.tab==="circle"||state.tab==="more")&&!selecting;
+const isQueue=()=>((state.tab==="home"&&homeSearch===null)||(state.tab==="circle"&&circleSearch===null)||state.tab==="more")&&!selecting;
 
 function buildQueueModel(tasks,opts={}){
  const rows=[],slots=[];let y=0;
@@ -890,10 +928,10 @@ function addCircleDoneButton(model){
 
 function cardHtml(t,idx,o={}){
  if(o.select){return `<article class="card ${selected.has(t.id)?"sel-on":""}" data-id="${t.id}">
-   <button class="selbox ${selected.has(t.id)?"on":""}" data-act="sel" data-id="${t.id}">${I.check}</button>
+   <button class="selbox ${selected.has(t.id)?"on":""}" role="checkbox" aria-checked="${selected.has(t.id)}" aria-label="${esc((state.lang==="en"?(selected.has(t.id)?"Deselect: ":"Select: "):(selected.has(t.id)?"선택 해제: ":"선택: "))+t.title)}" data-title="${esc(t.title)}" data-act="sel" data-id="${t.id}">${I.check}</button>
    <div class="mid"><p class="t-title">${esc(t.title)}</p></div></article>`}
  const topN=(!t.done&&o.rank&&idx<3)?idx+1:0,topcls=topN?`t${topN}`:"";
- const lead=`<button class="ck" data-act="complete" data-id="${t.id}"></button>`;
+ const lead=`<button class="ck" aria-label="${esc((state.lang==="en"?"Complete: ":"할 일 완료: ")+t.title)}" data-act="complete" data-id="${t.id}"></button>`;
  const rank=o.rank?`<div class="rank ${topN?"top":""}">${idx+1}</div>`:"";
  let mid;
  const unread=o.ctx==="circle"?sourceUnreadDot(t):"";
@@ -904,7 +942,7 @@ function cardHtml(t,idx,o={}){
  const whoHtml=!ms.length?"":ms.length===1?`<span class="who" style="background:${ms[0].color}">${ms[0].ini}</span>`:`<span class="whos">${ms.slice(0,3).map(m=>`<span class="who" style="background:${m.color}">${m.ini}</span>`).join("")}${ms.length>3?`<span class="who more">+${ms.length-3}</span>`:""}</span>`;
  // Keep Kkiu's basic queue controls in Kkiri too; filtering only disables reordering.
  const gripOk=o.rank&&!t.done&&(o.ctx==="home"||(o.ctx==="circle"&&!state.ciFilter));
- const acts=`${whoHtml}${gripOk?`<button class="ico grip" data-act="grip" data-id="${t.id}">${I.grip}</button>`:""}${editingId===t.id?`<button class="ico edit-cancel" aria-label="수정 취소" data-act="edit-cancel" data-id="${t.id}">${I.x}</button>`:""}`;
+ const acts=`${whoHtml}${gripOk?`<button class="ico grip" aria-label="${esc((state.lang==="en"?"Reorder: ":"순서 변경: ")+t.title)}" data-act="grip" data-id="${t.id}">${I.grip}</button>`:""}${editingId===t.id?`<button class="ico edit-cancel" aria-label="수정 취소" data-act="edit-cancel" data-id="${t.id}">${I.x}</button>`:""}`;
  return `<article class="card ${o.rank?"hasrank":""} ${topcls} ${searchFlashId===t.id?"search-hit":""}" data-id="${t.id}" ${o.rank?`data-idx="${idx}" data-y="${o.top??0}"`:""} ${o.top!==undefined?`style="top:${o.top}px"`:""}>${lead}${rank}<div class="mid">${mid}</div><div class="acts">${acts}</div></article>`}
 function rowHtml(r,ctx){
  const top=`style="top:${r.y}px"`;
@@ -926,12 +964,12 @@ function chipsHtml(){
 function headHtml(){
  const a=active().length;
  if(state.tab==="home"){
-  return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="검색" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}</button>`:""}</div></div></div>`}
+  return `<div class="head home-head"><div class="headrow"><h1 class="ttl">${T("hHome")}</h1><div class="hicons"><button class="hbtn" aria-label="${homeSearch===null?(state.lang==="en"?"Search":"검색"):(state.lang==="en"?"Close search":"검색 닫기")}" data-act="hsearch">${homeSearch===null?I.search:I.x}</button>${homeSearch===null?`<button class="hbtn" aria-label="완료 목록" data-act="sheet-open">${I.done}</button>`:""}</div></div></div>`}
  if(state.tab==="circle"){const cc=curC();
   if(!cc)return `<div class="head"><h1 class="ttl">${T("hCircle")}</h1><p class="head-sub">${T("hCircleSub")}</p></div>`;
   const ce=cc.emoji||"✨";
   const newDone=cc.unreadDone||0,otherUpdates=hasOtherCircleUpdates();
-  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><span class="circle-emoji" aria-hidden="true">${ce}</span><span class="circle-title-window"><span class="circle-title-text${cc.name.length>10?" stream":""}">${esc(cc.name)}</span></span><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
+  return `<div class="head circle-head"><div class="headrow"><button class="ttlbtn" data-act="circle-pick" title="${esc(cc.name)}"><span class="circle-emoji" aria-hidden="true">${ce}</span><span class="circle-title-window"><span class="circle-title-text${cc.name.length>10?" stream":""}">${esc(cc.name)}</span></span><span class="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></span>${otherUpdates?`<i class="alert-dot"></i>`:""}</button><div class="circle-tools"><p class="head-sub">멤버 ${cc.members.length}명</p><div class="hicons"><button class="hbtn" aria-label="${circleSearch===null?(state.lang==="en"?"Search":"검색"):(state.lang==="en"?"Close search":"검색 닫기")}" data-act="csearch">${circleSearch===null?I.search:I.x}</button>${circleSearch===null?`<button class="hbtn" aria-label="${state.lang==="en"?"Completed tasks":"완료 목록"}" data-act="sheet-open">${I.done}${newDone?`<span class="hbadge dot"></span>`:""}</button>`:""}<button class="hbtn" aria-label="${state.lang==="en"?"Circle settings":"끼리 관리"}" data-act="circle-manage">${I.more}</button></div></div></div></div>${chipsHtml()}`}
  if(state.tab==="stats")return `<div class="head"><h1 class="ttl">${T("hStats")}</h1><p class="head-sub">${T("hStatsSub")}</p></div>`;
  return `<div class="head more-head"><div class="headrow"><h1 class="ttl">${T("hMore")}</h1><div class="hicons" aria-hidden="true"></div></div></div>`}
 function assigneePickerHtml(c,selected,mode="input",taskId=""){const act=mode==="edit"?"edit-asg-pick":"asg-pick",extra=mode==="edit"?" edit-assignee-picker":"";return `<div class="asgrow${extra}" aria-label="담당자 선택">${orderedCircleMembers(c).map(k=>{const m=circlePerson(c,k);return `<button type="button" class="asgc ${selected===k?"on":""}" data-act="${act}" data-m="${k}" ${taskId?`data-id="${taskId}"`:""} title="${esc(m[state.lang])}"><span class="av">${m.ini}</span>${m[state.lang]}</button>`}).join("")}</div>`}
@@ -1067,7 +1105,7 @@ function cancelEdit(){if(!editingId)return;editingId=null;editingOriginal="";con
 function queueTasks(){return state.tab==="circle"?ciActive():active()}
 function enterSelect(id){if(state.tab!=="home"&&state.tab!=="circle")return;selecting=true;selected=new Set(id?[id]:[]);vibe(20);renderView()}
 function toggleSelect(id){selected.has(id)?selected.delete(id):selected.add(id);vibe(8);syncSelectUI()}
-function syncSelectUI(){const l=queueTasks(),all=l.length&&l.every(t=>selected.has(t.id));document.querySelectorAll(".selbox").forEach(b=>b.classList.toggle("on",selected.has(b.dataset.id)));document.querySelectorAll(".sel-mode .card").forEach(c=>c.classList.toggle("sel-on",selected.has(c.dataset.id)));const n=document.getElementById("selCount");if(n)n.textContent=selected.size?T("selCnt",{n:selected.size}):T("selNone");const a=document.getElementById("selAll");if(a)a.textContent=all?T("selUnall"):T("selAll");const d=document.getElementById("selDelete");if(d)d.disabled=!selected.size;if(d)d.textContent=T("selDel")+(selected.size?" · "+selected.size:"")}
+function syncSelectUI(){const l=queueTasks(),all=l.length&&l.every(t=>selected.has(t.id));document.querySelectorAll(".selbox").forEach(b=>{const on=selected.has(b.dataset.id);b.classList.toggle("on",on);b.setAttribute("aria-checked",String(on));b.setAttribute("aria-label",(state.lang==="en"?(on?"Deselect: ":"Select: "):(on?"선택 해제: ":"선택: "))+(b.dataset.title||""));});document.querySelectorAll(".sel-mode .card").forEach(c=>c.classList.toggle("sel-on",selected.has(c.dataset.id)));const n=document.getElementById("selCount");if(n)n.textContent=selected.size?T("selCnt",{n:selected.size}):T("selNone");const a=document.getElementById("selAll");if(a)a.textContent=all?T("selUnall"):T("selAll");const d=document.getElementById("selDelete");if(d)d.disabled=!selected.size;if(d)d.textContent=T("selDel")+(selected.size?" · "+selected.size:"")}
 function selectAll(){const ids=queueTasks().map(t=>t.id);const all=ids.length&&ids.every(i=>selected.has(i));selected=all?new Set():new Set(ids);renderView()}
 function deleteSelected(){if(!selected.size)return;const n=selected.size;
  if(state.tab==="circle"){const c=curC();if(c)c.tasks=c.tasks.filter(t=>!selected.has(t.id));ciReindex();state.ciInsertIndex=clamp(state.ciInsertIndex,0,ciActive().length)}
@@ -1075,7 +1113,7 @@ function deleteSelected(){if(!selected.size)return;const n=selected.size;
  selecting=false;selected=new Set();save();renderView();toast(T("tDel",{n}))}
 function cancelSelect(){selecting=false;selected=new Set();renderView()}
 function renderSelect(){const l=queueTasks();const allSel=l.length&&l.every(t=>selected.has(t.id));
- viewEl.innerHTML=`<div class="selhead"><button class="selx" data-act="sel-cancel">${I.x}</button>
+ viewEl.innerHTML=`<div class="selhead"><button class="selx" aria-label="${state.lang==="en"?"Cancel selection":"선택 취소"}" data-act="sel-cancel">${I.x}</button>
    <b id="selCount">${selected.size?T("selCnt",{n:selected.size}):T("selNone")}</b>
    <button class="seltxt" id="selAll" data-act="sel-all">${allSel?T("selUnall"):T("selAll")}</button></div>
   <div class="stage"><div class="scroller selscroll"><div class="list">${l.map(t=>cardHtml(t,0,{select:true})).join("")}</div></div></div>
@@ -1244,7 +1282,7 @@ function renderSheet(){
  const grp=(key,arr)=>arr.length?`<div class="ghead"><span>${T(key)} · ${arr.length}</span><button data-act="sheet-clear" data-ids="${arr.map(t=>t.id).join(",")}">${T("clear")}</button></div>${arr.map(t=>{
    const m=isCircle?circlePerson(curC(),(t.assignees||[])[0]):null;
    const who=m?`<span class="who" title="${esc(m[state.lang])}">${m.ini}</span>`:"";
-   return `<div class="drow ${expandedDoneId===t.id?"expanded":""}" data-act="sheet-expand" data-id="${t.id}"><button class="ck on" data-act="restore" data-id="${t.id}">${I.check}</button><span class="rankc">#${(t.doneAt??0)+1}</span><span class="dtitle">${esc(t.title)}</span>${isCircle?sourceUnreadDot(t):""}${who}<span class="dtime">${fmt(t.completedAt)}</span><button class="dx" data-act="sheet-del" data-id="${t.id}">${I.x}</button></div>`}).join("")}`:"";
+   return `<div class="drow ${expandedDoneId===t.id?"expanded":""}" role="button" tabindex="0" data-act="sheet-expand" data-id="${t.id}"><button class="ck on" aria-label="${esc((state.lang==="en"?"Restore: ":"완료 취소: ")+t.title)}" data-act="restore" data-id="${t.id}">${I.check}</button><span class="rankc">#${(t.doneAt??0)+1}</span><span class="dtitle">${esc(t.title)}</span>${isCircle?sourceUnreadDot(t):""}${who}<span class="dtime">${fmt(t.completedAt)}</span><button class="dx" aria-label="${esc((state.lang==="en"?"Delete: ":"삭제: ")+t.title)}" data-act="sheet-del" data-id="${t.id}">${I.x}</button></div>`}).join("")}`:"";
  body.innerHTML=filters+grp("gToday",gs.t)+grp("gYest",gs.y)+grp("gWeek",gs.w)+grp("gOld",gs.o);if(isCircle&&ciDoneFilter)markSourcesSeenLater(list.filter(t=>(t.assignees||[]).includes(ciDoneFilter)),"done")}
 
 function openCircleSheet(){renderCircleSheet();document.getElementById("sheetwrap").classList.add("on")}
@@ -1255,7 +1293,7 @@ function renderCircleSheet(){
  head.innerHTML=`<b>${T("circlePickT")}</b>`;
  const mineLabel=state.lang==="en"?"My tasks":"내 할일";
  const joinBox=`<div class="pcard" style="margin-bottom:12px"><h3>${T("joinT")}</h3><p>${T("joinP")}</p><div class="join-row"><input class="field" id="joinCode" autocomplete="off" autocapitalize="characters" placeholder="${T("joinPh")}"/><button type="button" class="mbtn primary" data-act="invite-join">${T("joinBtn")}</button></div></div>`;
- const circles=state.circles.map((c,i)=>`<div class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></div>`).join("");
+ const circles=state.circles.map((c,i)=>`<button type="button" class="suprow" data-act="circle-pick-i" data-i="${i}" style="margin-bottom:8px;cursor:pointer"><span class="crow-check">${i===state.ci?"✓":(c.emoji||"✨")}</span><span class="smid"><b>${esc(c.name)}</b><span>멤버 ${c.members.length}명 · ${T("taskCnt",{n:c.tasks.filter(t=>!t.done).length})}${ciMine(c)?` · ${mineLabel} ${ciMine(c)}`:""}${Object.values(c.memberUnread||{}).some(Boolean)?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px"></i>`:""}${c.unreadDone?` <i class="alert-dot" style="display:inline-block;vertical-align:1px;margin-left:5px;background:#397550"></i>`:""}</span></span>${c.unread?`<span class="circle-badge">${c.unread>99?"99+":c.unread}</span>`:""}<span class="out">›</span></button>`).join("");
  body.innerHTML=joinBox+circles+`<button class="featins" data-act="circle-new" style="margin-top:8px"><span class="p">+</span>${T("circleNew")}</button>`;
 }
 function renderManageSheet(){const c=curC();if(!c)return;if(!c.code){c.code=newCircleCode();save()}const head=document.getElementById("sheethead"),body=document.getElementById("sheetbody"),members=orderedCircleMembers(c);head.innerHTML=`<b>${c.emoji||"✨"} ${esc(c.name)}</b><div class="mini">${T("manageT")}</div>`;body.innerHTML=`<div class="pcard" style="margin-bottom:10px"><h3>${T("inviteT")} · <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--accent-soft);color:var(--accent-ink);padding:3px 9px;border-radius:8px">${c.code}</span></h3><p>${T("inviteP")}</p><button class="rbtn" data-act="invite" style="margin-top:10px;box-shadow:none;background:rgba(70,55,30,.05)">${T("inviteCopy")}<span>⎘</span></button></div>
@@ -1329,7 +1367,7 @@ function statsView(){
 
 const SLOT_SYMBOLS=["🌙","🍊","🌿","🔥","🐈","🧦","🐸"];
 let slotRollTimer=0;
-function slotPrefs(){const p=state.userPrefs.slotMachine||(state.userPrefs.slotMachine={locked:false,symbols:["🌙","🍊","🌿"]});if(!Array.isArray(p.symbols)||p.symbols.length!==3)p.symbols=["🌙","🍊","🌿"];return p}
+function slotPrefs(){normalizeStateShape(state);const p=state.userPrefs.slotMachine||(state.userPrefs.slotMachine={locked:false,symbols:["🌙","🍊","🌿"]});if(!Array.isArray(p.symbols)||p.symbols.length!==3)p.symbols=["🌙","🍊","🌿"];return p}
 function slotCombo(symbols){const counts={};symbols.forEach(x=>counts[x]=(counts[x]||0)+1);const max=Math.max(...Object.values(counts));return max===3?"triple":max===2?"pair":"mixed"}
 function renderSlotMachine(rolling=false){const btn=viewEl?.querySelector(".emoji-slot-btn");if(!btn)return;const p=slotPrefs(),combo=slotCombo(p.symbols),counts={};p.symbols.forEach(x=>counts[x]=(counts[x]||0)+1);btn.className=`ins quip emoji-slot-btn combo-${combo}${p.locked?" locked":""}${rolling?" rolling":""}${combo==="triple"&&p.symbols[0]==="🔥"?" symbol-fire":""}${combo==="triple"&&p.symbols[0]==="🌙"?" symbol-moon":""}`;btn.setAttribute("aria-label",p.locked?"슬롯머신 고정 해제":"슬롯머신 고정");btn.querySelectorAll(".emoji-reel").forEach((el,i)=>{el.textContent=p.symbols[i];el.classList.toggle("matched",counts[p.symbols[i]]>1)});const mode=btn.querySelector(".slot-mode");if(mode)mode.textContent=p.locked?"🔒":"↻"}
 function rollSlotMachine(force=false){const p=slotPrefs();if(p.locked&&!force)return;p.symbols=[0,1,2].map(()=>SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);renderSlotMachine(true);clearTimeout(slotRollTimer);slotRollTimer=setTimeout(()=>renderSlotMachine(false),220)}
@@ -1359,10 +1397,10 @@ function buildMoreQueue(){
  qMaxY=y;qPrevSI=null;qOffset=clamp(moreOffset,0,qMaxY);apply("more");renderSlotMachine(false);wireCircleTitleStream();setNavActive()
 }
 
-function resetAll(){askConfirm(T("mReset"),T("confirmReset"),T("mReset"),()=>{localStorage.removeItem(KEY);state=load();state.ciGhosts=false;state.ciExpanded=null;homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tReset"))},true)}
+function resetAll(){askConfirm(T("mReset"),T("confirmReset"),T("mReset"),()=>{localStorage.removeItem(KEY);replaceState(load());state.ciGhosts=false;state.ciExpanded=null;homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tReset"))},true)}
 function resetTestUi(){selecting=false;selected.clear();editingId=null;slotOpen=false;homeSearch=null;circleSearch=null;ciDoneFilter=null;expandedDoneId=null;state.ciGhosts=false;state.ciExpanded=null;state.ciFilter=null;state.insertIndex=0;state.ciInsertIndex=0}
-function resetToStarterData(){const lang=state.lang;localStorage.removeItem(KEY);state=load();state.lang=lang;state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Starter data restored":"초기 데이터로 되돌렸어요")}
-function removeAllDataForTest(){const title=state.lang==="en"?"Remove all data":"모든 데이터 제거",msg=state.lang==="en"?"This removes personal tasks, completed tasks, Circles, and all test badges so you can inspect empty states.":"개인 할 일·완료 목록·끼리·모든 테스트 뱃지를 비워 엠티케이스를 확인합니다.";askConfirm(title,msg,state.lang==="en"?"Remove":"제거",()=>{const lang=state.lang;state={tasks:[],circles:[],ci:0,doneLog:[],tab:"more",insertIndex:0,ciInsertIndex:0,ciFilter:null,lang,suggestions:[]};resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"All data removed":"모든 데이터를 비웠어요")},true)}
+function resetToStarterData(){const lang=state.lang;localStorage.removeItem(KEY);replaceState(load());state.lang=lang;state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Starter data restored":"초기 데이터로 되돌렸어요")}
+function removeAllDataForTest(){const title=state.lang==="en"?"Remove all data":"모든 데이터 제거",msg=state.lang==="en"?"This removes personal tasks, completed tasks, Circles, and all test badges so you can inspect empty states.":"개인 할 일·완료 목록·끼리·모든 테스트 뱃지를 비워 엠티케이스를 확인합니다.";askConfirm(title,msg,state.lang==="en"?"Remove":"제거",()=>{const lang=state.lang,userPrefs=state.userPrefs;replaceState({tasks:[],circles:[],ci:0,doneLog:[],tab:"more",insertIndex:0,ciInsertIndex:0,ciFilter:null,lang,suggestions:[],userPrefs});resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"All data removed":"모든 데이터를 비웠어요")},true)}
 function createUnreadBadgesForTest(){if(!state.circles.length){state.circles=seedCircles();state.ci=0}state.circles.forEach(c=>{c.tasks.forEach(t=>t.sourceUnread=false);c.tasks.filter(t=>!t.done).slice(0,3).forEach(t=>t.sourceUnread=true);c.tasks.filter(t=>t.done).slice(0,2).forEach(t=>t.sourceUnread=true);refreshCircleUnread(c)});state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Unread source badges created":"원본 항목 안읽음 뱃지를 만들었어요")}
 
 function setNavActive(){document.querySelectorAll("#nav .nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===state.tab));const badge=document.querySelector("#nav .nbadge");if(badge){const n=circleUnreadTotal();badge.textContent=n>99?"99+":n;badge.hidden=!n}}
@@ -1410,15 +1448,19 @@ function mount(){
  renderView();setNavActive();requestAnimationFrame(()=>{moveInd();requestAnimationFrame(()=>document.body.classList.add("motion-ready"))})}
 function applyCircleFilter(member){ciAssignees=new Set();state.ciFilter=member||null;state.ciGhosts=false;state.ciExpanded=null;state.ciInsertIndex=0;if(member){const c=curC();if(c?.memberUnread)c.memberUnread[member]=0}save();buildQueue("circle")}
 function activateStripButton(btn){if(!btn)return;const act=btn.dataset.act,k=btn.dataset.m,id=btn.dataset.id;if(act==="chip"){applyCircleFilter(k||null);return}if(act==="asg-pick"){ciAssignees=new Set([k]);btn.closest(".asgrow")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k));return}if(act==="edit-asg-pick"){const t=findTask(id);if(!t||!k)return;t.assignees=[k];scheduleSave();btn.closest(".edit-assignee-picker")?.querySelectorAll(".asgc").forEach(b=>b.classList.toggle("on",b.dataset.m===k))}}
-function startStripGesture(e,strip){stopQueueMotion();assigneeTouching=true;stripGesture={strip,button:e.target.closest("button"),pointerId:e.pointerId,x:e.clientX,y:e.clientY,start:strip.scrollLeft,moved:false};try{strip.setPointerCapture(e.pointerId)}catch{}e.preventDefault();e.stopPropagation()}
-function moveStripGesture(e){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)>4||Math.abs(dy)>4)g.moved=true;if(g.moved){g.strip.scrollLeft=g.start-dx;e.preventDefault();e.stopPropagation()}}
-function finishStripGesture(e,cancelled=false){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;try{g.strip.releasePointerCapture(e.pointerId)}catch{}stripGesture=null;assigneeTouching=false;stripSuppressClickUntil=performance.now()+350;e.preventDefault();e.stopPropagation();if(!cancelled&&!g.moved)activateStripButton(g.button)}
+function consumeEvent(e,immediate=false){e.preventDefault();immediate?e.stopImmediatePropagation():e.stopPropagation()}
+function gestureMoved(g,e,threshold){return Math.abs(e.clientX-g.x)>threshold||Math.abs(e.clientY-g.y)>threshold}
+function startStripGesture(e,strip){stopQueueMotion();assigneeTouching=true;stripGesture={strip,button:e.target.closest("button"),pointerId:e.pointerId,x:e.clientX,y:e.clientY,start:strip.scrollLeft,moved:false};try{strip.setPointerCapture(e.pointerId)}catch{}consumeEvent(e)}
+function moveStripGesture(e){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(gestureMoved(g,e,4))g.moved=true;if(g.moved){g.strip.scrollLeft=g.start-dx;consumeEvent(e)}}
+function finishStripGesture(e,cancelled=false){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;try{g.strip.releasePointerCapture(e.pointerId)}catch{}stripGesture=null;assigneeTouching=false;stripSuppressClickUntil=performance.now()+350;consumeEvent(e);if(!cancelled&&!g.moved)activateStripButton(g.button)}
 function startSelectCardGesture(e,card){selectCardGesture={card,id:card.dataset.id,pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false}}
-function moveSelectCardGesture(e){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;if(Math.abs(e.clientX-g.x)>7||Math.abs(e.clientY-g.y)>7)g.moved=true}
-function finishSelectCardGesture(e,cancelled=false){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;selectCardGesture=null;if(cancelled||g.moved)return;selectSuppressClickUntil=performance.now()+350;e.preventDefault();e.stopPropagation();toggleSelect(g.id)}
-app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const strip=e.target.closest(".chips,.asgrow");if(strip){startStripGesture(e,strip);return}if(selecting){const card=e.target.closest(".card[data-id]");if(card){startSelectCardGesture(e,card);return}}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
-app.addEventListener("pointermove",e=>{moveStripGesture(e);moveSelectCardGesture(e)},true);app.addEventListener("pointerup",e=>{finishStripGesture(e,false);finishSelectCardGesture(e,false)},true);app.addEventListener("pointercancel",e=>{finishStripGesture(e,true);finishSelectCardGesture(e,true)},true);
-app.addEventListener("click",e=>{if((e.target.closest(".chips,.asgrow")&&performance.now()<stripSuppressClickUntil)||(selecting&&e.target.closest(".card")&&performance.now()<selectSuppressClickUntil)){e.preventDefault();e.stopPropagation()}},true);
+function moveSelectCardGesture(e){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;if(gestureMoved(g,e,7))g.moved=true}
+function finishSelectCardGesture(e,cancelled=false){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;selectCardGesture=null;if(cancelled||g.moved)return;selectSuppressClickUntil=performance.now()+350;consumeEvent(e);toggleSelect(g.id)}
+function finishFastGesture(e,cancelled=false){if(e.pointerId!==fastGesturePointer)return;fastGesturePointer=null;consumeEvent(e);if(cancelled){fastGhostUntil=0;return}const armed=fastGhostUntil;setTimeout(()=>{if(fastGesturePointer===null&&fastGhostUntil===armed)fastGhostUntil=0},620)}
+app.addEventListener("pointerdown",e=>{if(fastGesturePointer===null&&fastGhostUntil)fastGhostUntil=0;const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();fastGesturePointer=e.pointerId;fastGhostUntil=performance.now()+600;consumeEvent(e);fastDispatching=true;try{fastControl.click()}finally{fastDispatching=false}return}const strip=e.target.closest(".chips,.asgrow");if(strip){startStripGesture(e,strip);return}if(selecting){const card=e.target.closest(".card[data-id]");if(card){startSelectCardGesture(e,card);return}}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
+app.addEventListener("pointermove",e=>{moveStripGesture(e);moveSelectCardGesture(e)},true);app.addEventListener("pointerup",e=>{finishStripGesture(e,false);finishSelectCardGesture(e,false);finishFastGesture(e,false)},true);app.addEventListener("pointercancel",e=>{finishStripGesture(e,true);finishSelectCardGesture(e,true);finishFastGesture(e,true)},true);
+app.addEventListener("click",e=>{if(!fastDispatching&&performance.now()<fastGhostUntil){fastGhostUntil=0;consumeEvent(e,true);return}if((e.target.closest(".chips,.asgrow")&&performance.now()<stripSuppressClickUntil)||(selecting&&e.target.closest(".card")&&performance.now()<selectSuppressClickUntil)){e.preventDefault();e.stopPropagation()}},true);
+app.addEventListener("keydown",e=>{const control=e.target.closest('[role="button"][data-act]');if(!control||!(e.key==="Enter"||e.key===" "))return;e.preventDefault();control.click()});
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
