@@ -5,19 +5,17 @@ import Header from './components/Header.jsx'
 import MoreScreen from './components/MoreScreen.jsx'
 import QueueScreen from './components/QueueScreen.jsx'
 import { CircleEditor, CirclePicker, CompletedSheet } from './components/Sheets.jsx'
-import { members, starterData } from './data.js'
+import { starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
 import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
-import { createPersonalTask, deletePersonalTasks, loadPersonalTasks, updatePersonalPositions, updatePersonalTask } from './services/supabaseRepository.js'
-
-const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+import { createCircle, createCircleTask, createPersonalTask, deleteTasks, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions } from './services/supabaseRepository.js'
 
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
   const [syncError, setSyncError] = useState('')
   const [tab, setTab] = useState('home')
-  const [data, setData] = useState(() => localRepository.load(starterData))
+  const [data, setData] = useState(() => hasSupabaseConfig ? { ...starterData, personal: [], circles: [] } : localRepository.load(starterData))
   const [circleId, setCircleId] = useState(data.circles[0]?.id)
   const [query, setQuery] = useState(null)
   const [filter, setFilter] = useState(null)
@@ -41,8 +39,11 @@ export default function App() {
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) return
     setRemoteLoading(true)
-    loadPersonalTasks(session.user.id)
-      .then((personal) => setData((current) => ({ ...current, personal })))
+    Promise.all([loadPersonalTasks(session.user.id), loadCircles()])
+      .then(([personal, circles]) => {
+        setData((current) => ({ ...current, personal, circles }))
+        setCircleId((current) => circles.some((item) => item.id === current) ? current : circles[0]?.id)
+      })
       .catch((error) => setSyncError(error.message))
       .finally(() => setRemoteLoading(false))
   }, [session?.user?.id])
@@ -54,7 +55,7 @@ export default function App() {
   const reportSyncError = (error) => setSyncError(error?.message || '데이터를 저장하지 못했어요.')
 
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
-  const activeMembers = members.map((member) => member.id === 'me' && circle?.profile ? { ...member, name: circle.profile.name, emoji: circle.profile.emoji } : member)
+  const activeMembers = circle?.members || []
   const tasks = tab === 'circle' ? circle?.tasks || [] : data.personal
   const unread = useMemo(() => data.circles.reduce((sum, item) => sum + (item.unread || 0), 0), [data.circles])
 
@@ -70,22 +71,28 @@ export default function App() {
     const next = [...active]
     next.splice(Math.max(0, Math.min(position, active.length)), 0, task)
     updateTasks(() => [...next, ...completed])
-    if (tab === 'home' && session?.user) {
-      createPersonalTask(session.user.id, task, position)
-        .then(() => updatePersonalPositions(next))
+    if (session?.user) {
+      const create = tab === 'home'
+        ? createPersonalTask(session.user.id, task, position)
+        : createCircleTask(session.user.id, circle.id, task, position)
+      create
+        .then(() => updateTaskPositions(next))
         .catch(reportSyncError)
     }
   }
   const completeTask = (id) => {
     const currentTask = tasks.find((task) => task.id === id)
     updateTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done, completedAt: task.done ? null : new Date().toISOString() } : task))
-    if (tab === 'home' && currentTask) updatePersonalTask(id, { done: !currentTask.done }).catch(reportSyncError)
+    if (currentTask && session?.user) updateTask(id, { done: !currentTask.done }).catch(reportSyncError)
   }
   const editTask = (id, title) => {
     updateTasks((current) => current.map((task) => task.id === id ? { ...task, title } : task))
-    if (tab === 'home') updatePersonalTask(id, { title }).catch(reportSyncError)
+    if (session?.user) updateTask(id, { title }).catch(reportSyncError)
   }
-  const setAssignee = (id, assignee) => updateTasks((current) => current.map((task) => task.id === id ? { ...task, assignee } : task))
+  const setAssignee = (id, assignee) => {
+    updateTasks((current) => current.map((task) => task.id === id ? { ...task, assignee } : task))
+    if (session?.user) updateTask(id, { assignee }).catch(reportSyncError)
+  }
   const moveTask = (id, direction) => {
     const active = tasks.filter((task) => !task.done)
     const completedItems = tasks.filter((task) => task.done)
@@ -96,7 +103,7 @@ export default function App() {
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
     updateTasks(() => [...next, ...completedItems])
-    if (tab === 'home') updatePersonalPositions(next).catch(reportSyncError)
+    if (session?.user) updateTaskPositions(next).catch(reportSyncError)
   }
   const moveTaskTo = (sourceId, targetId) => {
     const active = tasks.filter((task) => !task.done)
@@ -108,14 +115,14 @@ export default function App() {
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
     updateTasks(() => [...next, ...completedItems])
-    if (tab === 'home') updatePersonalPositions(next).catch(reportSyncError)
+    if (session?.user) updateTaskPositions(next).catch(reportSyncError)
   }
   const toggleSelect = (id) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next })
   const startSelect = (id) => setSelected(new Set([id]))
   const cancelSelect = () => setSelected(new Set())
   const selectAll = () => setSelected(new Set(tasks.filter((task) => !task.done).map((task) => task.id)))
-  const deleteSelected = () => { const ids = [...selected]; updateTasks((current) => current.filter((task) => !selected.has(task.id))); if (tab === 'home') deletePersonalTasks(ids).catch(reportSyncError); cancelSelect() }
-  const assignSelected = (assignee) => { updateTasks((current) => current.map((task) => selected.has(task.id) ? { ...task, assignee } : task)); cancelSelect() }
+  const deleteSelected = () => { const ids = [...selected]; updateTasks((current) => current.filter((task) => !selected.has(task.id))); if (session?.user) deleteTasks(ids).catch(reportSyncError); cancelSelect() }
+  const assignSelected = (assignee) => { const ids = [...selected]; updateTasks((current) => current.map((task) => selected.has(task.id) ? { ...task, assignee } : task)); if (session?.user) Promise.all(ids.map((id) => updateTask(id, { assignee }))).catch(reportSyncError); cancelSelect() }
 
   const switchTab = (next) => { setTab(next); setQuery(null); setFilter(null); setCompletedOpen(false); cancelSelect() }
   const selectCircle = (id) => {
@@ -126,23 +133,30 @@ export default function App() {
     setQuery(null)
   }
   const completed = tasks.filter((task) => task.done)
-  const clearCompleted = () => { const ids = completed.map((task) => task.id); updateTasks((current) => current.filter((task) => !task.done)); if (tab === 'home') deletePersonalTasks(ids).catch(reportSyncError); setCompletedOpen(false) }
-  const saveCircle = ({ name, emoji, profileName, profileEmoji }) => {
+  const clearCompleted = () => { const ids = completed.map((task) => task.id); updateTasks((current) => current.filter((task) => !task.done)); if (session?.user) deleteTasks(ids).catch(reportSyncError); setCompletedOpen(false) }
+  const saveCircle = async ({ name, emoji, profileName, profileEmoji }) => {
+    if (!session?.user) return
+    const payload = { name, emoji, profileName, profileEmoji }
     if (circleEditorOpen === 'create') {
-      const id = makeId()
-      setData((current) => ({ ...current, circles: [...current.circles, { id, name, emoji, unread: 0, tasks: [], profile: { name: profileName, emoji: profileEmoji } }] }))
-      setCircleId(id)
+      try {
+        const created = await createCircle(session.user.id, payload)
+        setData((current) => ({ ...current, circles: [...current.circles, created] }))
+        setCircleId(created.id)
+      } catch (error) {
+        reportSyncError(error)
+        return
+      }
     } else {
-      setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, name, emoji, profile: { name: profileName, emoji: profileEmoji } } : item) }))
+      try {
+        await updateRemoteCircle(circle.id, session.user.id, payload)
+        setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, name, emoji, members: item.members.map((member) => member.id === session.user.id ? { ...member, name: profileName, emoji: profileEmoji } : member) } : item) }))
+      } catch (error) {
+        reportSyncError(error)
+        return
+      }
     }
     setCircleEditorOpen(null)
     setCirclePickerOpen(false)
-  }
-  const deleteCircle = () => {
-    setData((current) => ({ ...current, circles: current.circles.filter((item) => item.id !== circle.id) }))
-    const next = data.circles.find((item) => item.id !== circle.id)
-    setCircleId(next?.id)
-    setCircleEditorOpen(null)
   }
   const settingValues = { compact: false, motion: true, notifications: true, ...(data.settings || {}) }
   const toggleSetting = (id) => setData((current) => ({ ...current, settings: { ...settingValues, [id]: !settingValues[id] } }))
@@ -154,11 +168,11 @@ export default function App() {
     <section className="phone">
       <Header tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading ? <main className="screen-scroll loading-screen">할 일을 불러오고 있어요…</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase.auth.signOut()} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} />}
+      {remoteLoading ? <main className="screen-scroll loading-screen">할 일을 불러오고 있어요…</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase.auth.signOut()} /> : <QueueScreen tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={startSelect} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} />}
       <BottomNav tab={tab} unread={unread} onChange={switchTab} />
       {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onClear={clearCompleted} onClose={() => setCompletedOpen(false)} />}
-      {circleEditorOpen && <CircleEditor circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.profile : null} onSave={saveCircle} onDelete={circleEditorOpen === 'edit' && data.circles.length > 1 ? deleteCircle : null} onClose={() => setCircleEditorOpen(null)} />}
+      {circleEditorOpen && <CircleEditor circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === session?.user?.id) : null} onSave={saveCircle} onDelete={null} onClose={() => setCircleEditorOpen(null)} />}
     </section>
   </div>
 }

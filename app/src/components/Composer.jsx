@@ -4,11 +4,14 @@ import { ArrowIcon } from './Icons.jsx'
 export default function Composer({ count, circle, members, onAdd }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
-  const [assignee, setAssignee] = useState('me')
+  const [assignee, setAssignee] = useState(members[0]?.id || null)
   const [position, setPosition] = useState(count)
   const ref = useRef(null)
 
   useEffect(() => { if (open) ref.current?.focus() }, [open])
+  useEffect(() => {
+    if (circle && !members.some((member) => member.id === assignee)) setAssignee(members[0]?.id || null)
+  }, [circle, members, assignee])
   const submit = () => {
     if (!value.trim()) return
     onAdd(value.trim(), assignee, position)

@@ -18,7 +18,7 @@ export default function Header({ tab, circle, searchOpen, onSearch, onCircleSele
             <SearchIcon />
           </button>
           {!searchOpen && <button className="icon-button" onClick={onCompleted} aria-label="완료된 할 일"><CheckIcon /></button>}
-          {tab === 'circle' && <button className="icon-button" onClick={onManage} aria-label="끼리 관리"><MoreIcon /></button>}
+          {tab === 'circle' && circle && <button className="icon-button" onClick={onManage} aria-label="끼리 관리"><MoreIcon /></button>}
         </div>
       )}
     </header>
