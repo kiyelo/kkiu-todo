@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Kkiu To Do — v18.2.43</title>
+<title>Kkiu To Do — v18.2.44</title>
 <style>
   :root{
     --paper:#fbf8f2; --surface:#fff; --ink:#1c1a17; --ink2:#46423b; --sub:#938c80; --faint:#bdb6a8;
@@ -414,6 +414,10 @@ body:not(.motion-ready) .emoji-reel{animation:none!important}
 .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:none}
 .chips::-webkit-scrollbar{display:none}
 .chips .chip,.asgrow,.asgrow .asgc{touch-action:none}
+
+#app.sel-mode .card{grid-template-columns:32px minmax(0,1fr);align-items:center;cursor:pointer;padding-left:14px;padding-right:16px}
+#app.sel-mode .selbox{justify-self:center;align-self:center;margin:0}
+#app.sel-mode .card .mid{align-self:center}
 </style>
 <style>
 /* KKIU v17 — Apple-inspired Liquid Glass redesign */
@@ -589,19 +593,20 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 <body>
 <div class="wrap">
   <section class="phone"><div id="app"></div><div class="toast" id="toast"></div><div class="buildtag" id="buildtag"></div></section>
-  <p class="note">끼우 목업 · v18.2.43</p>
+  <p class="note">끼우 목업 · v18.2.44</p>
 </div>
 <script>
 const KEY="kkiu.todo.v5", CARD_H=62, UNIT=72, GHOST_H=42, GHOST_U=50, BND_H=46, BND_U=56, COL_H=34, COL_U=44, DBTN_U=58, GAP=80, LINE=0.54;
-const BUILD="v18.2.43";
+const BUILD="v18.2.44";
 const APP_VERSION=BUILD;
 const CHANGE_HISTORY=[
+ {version:"v18.2.44",date:"2026.07.19",ko:["깨진 한글과 손상된 이모지 토큰 정리","더보기의 JSON 백업·가져오기·내보내기 UI와 관련 코드 제거","더보기의 불필요한 설명과 테스트용 괄호 문구 간소화","선택모드 체크박스를 카드 중앙선에 맞추고 카드 전체 탭으로 선택·해제 지원"],en:["Repaired corrupted Korean copy and damaged emoji tokens","Removed JSON backup, import, export UI, and related code","Simplified unnecessary More-page descriptions and test labels","Centered selection checkboxes and enabled whole-card tap toggling"]},
  {version:"v18.2.43",date:"2026.07.19",ko:["담당자 필터·입력 선택·수정 선택을 브라우저 기본 스크롤이 아닌 공용 포인터 제스처로 통합","최초 pointerdown부터 가로 이동량을 직접 반영해 첫 스와이프가 포커스 전환에 소모되지 않도록 수정","짧은 터치는 선택, 일정 거리 이상 이동은 스와이프로 판정해 수정 중 필터가 드래그 시작과 동시에 선택되던 문제 제거","담당자 필터를 단일 행 가로 스크롤 구조로 변경"],en:["Unified member filters and input/edit assignee pickers under one explicit pointer gesture","Applied horizontal movement from the first pointer sequence so focus changes cannot consume the first swipe","Distinguished short taps from drags to stop filters activating at swipe start during editing","Changed member filters to a single-row horizontal scroller"]},
  {version:"v18.2.42",date:"2026.07.19",ko:["실제 연속 터치 테스트에서 재현된 관성 스크롤 직후 앱바 click 누락 수정","상·하단 앱바 컨트롤을 pointerdown 시 즉시 실행해 브라우저의 합성 click 취소 여부와 무관하게 첫 터치 보장","담당자 선택·가로 스와이프·수정 중 담당자 필터의 첫 터치 동작 유지"],en:["Fixed missing app-bar clicks after momentum scrolling reproduced with raw touch sequences","Executed top and bottom app-bar controls immediately on pointerdown so first touch no longer depends on a synthetic click","Preserved first-touch assignee selection, horizontal swiping, and member filtering during editing"]},
  {version:"v18.2.41",date:"2026.07.19",ko:["큐 스크롤·관성·스냅 도중 앱바 컨트롤을 누르면 진행 중인 모션을 즉시 정지하고 첫 터치부터 버튼 동작","끼리 입력·수정 담당자 선택 영역의 pointerdown 차단 제거로 최초 터치 선택과 가로 스와이프 지원","수정 중 담당자 필터를 처음 누를 때 편집 카드가 먼저 닫혀 클릭이 소실되던 이벤트 순서 수정","담당자 영역 조작 중 입력창과 수정 제목의 포커스를 안전하게 복원"],en:["Stopped queue motion immediately when app-bar controls are pressed so the first tap works during scrolling","Removed pointerdown blocking from Circle assignee strips for first-touch selection and horizontal swiping","Fixed the event order that discarded the first assignee-filter tap during editing","Safely restored input and edit focus after assignee-strip interaction"]},
  {version:"v18.2.40",date:"2026.07.19",ko:["끼우 탭 한국어 타이틀을 ‘할 일’로 수정하고 완료 아이콘의 숫자 뱃지 제거","끼리 전체 목록에서는 업데이트 뱃지를 유지하고 해당 담당자 필터에서 확인할 때만 읽음 처리","끼리 할 일 수동 순서 변경 시 실제 위치가 달라진 기존 할 일에 업데이트 뱃지 표시","새 할 일 삽입으로 기존 순번이 밀리는 경우에는 재배치 업데이트에서 제외"],en:["Renamed the Korean Queue title to ‘할 일’ and removed the completed-count badge","Kept Circle update badges in the All view and marked them seen only in an assignee filter","Added update badges to existing Circle tasks whose positions changed through manual reordering","Excluded index shifts caused only by inserting a new task"]},
  {version:"v18.2.39",date:"2026.07.19",ko:["끼리 할일 수정 시 담당자 선택 UI를 입력 UI와 동일한 화면 폭으로 확장","담당자 칩의 가로 스크롤 범위와 좌우 여백을 입력 상태와 정확히 통일"],en:["Expanded the Circle edit assignee picker to the same viewport width as task entry","Matched horizontal scrolling and side insets between edit and input states"]},
- {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 ��컬 설정으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·��은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
+ {version:"v18.2.38",date:"2026.07.19",ko:["끼리 할일 수정 담당자 UI를 입력 UI와 동일한 가로 스크롤 칩으로 통합","끼리 설정에 핸들 기반 담당자 순서 변경 추가·자신은 항상 첫 번째 고정·순서는 사용자 로컬 설정으로 분리 저장","더보기 이스터에그를 문구 없는 이모지 슬롯머신으로 교체하고 조합별 지속 애니메이션 및 터치 잠금 모드 추가","초기 화면의 동기 저장·반복 레이아웃 측정·숨은 블러 합성을 지연 또는 일괄 처리해 첫 표시 속도 개선"],en:["Unified Circle edit assignees with the same horizontal chip UI used for task entry","Added handle-based personal member ordering with self pinned first","Replaced More with a text-free emoji slot machine featuring persistent combo animations and tap-to-lock mode","Improved first paint by deferring synchronous saves, batching layout reads, and disabling hidden blur composition"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["앱 톤과 맞지 않던 젬을 제거하고 파란 점·선·파동으로 구성된 키네틱 포인트 적용","알림 뱃지 위치를 아이콘과 콘텐츠 내부 기준으로 통일","끼리 원본 진행 할일과 완료 할일에 최초 확인용 빨간 점 표시 추가","중복 렌더러·구형 더보기 스크롤·미사용 입력 로직을 제거하고 공용 큐 엔진 중심으로 리팩토링"],en:["Replaced the mismatched gem with a minimal kinetic point made of a blue dot, lines, and ripple","Normalized notification badge placement","Added first-view red source dots to original active and completed Circle tasks","Removed duplicate renderers, legacy More scrolling, and unused input logic around the shared queue engine"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI의 문구·슬롯머신·당첨 상태 제거","스크롤 방향과 속도에 반응하고 스냅 시 튀며 방치 중 숨 쉬고 깜빡이는 살아 있는 젬 적용","젬을 직접 누르면 잠깐 찌그러졌다 복원되는 무기능 이스터에그 추가"],en:["Removed copy, slot-machine results, and winning states","Added a living gem that reacts to scrolling, hops on snap, breathes, and blinks","Added an intentionally functionless poke reaction"]},
  {version:"v18.2.37",date:"2026.07.19",ko:["더보기 플로팅 UI에 무의미한 이스터에그 끼우 젬 추가","메뉴 사이를 이동할 때마다 이모지 3개와 가짜 생산성·운세·미스터리 문구를 무작위 표시","같은 이모지 3개가 나오면 젬 발광·파티클·특수 햅틱 효과 실행","플로팅 UI를 탭해 직접 다시 굴릴 수 있도록 지원"],en:["Added the intentionally useless Kkiu Gem easter egg to the More floating UI","Randomized three emoji and playful fake productivity, fortune, or mystery copy on every menu-gap move","Triggered glow, particles, and special haptics on triple matches","Allowed tapping the floating UI to reroll manually"]},
@@ -629,12 +634,12 @@ const CHANGE_HISTORY=[
  {version:"v18.2.13",date:"2026.07.19",ko:["끼리 담당자 필터를 좌우로 스크롤하는 동안 페이지 전환 제스처가 시작되지 않도록 터치 영역을 분리"],en:["Isolated the Circle assignee filter touch area so horizontal scrolling never starts page navigation"]},
  {version:"v18.2.12",date:"2026.07.19",ko:["더보기 화면을 계정·환경·데이터 섹션 중심으로 전면 재구축하고 끼우·끼리와 같은 플로팅 삽입 구조로 정리"],en:["Rebuilt More around Account, Preferences, and Data sections with the same floating insertion behavior as Queue and Circle"]},
  {version:"v18.2.11",date:"2026.07.19",ko:["끼리·프로필 편집창의 이름과 이모지 라벨을 간결한 카드형 구조로 정리하고 저장 동작을 명확하게 개선"],en:["Simplified the Circle and profile editor into a clear card layout with concise labels and an obvious save action"]},
- {version:"v18.2.10",date:"2026.07.19",ko:["끼리 상단 이모지를 고정하고 긴 그룹명이 말줄임표 없이 전체 흐름 표시되도록 개���"],en:["Fixed the Circle header emoji in place and streamed the full group name without ellipsis"]},
+ {version:"v18.2.10",date:"2026.07.19",ko:["끼리 상단 이모지를 고정하고 긴 그룹명이 말줄임표 없이 전체 흐름 표시되도록 개선"],en:["Fixed the Circle header emoji in place and streamed the full group name without ellipsis"]},
  {version:"v18.2.9",date:"2026.07.19",ko:["끼리 이름·대표 이모지와 내 프로필 이름·이모지를 각각 한 화면에서 함께 편집하도록 통합","빠른 선택 이모지 칩을 제거하고 대량 이모지 목록·검색·랜덤 선택을 제공"],en:["Combined Circle name and emoji editing, and profile name and emoji editing, into one screen each","Removed quick emoji chips and added a large searchable emoji list with random selection"]},
  {version:"v18.2.8",date:"2026.07.19",ko:["끼우·끼리·더보기 상단을 동일한 headrow 높이와 제목 기준선으로 통일"],en:["Unified Queue, Circle, and More headers with the same headrow height and title baseline"]},
  {version:"v18.2.7",date:"2026.07.19",ko:["상단 버튼 공통 스타일이 다른 보정 규칙에 덮어쓰이지 않도록 최종 정렬·간격·배경을 고정"],en:["Locked the final shared header button alignment, spacing, and surface styling against later overrides"]},
  {version:"v18.2.6",date:"2026.07.19",ko:["끼우와 끼리의 상단 버튼 크기·모서리·간격·아이콘 정렬을 공통 스타일로 통일"],en:["Unified Queue and Circle header button size, corners, spacing, and icon alignment"]},
- {version:"v18.2.5",date:"2026.07.19",ko:["끼리 상단을 끼우와 같은 한 줄 구조로 통일하고 그룹명·우측 아이콘을 ��은 행에 배치","그룹명이 길어도 두 줄로 늘어나지 않도록 흐름 표시를 유지"],en:["Unified the Circle header into the same single-row layout as Queue with the title and actions aligned","Kept long Circle names on one line with streaming instead of expanding to two lines"]},
+ {version:"v18.2.5",date:"2026.07.19",ko:["끼리 상단을 끼우와 같은 한 줄 구조로 통일하고 그룹명·우측 아이콘을 같은 행에 배치","그룹명이 길어도 두 줄로 늘어나지 않도록 흐름 표시를 유지"],en:["Unified the Circle header into the same single-row layout as Queue with the title and actions aligned","Kept long Circle names on one line with streaming instead of expanding to two lines"]},
  {version:"v18.2.4",date:"2026.07.19",ko:["할 일 수정 중 취소 버튼과 Escape 취소를 추가","다른 UI를 누르면 수정 모드가 자동 해제되도록 수정"],en:["Added a cancel button and Escape-to-cancel while editing a task","Automatically exits edit mode when another UI element is selected"]},
  {version:"v18.2.3",date:"2026.07.19",ko:["끼리 설정에 전체 이모지 선택 진입점을 명확히 표시","더보기 플로팅 요소가 목록 첫·마지막 위치까지 이동하도록 수정","할 일 수정 완료 뒤 현재 스크롤 위치를 유지하도록 보완"],en:["Made the full emoji picker entry points explicit in Circle settings","Allowed the More floating element to reach the first and last list positions","Preserved the current scroll position after finishing a task edit"]},
  {version:"v18.2.2",date:"2026.07.19",ko:["낮은 모바일 화면에서 상단이 잘리던 문제를 수정하고, 끼리 제목·아이콘 터치 영역을 분리","긴 끼리 이름 흐름 표시와 수정 이력의 닫기 버튼을 보완"],en:["Fixed clipped headers on short mobile screens and separated Circle title and icon touch targets","Fixed long Circle-name streaming and added an explicit close button to update history"]},
@@ -673,7 +678,7 @@ const I={
 const STR={
 ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  hHome:"할 일",hHomeSub:"{a}개의 할 일 · 완료 {d}",
- hCircle:"끼리",hCircleSub:"가���·연인·친구와 함께 끼우기",
+ hCircle:"끼리",hCircleSub:"가족·연인·친구와 함께 끼우기",
  hStats:"통계",hStatsSub:"끼우가 잘 작동하고 있나요?",
  hMore:"더보기",hMoreSub:"설정 · 후원 · 데이터",
  slotLabel:"<b>{n}</b>번째에 할일 끼우기",placeholder:"할 일을 입력하고 끼우기",
@@ -685,7 +690,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  doneBtnLabel:"완료됨 {n}개 보기",
  adTitle:"여기에 광고가 표시됩니다",adSub:"인피드 네이티브 · 끼우 번호에서 제외",
  tAdd:"{n}번째에 끼웠어요",tDone:"완료했어요",tRestore:"#{n}으로 복원했어요",tMove:"{n}번째로 이동",tDel:"{n}개 삭제했어요 (통계는 유지)",
- tEmpty:"할 일을 입력해 주세요",tCopy:"JSON을 복사했어요",tImportOk:"가져오기 완료",tImportBad:"JSON 형식이 올바르지 않아요",tReset:"초기화했어요",
+ tEmpty:"할 일을 입력해 주세요",tReset:"초기화했어요",
  tLink:"데모에서는 외부 링크가 연결되지 않아요",tSoon:"출시 버전에서 제공 예정이에요",
  tFilterMove:"순서 변경은 전체 보기에서 (필터 중 스프링 로드는 추후 지원)",
  confirmReset:"모든 데이터를 삭제하고 초기화할까요?",
@@ -695,7 +700,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  stWeek:"최근 7일 완료",
  stOld:"오래 기다린 할 일",stOldP:"가장 먼저 끼운 뒤 아직 완료하지 않은 항목이에요",
  stPos:"어디에 끼웠나요?",stPosP:"새 할 일을 끼운 위치 분포",posTop:"상단",posMid:"중단",posBot:"하단",
- stAcc:"우선순위 정확도",stAccP:"완료된 일 중 당시 상위 3순위 비율 — 높을���록 “위치=우선순위”가 잘 작동 중",
+ stAcc:"우선순위 정확도",stAccP:"완료된 일 중 당시 상위 3순위 비율 — 높을수록 “위치=우선순위”가 잘 작동 중",
  stAvoid:"회피 패턴",stAvoidP:"오래 밀린 할 일 탐지 · 운영 지표로도 활용",
  lockNeed:"완료 {n}개부터 열려요 · 현재 {c}개",
  mAccount:"계정 관리",mNoti:"알림 설정",mTerms:"이용약관 · 개인정보",mContact:"문의하기",soon:"예정",
@@ -704,9 +709,8 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  mFeatListT:"제안한 기능",mFeatEmpty:"아직 제안이 없어요 — 아래에서 첫 기능을 끼워보세요",mFeatInsLabel:"원하는 기능 끼우기",mFeatPh:"어떤 기능이 있으면 좋을까요?",tFeatAdd:"제안이 1순위로 끼워졌어요. 감사합니다!",
  lnkSite:"3Day Weekend Lab.",lnkSiteP:"개발자 홈페이지",lnkCoffee:"커피 한 잔 후원",lnkCoffeeP:"Buy me a coffee",
  aff1:"심플 가계부",aff1P:"제휴 · 지출도 위치로 정리",aff2:"포모도로 타이머",aff2P:"제휴 · 끼우와 함께 쓰기 좋은 집중 타이머",aff:"제휴",
- mBackupT:"데이터 백업",mBackupP:"현재 버전은 서버 없이 이 브라우저(localStorage)에 저장됩니다.",
- mExport:"JSON 내보내기 / 복사",mImport:"JSON 가져오기",mReset:"전체 초기화",ioPh:"가져올 JSON 붙여넣기",
- emptySearchT:"무���을 찾을까요?",emptySearchP:"제목으로 바로 검색합니다. 완료된 일도 함께 찾아요. 검색 중에는 끼우기·순서 변경이 잠시 꺼집니다.",
+ mReset:"전체 초기화",
+ emptySearchT:"무엇을 찾을까요?",emptySearchP:"제목으로 바로 검색합니다. 완료된 일도 함께 찾아요. 검색 중에는 끼우기·순서 변경이 잠시 꺼집니다.",
  selNone:"항목을 선택하세요",selCnt:"{n}개 선택됨",selAll:"전체 선택",selUnall:"선택 해제",selCancel:"취소",selDel:"삭제",
  cancel:"취소",create:"만들기",clearModalT:"삭제할 항목을 선택하세요",
  circlePickT:"끼리 전환",circleNew:"새 끼리 만들기",circleNewPrompt:"새 끼리 이름",circleNewPh:"예: 우리집, 강릉 여행",tCircleNew:"'{n}' 끼리를 만들었어요 — 관리에서 멤버를 초대하세요",
@@ -714,7 +718,7 @@ ko:{navHome:"끼우",navCircle:"끼리",navStats:"통계",navMore:"더보기",
  membersT:"멤버 {n}명",meTag:"나",taskCnt:"진행 중 {n}개",leaveCircle:"나가기",leaveConfirm:"'{n}' 끼리에서 나갈까요?",tLeave:"'{n}' 끼리에서 나갔어요",ownerOnly:" · 개설자만 가능(데모)",
  circleDel:"이 끼리 삭제",circleDelConfirm:"'{n}' 끼리와 모든 할 일을 삭제할까요?",tCircleDel:"끼리를 삭제했어요",
  emptyCircleT:"아직 끼리가 없어요",emptyCircleP:"가족·연인·친구와 함께 쓰는 공유 큐를 만들어 보세요.",
- mFeatSlot:"여기에 원���는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
+ mFeatSlot:"여기에 원하는 기능 끼우기 — 문의로 요청",asgLabel:"담당",asgDefaultHint:"미선택시 기본값"},
 en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  hHome:"Queue",hHomeSub:"{a} to-dos · {d} done",
  hCircle:"Circle",hCircleSub:"A queue you share with your circle",
@@ -729,7 +733,7 @@ en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  doneBtnLabel:"View {n} done",
  adTitle:"Your ad could be here",adSub:"In-feed native · excluded from ranks",
  tAdd:"Inserted at #{n}",tDone:"Completed",tRestore:"Restored to #{n}",tMove:"Moved to #{n}",tDel:"Deleted {n} (stats kept)",
- tEmpty:"Type something first",tCopy:"JSON copied",tImportOk:"Import complete",tImportBad:"Invalid JSON",tReset:"Reset done",
+ tEmpty:"Type something first",tReset:"Reset done",
  tLink:"External links are disabled in this demo",tSoon:"Coming in the release version",
  tFilterMove:"Reorder in All view (spring-load while filtered: planned)",
  confirmReset:"Delete all data and reset?",
@@ -748,8 +752,7 @@ en:{navHome:"Kkiu",navCircle:"Circle",navStats:"Stats",navMore:"More",
  mFeatListT:"Suggested features",mFeatEmpty:"No suggestions yet — insert your first feature below",mFeatInsLabel:"Insert a feature you'd like",mFeatPh:"What feature would help you?",tFeatAdd:"Your suggestion was inserted at #1. Thank you!",
  lnkSite:"3Day Weekend Lab.",lnkSiteP:"Developer homepage",lnkCoffee:"Buy me a coffee",lnkCoffeeP:"One-time support",
  aff1:"Simple Budget",aff1P:"Affiliate · sort spending by position",aff2:"Pomodoro Timer",aff2P:"Affiliate · focus timer that pairs well with Kkiu",aff:"AD",
- mBackupT:"Data backup",mBackupP:"This version stores everything in this browser (localStorage), no server.",
- mExport:"Export / copy JSON",mImport:"Import JSON",mReset:"Reset all",ioPh:"Paste JSON to import",
+ mReset:"Reset all",
  emptySearchT:"What are you looking for?",emptySearchP:"Searches titles instantly, including completed items. Inserting and reordering pause while searching.",
  selNone:"Select items",selCnt:"{n} selected",selAll:"Select all",selUnall:"Deselect",selCancel:"Cancel",selDel:"Delete",
  cancel:"Cancel",create:"Create",clearModalT:"Select items to delete",
@@ -773,7 +776,7 @@ const CIRCLE_SEED2=[["숙소 최종 결제",["me"]],["KTX 왕복 예매",["da"]]
 function newCircleCode(){return "KKIU-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 const CIRCLE_EMOJIS=["🏠","✈️","🌿","🎯","🍳","🎈","🧺","🎮","🪴","📚","🏕️","🎵"];
 const PROFILE_EMOJIS=["🌿","🐶","🍊","🪁","🌸","🌊","☀️","🌳","🧡","🚲","🦊","🐱"];
-const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚 ��� 🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰 ��� 🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ���️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 ���� 📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ");
+const EMOJI_LIBRARY="😀 😃 😄 😁 😆 😅 😂 🤣 🥹 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🤝 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤏 💪 🙏 👏 🙌 🫶 👐 💅 🤳 💃 🕺 👑 🧡 ❤️ 🩷 🩵 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 💯 💢 💥 💫 💦 💨 🕳️ 💣 💤 👀 👁️ 👄 👅 ✨ ⭐ 🌟 💫 ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ❄️ ☃️ 🌙 🌌 🌊 💧 🍀 🌿 🍃 🍂 🍁 🌱 🌵 🌴 🌳 🌲 🌸 🌹 🌺 🌻 🌼 💐 🪻 🪴 🏠 🏡 🏢 🏫 🏥 🏪 🏰 🏕️ ⛺ 🏖️ 🏝️ 🗺️ ✈️ 🚗 🚕 🚌 🚎 🏎️ 🚓 🚑 🚒 🚲 🛴 🛵 🚆 🚇 🚉 🚀 🛸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐒 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🐇 🐿️ 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🥗 🍜 🍝 🍣 🍤 🍚  🍘 🍥 🥟 🦪 🍦 🍧 🍨 🍩 🍪 🎂 🍰  🍫 🍬 🍭 ☕ 🫖 🧃 🥤 🧋 🍺 🍻 🍷 🥂 🍸 🍹 🧉 🏀 ⚽ 🏈 ⚾ 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 🛷 🥌 🏆 🥇 🥈 🥉 🏅 🎖️ ️ 🎯 🪁 🎮 🕹️ 🎲 ♟️ 🧩 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶  📖 📝 ✏️ 🖍️ 🖌️ 📷 📸 🔍 💡 🔔 ⏰ 📌 📎 🗓️ ✅ ❌ ❗ ❓ ⁉️ ⚠️ 🚫 🔒 🔓 🔑 🛠️ ⚙️ 🧰 💼 🛒 🎁 🎈 🎉 🎊 🎀 🧸 🪄 🪩".split(" ").filter(Boolean);
 function newCircleEmoji(){return CIRCLE_EMOJIS[Math.floor(Math.random()*CIRCLE_EMOJIS.length)]}
 function seedCircles(){return[
  {id:uid(),name:"우리집",emoji:"🏠",code:newCircleCode(),unread:0,memberUnread:{me:2,su:1},unreadDone:1,members:["me","su","da","jh","ha","jw","sy","mj","yu","dy"],tasks:seedCircle()},
@@ -786,7 +789,7 @@ let viewEl=null, switching=false, homeSearch=null,circleSearch=null,ciDoneFilter
 let Q=null,qRows=[],qOffset=0,qTT=0,qMaxY=0,qPrevSI=null,qInsertGi=0,qtrackEl=null,stageEl=null,slotCenter=0,TITLE_W=200;
 let dragging=false,axis=null,gx=0,gy=0,startY=0,panBase=0,lastY=0,lastT=0,vel=0,moved=0,viewW=0,svEl=null,svBase=0;
 let raf=null,wheelT=null,dragEndAt=0,tapSuppressMs=0,pressTimer=null,pressId=null,slotOpen=false,searchFlashId=null;
-let assigneeTouching=false,stripGesture=null,stripSuppressClickUntil=0;
+let assigneeTouching=false,stripGesture=null,stripSuppressClickUntil=0,selectCardGesture=null,selectSuppressClickUntil=0;
 let reActive=[],reFrom=0,reTo=0,reEl=null,reY0=0,reStageTop=0,reTrackTop=0,reCtx="home";
 let gripArmTimer=null,gripArmId=null,gripDownEvent=null,gripArmed=false;
 let measCtx=null;
@@ -888,7 +891,7 @@ function addCircleDoneButton(model){
 function cardHtml(t,idx,o={}){
  if(o.select){return `<article class="card ${selected.has(t.id)?"sel-on":""}" data-id="${t.id}">
    <button class="selbox ${selected.has(t.id)?"on":""}" data-act="sel" data-id="${t.id}">${I.check}</button>
-   <div class="mid"><p class="t-title">${esc(t.title)}</p></div><div class="acts"></div></article>`}
+   <div class="mid"><p class="t-title">${esc(t.title)}</p></div></article>`}
  const topN=(!t.done&&o.rank&&idx<3)?idx+1:0,topcls=topN?`t${topN}`:"";
  const lead=`<button class="ck" data-act="complete" data-id="${t.id}"></button>`;
  const rank=o.rank?`<div class="rank ${topN?"top":""}">${idx+1}</div>`:"";
@@ -971,7 +974,7 @@ function buildQueue(ctx,preserve){
  const keepOffset=preserve?qOffset:null;
  if(ctx==="home")reindex();else ciReindex();
  const qTasks=ctx==="home"?active():ciActive();
- const emptyCopy=ctx==="circle"&&state.ciFilter?{t:"이 담당자에게 맡긴 진행 할 일이 없어요",p:"전체 필터로 돌아가거나, 이 담당자의 첫 할 일을 끼워 보세요.",a:"전체 보기",act:"empty-all"}:ctx==="circle"?{t:"아직 진행 중인 끼리 할 일이 없어요",p:"가장 먼저 할 일을 이 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"}:{t:"아직 끼운 할 일이 없어요",p:"���오른 첫 할 일을 오늘의 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"};
+ const emptyCopy=ctx==="circle"&&state.ciFilter?{t:"이 담당자에게 맡긴 진행 할 일이 없어요",p:"전체 필터로 돌아가거나, 이 담당자의 첫 할 일을 끼워 보세요.",a:"전체 보기",act:"empty-all"}:ctx==="circle"?{t:"아직 진행 중인 끼리 할 일이 없어요",p:"가장 먼저 할 일을 이 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"}:{t:"아직 끼운 할 일이 없어요",p:"떠오른 첫 할 일을 오늘의 큐에 끼워 보세요.",a:"첫 할 일 끼우기",act:"slot-open"};
  const emptyHtml=qTasks.length?"":`<div class="queueempty"><div class="empty-c"><h3>${emptyCopy.t}</h3><p>${emptyCopy.p}</p><button data-act="${emptyCopy.act}">${emptyCopy.a}</button></div></div>`;
  viewEl.innerHTML=`${headHtml()}<div class="stage q" id="stage"><div class="qvp"><div class="qtrack" id="qtrack"></div></div>${emptyHtml}<div class="qfade t"></div><div class="qfade b"></div>${slotHtml(ctx)}</div>`;
  stageEl=viewEl.querySelector("#stage");qtrackEl=viewEl.querySelector("#qtrack");
@@ -1341,10 +1344,9 @@ function moreQueueItems(){
   row(I.bell,T("mNoti"),"stub",`<em>${T("soon")}</em> ›`),
   section(state.lang==="en"?"PREFERENCES":"환경",`<div class="pcard more-language"><div class="mlead"><span class="mrank">${I.globe}</span><h3>${T("mLang")}</h3></div><div class="more-langbar">${seg("ko","한국어")}${seg("en","English")}</div></div>`),
   row(I.shield,T("mTerms"),"stub"),row(I.mail,T("mContact"),"stub"),`<div class="more-divider more-qdivider"></div>`,
-  section(state.lang==="en"?"DATA":"데이터",`<div class="pcard"><div class="mlead"><span class="mrank">${I.gear}</span><h3>${T("mBackupT")}</h3></div><p>${T("mBackupP")}</p></div>`),
-  row(I.arrow,T("mExport"),"export","⇩"),`<textarea class="field" id="io" placeholder="${T("ioPh")}"></textarea>`,row(I.arrow,T("mImport"),"import","⇧"),row(I.x,T("mReset"),"reset","⟲"),
-  section(state.lang==="en"?"TEST TOOLS":"테스트 도구",row("↺",state.lang==="en"?"Reset to starter data":"초기 데이터로 리셋","test-seed","⟲")),
-  row("⌫",state.lang==="en"?"Remove all data (empty-state test)":"모든 데이터 제거 (엠티케이스 확인용)","test-empty","!"),row(I.bell,state.lang==="en"?"Create all unread badges":"모든 안읽음 뱃지 생성","test-unread","•"),
+  section(state.lang==="en"?"DATA":"데이터",row(I.x,T("mReset"),"reset","⟲")),
+  section(state.lang==="en"?"TEST TOOLS":"테스트 도구",row("↺",state.lang==="en"?"Reset starter data":"초기 데이터로 리셋","test-seed","⟲")),
+  row("⌫",state.lang==="en"?"Remove all data":"모든 데이터 제거","test-empty","!"),row(I.bell,state.lang==="en"?"Create unread badges":"안읽음 뱃지 생성","test-unread","•"),
   `<button class="more-version" data-act="history">${state.lang==="en"?"Version":"버전"} ${BUILD}<span>·</span><span>${state.lang==="en"?"Update history":"수정 이력"}</span><span>›</span></button>`]
 }
 function buildMoreQueue(){
@@ -1357,13 +1359,6 @@ function buildMoreQueue(){
  qMaxY=y;qPrevSI=null;qOffset=clamp(moreOffset,0,qMaxY);apply("more");renderSlotMachine(false);wireCircleTitleStream();setNavActive()
 }
 
-function exportJson(){const s=JSON.stringify({exportedAt:now(),tasks:state.tasks,circles:state.circles,doneLog:state.doneLog},null,2);navigator.clipboard?.writeText(s);const ta=document.getElementById("io");if(ta)ta.value=s;toast(T("tCopy"))}
-function importJson(){const ta=document.getElementById("io");if(!ta)return;
- try{const p=JSON.parse(ta.value);const arr=Array.isArray(p)?p:p.tasks;if(!Array.isArray(arr))throw 0;
-  state.tasks=arr.map((t,i)=>({id:t.id||uid(),title:String(t.title||"–"),favorite:!!t.favorite,done:!!t.done,order:Number.isFinite(t.order)?t.order:i,createdAt:t.createdAt||now(),completedAt:t.completedAt||null,insertAt:Number.isFinite(t.insertAt)?t.insertAt:i,listAt:Number.isFinite(t.listAt)?t.listAt:arr.length,doneAt:Number.isFinite(t.doneAt)?t.doneAt:null}));
-  if(Array.isArray(p.circles)&&p.circles.length){state.circles=p.circles;state.ci=0;state.ciFilter=null}
-  if(Array.isArray(p.doneLog))state.doneLog=p.doneLog;
-  reindex();state.tab="home";homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tImportOk"))}catch{toast(T("tImportBad"))}}
 function resetAll(){askConfirm(T("mReset"),T("confirmReset"),T("mReset"),()=>{localStorage.removeItem(KEY);state=load();state.ciGhosts=false;state.ciExpanded=null;homeSearch=null;save();renderView();setNavActive();moveInd();toast(T("tReset"))},true)}
 function resetTestUi(){selecting=false;selected.clear();editingId=null;slotOpen=false;homeSearch=null;circleSearch=null;ciDoneFilter=null;expandedDoneId=null;state.ciGhosts=false;state.ciExpanded=null;state.ciFilter=null;state.insertIndex=0;state.ciInsertIndex=0}
 function resetToStarterData(){const lang=state.lang;localStorage.removeItem(KEY);state=load();state.lang=lang;state.tab="more";resetTestUi();save();renderView();setNavActive();moveInd();toast(state.lang==="en"?"Starter data restored":"초기 데이터로 되돌렸어요")}
@@ -1418,9 +1413,12 @@ function activateStripButton(btn){if(!btn)return;const act=btn.dataset.act,k=btn
 function startStripGesture(e,strip){stopQueueMotion();assigneeTouching=true;stripGesture={strip,button:e.target.closest("button"),pointerId:e.pointerId,x:e.clientX,y:e.clientY,start:strip.scrollLeft,moved:false};try{strip.setPointerCapture(e.pointerId)}catch{}e.preventDefault();e.stopPropagation()}
 function moveStripGesture(e){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)>4||Math.abs(dy)>4)g.moved=true;if(g.moved){g.strip.scrollLeft=g.start-dx;e.preventDefault();e.stopPropagation()}}
 function finishStripGesture(e,cancelled=false){const g=stripGesture;if(!g||e.pointerId!==g.pointerId)return;try{g.strip.releasePointerCapture(e.pointerId)}catch{}stripGesture=null;assigneeTouching=false;stripSuppressClickUntil=performance.now()+350;e.preventDefault();e.stopPropagation();if(!cancelled&&!g.moved)activateStripButton(g.button)}
-app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const strip=e.target.closest(".chips,.asgrow");if(strip){startStripGesture(e,strip);return}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
-app.addEventListener("pointermove",moveStripGesture,true);app.addEventListener("pointerup",e=>finishStripGesture(e,false),true);app.addEventListener("pointercancel",e=>finishStripGesture(e,true),true);
-app.addEventListener("click",e=>{if(e.target.closest(".chips,.asgrow")&&performance.now()<stripSuppressClickUntil){e.preventDefault();e.stopPropagation()}},true);
+function startSelectCardGesture(e,card){selectCardGesture={card,id:card.dataset.id,pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false}}
+function moveSelectCardGesture(e){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;if(Math.abs(e.clientX-g.x)>7||Math.abs(e.clientY-g.y)>7)g.moved=true}
+function finishSelectCardGesture(e,cancelled=false){const g=selectCardGesture;if(!g||e.pointerId!==g.pointerId)return;selectCardGesture=null;if(cancelled||g.moved)return;selectSuppressClickUntil=performance.now()+350;e.preventDefault();e.stopPropagation();toggleSelect(g.id)}
+app.addEventListener("pointerdown",e=>{const fastControl=e.target.closest(".head button,.nav button,.seldock button,.selhead button,.sheethead button");if(fastControl){stopQueueMotion();e.preventDefault();e.stopPropagation();fastControl.click();return}const strip=e.target.closest(".chips,.asgrow");if(strip){startStripGesture(e,strip);return}if(selecting){const card=e.target.closest(".card[data-id]");if(card){startSelectCardGesture(e,card);return}}if(!editingId)return;if(e.target.closest('[data-act="edit-cancel"]')){e.preventDefault();cancelEdit();return}if(!e.target.closest(".card.editing"))cancelEdit()},true);
+app.addEventListener("pointermove",e=>{moveStripGesture(e);moveSelectCardGesture(e)},true);app.addEventListener("pointerup",e=>{finishStripGesture(e,false);finishSelectCardGesture(e,false)},true);app.addEventListener("pointercancel",e=>{finishStripGesture(e,true);finishSelectCardGesture(e,true)},true);
+app.addEventListener("click",e=>{if((e.target.closest(".chips,.asgrow")&&performance.now()<stripSuppressClickUntil)||(selecting&&e.target.closest(".card")&&performance.now()<selectSuppressClickUntil)){e.preventDefault();e.stopPropagation()}},true);
 app.addEventListener("click",e=>{
  const tab=e.target.closest("[data-tab]");if(tab){goTab(tab.dataset.tab);return}
  const el=e.target.closest("[data-act]");if(!el)return;const act=el.dataset.act,id=el.dataset.id;
@@ -1475,7 +1473,7 @@ app.addEventListener("click",e=>{
  if(selecting&&e.target.closest(".card")){toggleSelect(id);return}
  if(act==="complete")complete(id);else if(act==="fav")favorite(id);
  else if(act==="sel-delete")deleteSelected();else if(act==="sel-cancel")cancelSelect();else if(act==="sel-all")selectAll();
- else if(act==="export")exportJson();else if(act==="import")importJson();else if(act==="reset")resetAll();else if(act==="test-seed")resetToStarterData();else if(act==="test-empty")removeAllDataForTest();else if(act==="test-unread")createUnreadBadgesForTest();
+ else if(act==="reset")resetAll();else if(act==="test-seed")resetToStarterData();else if(act==="test-empty")removeAllDataForTest();else if(act==="test-unread")createUnreadBadgesForTest();
  else if(act==="link")toast(T("tLink"))});
 function submitAdd(){const si=viewEl.querySelector("#si");if(!si)return;const v=si.value;si.value="";autoGrowSi(si);state.tab==="circle"?ciAdd(v):addTask(v)}
 app.addEventListener("submit",e=>{
