@@ -1,10 +1,8 @@
-# React 0.9.0 적용
-
-ZIP 내부 파일을 로컬 저장소 폴더에 복사해 바꾼 뒤 실행합니다.
-
+# React 1.0.0 적용
+ZIP 내부 파일을 기존 저장소에 덮어쓴 뒤 실행하세요.
 ```bash
 git add -A
-git commit -m "feat: rebuild v18.4.8 parity in React"
+git commit -m "feat: rebuild interaction parity from HTML audit"
 git fetch origin
 git push --force-with-lease origin main
 ```
