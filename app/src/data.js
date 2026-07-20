@@ -1,25 +1,4 @@
-export const members = [
-  { id: 'me', name: '나', emoji: '🙂', role: 'owner' },
-  { id: 'mina', name: '미나', emoji: '🐰', role: 'member' },
-  { id: 'jun', name: '준', emoji: '🐻', role: 'member' },
-  { id: 'sol', name: '솔', emoji: '🐥', role: 'member' },
-]
-
-export const starterData = {
-  personal: [
-    { id: 'p1', title: '장보기 목록 확인하기', favorite: true, done: false, createdAt: Date.now() - 3000 },
-    { id: 'p2', title: '동해물과 백두산이 마르고 닳도록 하느님이 보우하사 우리나라 만세', done: false, createdAt: Date.now() - 2000 },
-    { id: 'p3', title: '우산 챙기기', done: false, createdAt: Date.now() - 1000 },
-    { id: 'p4', title: '지난주 영수증 정리', done: true, doneAt: 2, completedAt: new Date().toISOString() },
-  ],
-  circles: [
-    { id: 'c1', name: '주말을 알차게 보내는 사람들', emoji: '🏕️', code: 'KKIU-WEEK', unread: 2, unreadDone: 1, members, memberUnread: { mina: 1, jun: 1 }, tasks: [
-      { id: 'c1t1', title: '숙소 체크인 시간 확인', assignee: 'me', done: false },
-      { id: 'c1t2', title: '저녁 식당 예약', assignee: 'mina', done: false },
-      { id: 'c1t3', title: '보드게임 챙기기', assignee: 'jun', done: false },
-      { id: 'c1t4', title: '장보기 분담하기', assignee: 'sol', done: true, doneAt: 3, completedAt: new Date().toISOString() },
-    ]},
-    { id: 'c2', name: '우리 가족', emoji: '🏠', code: 'KKIU-HOME', unread: 1, members: members.slice(0, 3), memberUnread: { mina: 1 }, tasks: [] },
-  ],
-  settings: { compact: false, motion: true, notifications: true },
-}
+export const members=[{id:'me',name:'나',emoji:'🌿',role:'owner'},{id:'su',name:'수호',emoji:'🐶'},{id:'da',name:'다은',emoji:'🍊'},{id:'jh',name:'지혜',emoji:'🌸'}]
+const titles=['프로젝트 킥오프 안건 정리','디자인 시스템 컬러 토큰 검토','이번 주 회고 메모 작성','장보기 — 우유, 달걀, 커피, 휴지, 세제, 고양이 모래까지 잊지 말고 한 번에 사오기','30분 운동하기','부모님께 안부 전화','여행 숙소 후보 비교하고 가격·위치·후기까지 표로 정리해서 공유하기','읽을 아티클 모아두기','세금 서류 제출','자전거 라이트 교체','도서관 책 반납','블로그 초안 퇴고','화분 물주기','주간 회의 안건 공유']
+const circleTitles=['주말 장보기 리스트 확정','세탁소에 코트 맡기기','공과금 이체','거실 전구 교체','분리수거 버리기','에어컨 필터 청소','약국에서 영양제 사오기','주말 데이트 식당 예약']
+export const starterData={personal:titles.map((title,i)=>({id:`p${i}`,title,done:false,createdAt:Date.now()-i*1000})),circles:[{id:'c1',name:'우리집',emoji:'🏠',code:'KKIU-HOME',unread:3,unreadDone:1,members,memberUnread:{su:1,da:1},tasks:circleTitles.map((title,i)=>({id:`c1t${i}`,title,assignee:members[i%members.length].id,done:false}))},{id:'c2',name:'강릉 여행',emoji:'✈️',code:'KKIU-TRIP',unread:1,members:members.slice(0,3),memberUnread:{},tasks:[]}],settings:{compact:false,motion:true,notifications:true,language:'ko'}}

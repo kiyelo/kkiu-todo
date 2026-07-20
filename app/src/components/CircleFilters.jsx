@@ -1,6 +1,1 @@
-export default function CircleFilters({ members, value, onChange, unread = {} }) {
-  return <div className="filter-strip" aria-label="담당자 필터">
-    <button className={!value ? 'filter-chip selected' : 'filter-chip'} onClick={() => onChange(null)}><span>👥</span><b>전체</b></button>
-    {members.map((member) => <button key={member.id} className={value === member.id ? 'filter-chip selected' : 'filter-chip'} onClick={() => onChange(member.id)}><span>{member.emoji}</span><b>{member.name}{unread[member.id] ? <i /> : null}</b></button>)}
-  </div>
-}
+export default function CircleFilters({members,value,onChange,unread={}}){const chip=(id,name,emoji)=><button key={id||'all'} className={`chip${value===id?' on':''}`} onClick={()=>onChange(id)}><span className="av">{emoji}</span><span className="chip-label">{name}{id&&unread[id]?<i className="chip-dot"/>:null}</span></button>;return <div className="chips">{chip(null,'전체','☰')}{members.map(m=>chip(m.id,m.name,m.emoji))}</div>}

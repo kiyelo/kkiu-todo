@@ -1,40 +1,6 @@
-import { useState } from 'react'
-
-export function Sheet({ title, children, onClose }) {
-  return <div className="sheet-layer" role="dialog" aria-modal="true" aria-label={title}>
-    <button className="sheet-scrim" onClick={onClose} aria-label="닫기" />
-    <section className="sheet-panel"><div className="sheet-grab" /><header><h2>{title}</h2><button onClick={onClose}>완료</button></header>{children}</section>
-  </div>
-}
-
-export function CirclePicker({ circles, selected, onSelect, onCreate, onClose }) {
-  return <Sheet title="끼리 선택" onClose={onClose}><div className="sheet-list">
-    {circles.map((circle) => <button key={circle.id} className={selected === circle.id ? 'sheet-row selected' : 'sheet-row'} onClick={() => onSelect(circle.id)}><span className="sheet-emoji">{circle.emoji}</span><div><b>{circle.name}</b><small>할 일 {circle.tasks.filter((task) => !task.done).length}개</small></div>{circle.unread > 0 && <i className="row-badge">{circle.unread}</i>}</button>)}
-    <button className="sheet-row add-circle" onClick={onCreate}><span className="sheet-emoji">＋</span><div><b>새 끼리 만들기</b><small>공유 할 일 목록을 만들어보세요</small></div></button>
-  </div></Sheet>
-}
-
-const emojiOptions = ['🏠', '🏕️', '🎯', '🍀', '🐣', '🧡', '📚', '🎮', '✈️', '🛒', '🏃', '🎉']
-
-export function CircleEditor({ circle, profile, onSave, onDelete, onClose }) {
-  const [name, setName] = useState(circle?.name || '')
-  const [emoji, setEmoji] = useState(circle?.emoji || '🍀')
-  const [profileName, setProfileName] = useState(profile?.name || '나')
-  const [profileEmoji, setProfileEmoji] = useState(profile?.emoji || '🙂')
-  const isNew = !circle
-  return <Sheet title={isNew ? '새 끼리 만들기' : '끼리 관리'} onClose={onClose}><form className="circle-editor" onSubmit={(event) => { event.preventDefault(); if (name.trim()) onSave({ name: name.trim(), emoji, profileName: profileName.trim() || '나', profileEmoji }) }}>
-    <label><span>끼리</span><div className="identity-field"><button type="button" className="emoji-current">{emoji}</button><input value={name} onChange={(event) => setName(event.target.value)} placeholder="끼리 이름" /></div></label>
-    <div className="emoji-grid" aria-label="끼리 이모지 선택">{emojiOptions.map((item) => <button type="button" key={item} className={emoji === item ? 'selected' : ''} onClick={() => setEmoji(item)}>{item}</button>)}</div>
-    <label><span>내 프로필</span><div className="identity-field"><button type="button" className="emoji-current">{profileEmoji}</button><input value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="내 이름" /></div></label>
-    <div className="emoji-grid" aria-label="내 이모지 선택">{emojiOptions.map((item) => <button type="button" key={item} className={profileEmoji === item ? 'selected' : ''} onClick={() => setProfileEmoji(item)}>{item}</button>)}</div>
-    <button className="primary-sheet-action" type="submit">{isNew ? '만들기' : '저장'}</button>
-    {!isNew && onDelete && <button className="delete-circle" type="button" onClick={onDelete}>끼리 나가기</button>}
-  </form></Sheet>
-}
-
-export function CompletedSheet({ tasks, members, circle, onRestore, onClear, onClose }) {
-  return <Sheet title={`완료된 할 일 ${tasks.length}`} onClose={onClose}><div className="sheet-list completed-sheet">
-    {tasks.length ? tasks.map((task) => <article className="completed-card" key={task.id}><button onClick={() => onRestore(task.id)} aria-label="다시 할 일로"><span>✓</span></button><div><p>{task.title}</p><small>{task.completedAt ? new Date(task.completedAt).toLocaleDateString('ko-KR') : '완료됨'}</small></div>{circle && <i>{members.find((member) => member.id === task.assignee)?.emoji}</i>}</article>) : <div className="sheet-empty">완료된 할 일이 없어요</div>}
-    {tasks.length > 0 && <button className="clear-completed" onClick={onClear}>완료된 할 일 전체 비우기</button>}
-  </div></Sheet>
-}
+import{useState}from'react';
+export function Sheet({title,children,onClose}){return <div className="sheetwrap on"><button className="scrim" onClick={onClose}/><div className="sheet"><div className="grab"/><div className="sheethead"><b>{title}</b><button className="sheetclose" onClick={onClose}>×</button></div><div className="sheetbody">{children}</div></div></div>}
+export function CirclePicker({circles,selected,onSelect,onCreate,onClose}){return <Sheet title="끼리 선택" onClose={onClose}>{circles.map(c=><button className="suprow" key={c.id} onClick={()=>onSelect(c.id)}><span className="crow-check">{selected===c.id?'✓':c.emoji}</span><span className="smid"><b>{c.name}</b><span>멤버 {c.members?.length||1}명 · 할 일 {c.tasks.filter(t=>!t.done).length}개</span></span>{c.unread>0&&<span className="circle-badge">{c.unread}</span>}<span className="out">›</span></button>)}<button className="featins" onClick={onCreate}><span className="p">+</span>새 끼리 만들기</button></Sheet>}
+const emojis='🏠 ✈️ 🌿 🎯 🍳 🎈 🧺 🎮 🪴 📚 🏕️ 🎵 🌙 🍊 🐶 🐱 🌸 ☀️'.split(' ');
+export function CircleEditor({circle,profile,onSave,onDelete,onClose}){const[name,setName]=useState(circle?.name||''),[emoji,setEmoji]=useState(circle?.emoji||'🌿'),[pn,setPn]=useState(profile?.name||'나'),[pe,setPe]=useState(profile?.emoji||'🙂');return <Sheet title={circle?'끼리 관리':'새 끼리 만들기'} onClose={onClose}><form className="identity-editor" onSubmit={e=>{e.preventDefault();onSave({name:name.trim(),emoji,profileName:pn.trim(),profileEmoji:pe})}}><div className="pcard"><h3>끼리</h3><div className="join-row"><button type="button" className="emoji-current">{emoji}</button><input className="field" value={name} onChange={e=>setName(e.target.value)} placeholder="끼리 이름"/></div><div className="identity-emoji-grid">{emojis.map(x=><button type="button" className={x===emoji?'on':''} onClick={()=>setEmoji(x)} key={x}>{x}</button>)}</div></div><div className="pcard"><h3>내 프로필</h3><div className="join-row"><button type="button" className="emoji-current">{pe}</button><input className="field" value={pn} onChange={e=>setPn(e.target.value)}/></div></div><button className="mbtn primary" type="submit">저장</button>{onDelete&&<button className="mbtn danger" type="button" onClick={onDelete}>끼리 삭제</button>}</form></Sheet>}
+export function CompletedSheet({tasks,members,circle,onRestore,onDelete,onClear,onClose}){return <Sheet title={`✓ 완료된 할 일 ${tasks.length}`} onClose={onClose}>{tasks.length?tasks.map(t=><div className="drow" key={t.id}><button className="ck on" onClick={()=>onRestore(t.id)}>✓</button><span className="rankc">#{(t.doneAt??0)+1}</span><span className="dtitle">{t.title}</span>{circle&&<span className="who">{members.find(m=>m.id===t.assignee)?.emoji}</span>}<button className="dx" onClick={()=>onDelete(t.id)}>×</button></div>):<div className="empty"><div className="empty-c"><h3>완료된 할 일이 없어요</h3></div></div>}{tasks.length>0&&<button className="rbtn danger" onClick={onClear}>완료 목록 비우기</button>}</Sheet>}
