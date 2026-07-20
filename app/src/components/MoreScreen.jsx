@@ -1,15 +1,15 @@
-const settings = [
-  { id: 'compact', icon: '↕️', label: '촘촘하게 보기', kind: 'toggle' },
-  { id: 'motion', icon: '✨', label: '화면 움직임', kind: 'toggle' },
-  { id: 'notifications', icon: '🔔', label: '알림', kind: 'toggle' },
+import { useMemo, useRef, useState } from 'react'
+import useFloatingQueue from '../hooks/useFloatingQueue.js'
+const symbols = ['🌙','🍊','🌿','🔥','🍀','🫧','⭐','☕']
+const rows = [
+  ['🙂','내 프로필','계정과 표시 이름'], ['🌐','언어','한국어 · English'], ['✨','화면 움직임','애니메이션 설정'], ['↕️','촘촘하게 보기','카드 밀도 설정'], ['🔔','알림','알림 환경 설정'], ['⬇️','데이터 백업','JSON으로 저장'], ['⬆️','데이터 복원','백업 파일 불러오기'], ['↻','초기 데이터','목업 초기 상태로 복원'], ['🛡️','개인정보처리방침',''], ['💬','의견 보내기','']
 ]
-
 export default function MoreScreen({ values, onToggle, user, onSignOut }) {
-  return <main className="screen-scroll more-screen"><div className="menu-list">
-    <section className="menu-group"><h2>앱 설정</h2>{settings.map((item) => <button className="menu-card" key={item.id} onClick={() => onToggle(item.id)}><span>{item.icon}</span><b>{item.label}</b><i className={values[item.id] ? 'switch on' : 'switch'}><u /></i></button>)}</section>
-    <section className="menu-group"><h2>계정</h2><button className="menu-card"><span>🙂</span><b>{user?.email || '내 프로필'}</b><i>›</i></button><button className="menu-card"><span>🔒</span><b>개인정보 및 보안</b><i>›</i></button><button className="menu-card"><span>☁️</span><b>데이터 동기화</b><i>›</i></button>{user && <button className="menu-card sign-out-card" onClick={onSignOut}><span>↪</span><b>로그아웃</b><i>›</i></button>}</section>
-    <section className="menu-group"><h2>지원</h2><button className="menu-card"><span>💬</span><b>의견 보내기</b><i>›</i></button><button className="menu-card"><span>🛡️</span><b>개인정보처리방침</b><i>›</i></button></section>
-    <a className="prototype-link" href="./kkiu4-v18-ux-fixes.html">v18.4.8 기준 목업 보기</a>
-    <p className="version">React 전환판 · 0.6.0</p>
-  </div></main>
+  const queue = useFloatingQueue(rows.length - 1, 0, { rowHeight: 76 })
+  const [slot, setSlot] = useState(['🌙','🍊','🌿']), [locked, setLocked] = useState(false), [history, setHistory] = useState(false)
+  const fileRef = useRef(null)
+  const backup = () => { const keys = Object.keys(localStorage).filter((key) => key.startsWith('kkiu')); const payload = Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key)])); const url = URL.createObjectURL(new Blob([JSON.stringify({ version:'0.7.0', exportedAt:new Date().toISOString(), storage:payload },null,2)],{type:'application/json'})); const a=document.createElement('a');a.href=url;a.download=`kkiu-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url) }
+  const actions = useMemo(() => [null,null,()=>onToggle('motion'),()=>onToggle('compact'),()=>onToggle('notifications'),backup,()=>fileRef.current?.click(),()=>{if(confirm('초기 데이터로 되돌릴까요?')){Object.keys(localStorage).filter(k=>k.startsWith('kkiu')).forEach(k=>localStorage.removeItem(k));location.reload()}},null,null], [onToggle])
+  const restore = async (file) => { try { const data=JSON.parse(await file.text()); if(!data.storage)throw new Error(); Object.entries(data.storage).forEach(([k,v])=>localStorage.setItem(k,v)); location.reload() } catch { alert('끼우 백업 파일이 아니에요.') } }
+  return <><main className={`more-queue-stage${queue.dragging?' is-dragging':''}`} {...queue.gestureProps}><div className="queue-fade queue-fade-top"/><div className="queue-fade queue-fade-bottom"/><div className="more-queue-track" style={{transform:`translate3d(0,calc(-${queue.index*queue.rowHeight}px + ${queue.dragY}px),0)`}}>{rows.map(([icon,label,sub],i)=><div className="more-queue-item" style={{top:`${i*queue.rowHeight+36}px`}} key={label}><button className="more-row-card" onClick={actions[i]}><span>{icon}</span><span><b>{i===0?(user?.email||label):label}</b>{sub&&<small>{sub}{i===2?` · ${values.motion?'사용':'줄이기'}`:i===3?` · ${values.compact?'사용':'기본'}`:''}</small>}</span><i>›</i></button></div>)}</div><button className={`emoji-slot${locked?' locked':''}`} onClick={()=>{if(locked){setLocked(false);setSlot(Array.from({length:3},()=>symbols[Math.floor(Math.random()*symbols.length)]))}else setLocked(true)}}><span>{slot.map((s,i)=><i key={i}>{s}</i>)}</span><b>{locked?'🔒':'↻'}</b></button></main><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={e=>e.target.files?.[0]&&restore(e.target.files[0])}/><button className="version-button" onClick={()=>setHistory(true)}>React 0.7.0 · 수정 이력</button>{user&&<button className="floating-signout" onClick={onSignOut}>로그아웃</button>}{history&&<div className="overlay-dialog"><button className="dialog-scrim" onClick={()=>setHistory(false)}/><section className="history-dialog"><header><div><small>KKIU UPDATE</small><h2>수정 이력</h2></div><button onClick={()=>setHistory(false)}>×</button></header><article><b>React 0.7.0</b><ul><li>v18.4.8 플로팅 큐 위치 계산 복원</li><li>끼리 멤버·담당자 데이터 복원</li><li>더보기 플로팅 메뉴와 백업·복원 추가</li><li>하단 내비게이션 이동 표시 개선</li></ul></article></section></div>}</>
 }
