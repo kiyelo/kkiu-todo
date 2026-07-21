@@ -1,0 +1,12 @@
+{
+  "version": "1.3.4",
+  "runtimeErrors": 0,
+  "englishHtmlParity": true,
+  "adIndependentInsertionSlots": {"above": true, "below": true, "rank": 11},
+  "adRemainsStationaryDuringTaskReorder": true,
+  "reorderHapticPerPosition": true,
+  "reorderCanReturnToOrigin": true,
+  "liveRankUpdates": {"dragged": "#4", "shiftedNeighbor": "#1", "returned": "#1"},
+  "moreEntryTopFill": {"firstEntryTopPx": 17.87, "reentryTopPx": 26.64},
+  "moreBidirectionalFullScroll": true
+}

@@ -63,7 +63,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem('kkiu-ui-v1', JSON.stringify({ tab, circleId, filter, queuePositions })) }, [tab, circleId, filter, queuePositions])
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 1700); return () => window.clearTimeout(timer) }, [toast])
 
-  const reportSyncError = (error) => setSyncError(error?.message || '데이터를 저장하지 못했어요.')
+  const language = data.settings?.language || 'ko'
+  const reportSyncError = (error) => setSyncError(error?.message || (language === 'en' ? 'Could not save data.' : '데이터를 저장하지 못했어요.'))
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
   const activeMembers = circle?.members || []
   const tasks = tab === 'circle' ? circle?.tasks || [] : data.personal
@@ -84,7 +85,7 @@ export default function App() {
     next.splice(at, 0, task)
     updateTasks(() => [...next, ...completed])
     setQueuePositions((current) => ({ ...current, [tab]: at + 1 }))
-    setToast(`${at + 1}번째에 끼웠어요`)
+    setToast(language === 'en' ? `Inserted at #${at + 1}` : `${at + 1}번째에 끼웠어요`)
     if (session?.user) {
       const create = tab === 'home' ? createPersonalTask(session.user.id, task, at) : createCircleTask(session.user.id, circle.id, task, at)
       create.then(() => updateTaskPositions(next)).catch(reportSyncError)
@@ -133,7 +134,7 @@ export default function App() {
   const toggleSelect = (id) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next })
   const cancelSelect = () => setSelected(new Set())
   const selectAll = () => setSelected(new Set(tasks.filter((task) => !task.done).map((task) => task.id)))
-  const deleteSelected = () => { const ids = [...selected]; updateTasks((current) => current.filter((task) => !selected.has(task.id))); if (session?.user) deleteTasks(ids).catch(reportSyncError); cancelSelect(); setToast(`${ids.length}개를 삭제했어요`) }
+  const deleteSelected = () => { const ids = [...selected]; updateTasks((current) => current.filter((task) => !selected.has(task.id))); if (session?.user) deleteTasks(ids).catch(reportSyncError); cancelSelect(); setToast(language === 'en' ? `Deleted ${ids.length}` : `${ids.length}개를 삭제했어요`) }
   const assignSelected = (assignee) => { const ids = [...selected]; updateTasks((current) => current.map((task) => selected.has(task.id) ? { ...task, assignee } : task)); if (session?.user) Promise.all(ids.map((id) => updateTask(id, { assignee }))).catch(reportSyncError); cancelSelect() }
 
   const switchTab = (next) => { setTab(next); setQuery(null); setFocusTaskId(null); setCompletedOpen(false); cancelSelect() }
@@ -145,16 +146,16 @@ export default function App() {
       try {
         const profile = circle?.members.find((m) => m.id === session.user.id) || { name: '나', emoji: '🙂' }
         const id = await joinCircleByCode(normalized, profile.name, profile.emoji)
-        const circles = await loadCircles(); setData((current) => ({ ...current, circles })); setCircleId(id); setTab('circle'); setCirclePickerOpen(false); setToast('끼리에 참여했어요'); return true
+        const circles = await loadCircles(); setData((current) => ({ ...current, circles })); setCircleId(id); setTab('circle'); setCirclePickerOpen(false); setToast(language === 'en' ? 'Joined circle' : '끼리에 참여했어요'); return true
       } catch (error) { reportSyncError(error); return false }
     }
     const found = data.circles.find((item) => item.code?.toUpperCase() === normalized)
-    if (!found) { setToast('초대 코드를 찾을 수 없어요'); return false }
-    selectCircle(found.id); setTab('circle'); setToast(`${found.name}에 참여했어요`); return true
+    if (!found) { setToast(language === 'en' ? 'No matching invite code found' : '초대 코드를 찾을 수 없어요'); return false }
+    selectCircle(found.id); setTab('circle'); setToast(language === 'en' ? `Joined '${found.name}'` : `${found.name}에 참여했어요`); return true
   }
   const completed = tasks.filter((task) => task.done)
   const clearCompleted = (ids = completed.map((task) => task.id)) => { const idSet = new Set(ids); updateTasks((current) => current.filter((task) => !idSet.has(task.id))); if (session?.user) deleteTasks(ids).catch(reportSyncError) }
-  const requestClearCompleted = (ids = completed.map((task) => task.id)) => setConfirm({ title:'완료 목록 비우기', message:`완료된 할 일 ${ids.length}개를 삭제할까요?`, danger:true, action:()=>clearCompleted(ids) })
+  const requestClearCompleted = (ids = completed.map((task) => task.id)) => setConfirm({ title: language === 'en' ? 'Clear completed tasks' : '완료 목록 비우기', message: language === 'en' ? `Clear ${ids.length} completed tasks?` : `완료된 할 일 ${ids.length}개를 삭제할까요?`, danger:true, action:()=>clearCompleted(ids) })
 
   const saveCircle = async ({ name, emoji, profileName, profileEmoji }) => {
     const payload = { name, emoji, profileName, profileEmoji }
@@ -169,23 +170,23 @@ export default function App() {
       if (session?.user) { try { await updateRemoteCircle(circle.id, session.user.id, payload) } catch (error) { reportSyncError(error); return } }
       setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, name, emoji, members: item.members.map((member) => member.id === (session?.user?.id || 'me') ? { ...member, name: profileName, emoji: profileEmoji } : member) } : item) }))
     }
-    if (circleEditorOpen === 'create') { setCircleEditorOpen(null); setCirclePickerOpen(false) } else setCircleEditorOpen('edit'); setToast('저장했어요')
+    if (circleEditorOpen === 'create') { setCircleEditorOpen(null); setCirclePickerOpen(false) } else setCircleEditorOpen('edit'); setToast(language === 'en' ? 'Saved' : '저장했어요')
   }
 
   const removeCircle = async () => {
     if (!circle) return
     if (session?.user) { try { await deleteCircle(circle.id) } catch (error) { reportSyncError(error); return } }
     const remaining = data.circles.filter((item) => item.id !== circle.id)
-    setData((current) => ({ ...current, circles: remaining })); setCircleId(remaining[0]?.id); setCircleEditorOpen(null); setToast('끼리를 삭제했어요')
+    setData((current) => ({ ...current, circles: remaining })); setCircleId(remaining[0]?.id); setCircleEditorOpen(null); setToast(language === 'en' ? 'Circle deleted' : '끼리를 삭제했어요')
   }
-  const requestRemoveCircle = () => setConfirm({ title: '이 끼리 삭제', message: `${circle?.name || '끼리'}와 모든 할 일을 삭제할까요?`, danger: true, action: removeCircle })
+  const requestRemoveCircle = () => setConfirm({ title: language === 'en' ? 'Delete this circle' : '이 끼리 삭제', message: language === 'en' ? `Delete '${circle?.name || 'Circle'}' and all of its to-dos?` : `${circle?.name || '끼리'}와 모든 할 일을 삭제할까요?`, danger: true, action: removeCircle })
   const leaveCircle = async () => {
     if (!circle) return
     if (session?.user) { try { await leaveRemoteCircle(circle.id, session.user.id) } catch (error) { reportSyncError(error); return } }
     const remaining = data.circles.filter((item) => item.id !== circle.id)
-    setData((current) => ({ ...current, circles: remaining })); setCircleId(remaining[0]?.id); setCircleEditorOpen(null); setToast(`${circle.name}에서 나왔어요`)
+    setData((current) => ({ ...current, circles: remaining })); setCircleId(remaining[0]?.id); setCircleEditorOpen(null); setToast(language === 'en' ? `Left '${circle.name}'` : `${circle.name}에서 나왔어요`)
   }
-  const requestLeaveCircle = () => setConfirm({ title: '끼리 나가기', message: `${circle?.name || '끼리'}에서 나갈까요?`, danger: true, action: leaveCircle })
+  const requestLeaveCircle = () => setConfirm({ title: language === 'en' ? 'Leave circle' : '끼리 나가기', message: language === 'en' ? `Leave '${circle?.name || 'Circle'}'?` : `${circle?.name || '끼리'}에서 나갈까요?`, danger: true, action: leaveCircle })
   const reorderMembers = (members) => {
     if (!circle) return
     setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, members } : item) }))
@@ -223,12 +224,12 @@ export default function App() {
   const persistSettings = (settings) => { if (session?.user) savePreferences(session.user.id,settings).catch(reportSyncError) }
   const toggleSetting = (id) => { const next={ ...settingValues, [id]: !settingValues[id] }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
   const setLanguage = (language) => { const next={ ...settingValues, language }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
-  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.3.3', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast('백업 파일을 만들었어요') }
-  const restoreData = async (file) => { try { const parsed = JSON.parse(await file.text()); const next = parsed.data || parsed; if (!Array.isArray(next.personal) || !Array.isArray(next.circles)) throw new Error('끼우 백업 파일이 아니에요.'); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast('백업을 복원했어요'); return true } catch(error) { setToast(error instanceof SyntaxError?'JSON 파일 형식이 올바르지 않아요.':(error.message||'백업 파일을 복원하지 못했어요.')); return false } }
-  const doResetData = () => { const next = freshStarterData(); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast('초기 데이터로 되돌렸어요') }
-  const resetData = () => setConfirm({ title: '전체 초기화', message: '현재 데이터를 지우고 초기 데이터로 되돌릴까요?', danger: true, action: doResetData })
-  const emptyData = () => setConfirm({ title: '모든 데이터 제거', message: '개인 할 일, 완료 목록, 끼리와 테스트 뱃지를 모두 비울까요?', danger: true, action: () => { setData((current) => ({ ...current, personal: [], circles: [] })); setCircleId(undefined); setToast('모든 데이터를 비웠어요') } })
-  const createUnread = () => { setData((current) => ({ ...current, circles: current.circles.map((c,ci) => ({ ...c, unread: ci===0?Math.min(3,c.tasks.filter((t)=>!t.done).length):0, memberUnread: ci===0?Object.fromEntries(c.members.slice(0,3).map((m)=>[m.id,1])):{}, tasks:c.tasks.map((t,i)=>({...t,sourceUnread:ci===0&&i<3})) })) })); setToast('안읽음 뱃지를 만들었어요') }
+  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.3.4', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast(language === 'en' ? 'Backup file created' : '백업 파일을 만들었어요') }
+  const restoreData = async (file) => { try { const parsed = JSON.parse(await file.text()); const next = parsed.data || parsed; if (!Array.isArray(next.personal) || !Array.isArray(next.circles)) throw new Error('끼우 백업 파일이 아니에요.'); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast(language === 'en' ? 'Backup restored' : '백업을 복원했어요'); return true } catch(error) { setToast(error instanceof SyntaxError?'JSON 파일 형식이 올바르지 않아요.':(error.message||'백업 파일을 복원하지 못했어요.')); return false } }
+  const doResetData = () => { const next = freshStarterData(); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast(language === 'en' ? 'Starter data restored' : '초기 데이터로 되돌렸어요') }
+  const resetData = () => setConfirm({ title: language === 'en' ? 'Reset all' : '전체 초기화', message: language === 'en' ? 'Delete all data and reset?' : '현재 데이터를 지우고 초기 데이터로 되돌릴까요?', danger: true, action: doResetData })
+  const emptyData = () => setConfirm({ title: language === 'en' ? 'Remove all data' : '모든 데이터 제거', message: language === 'en' ? 'This removes personal tasks, completed tasks, Circles, and all test badges.' : '개인 할 일, 완료 목록, 끼리와 테스트 뱃지를 모두 비울까요?', danger: true, action: () => { setData((current) => ({ ...current, personal: [], circles: [] })); setCircleId(undefined); setToast(language === 'en' ? 'All data removed' : '모든 데이터를 비웠어요') } })
+  const createUnread = () => { setData((current) => ({ ...current, circles: current.circles.map((c,ci) => ({ ...c, unread: ci===0?Math.min(3,c.tasks.filter((t)=>!t.done).length):0, memberUnread: ci===0?Object.fromEntries(c.members.slice(0,3).map((m)=>[m.id,1])):{}, tasks:c.tasks.map((t,i)=>({...t,sourceUnread:ci===0&&i<3})) })) })); setToast(language === 'en' ? 'Unread source badges created' : '안읽음 뱃지를 만들었어요') }
   const goToSearchResult = (task) => { setNewTaskId(null); if (task.done) { setCompletedOpen(true); return } setFocusTaskId(task.id); setQuery(null) }
 
   const startSwipe = (event) => {
@@ -252,13 +253,13 @@ export default function App() {
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading ? <main className="screen-scroll loading-screen">할 일을 불러오고 있어요…</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} onStub={setToast} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
+      {remoteLoading ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} onStub={setToast} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {toast && <div className="app-toast" role="status">{toast}</div>}
-      {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
+      {circlePickerOpen && <CirclePicker language={language} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onDelete={(id) => clearCompleted([id])} onClear={requestClearCompleted} onClose={() => setCompletedOpen(false)} />}
-      {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === (session?.user?.id || 'me')) : null} onSave={saveCircle} onInvite={(code) => { navigator.clipboard?.writeText(code).catch(()=>{}); setToast(`초대 코드 ${code}를 복사했어요`) }} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onDelete={circleEditorOpen === 'edit' && (circle?.createdBy === (session?.user?.id || 'me') || circle?.members.find((member) => member.id === (session?.user?.id || 'me'))?.role === 'owner') ? requestRemoveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
-      {confirm && <ConfirmDialog {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
+      {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === (session?.user?.id || 'me')) : null} onSave={saveCircle} onInvite={(code) => { navigator.clipboard?.writeText(code).catch(()=>{}); setToast(language === 'en' ? `Copied invite code ${code}` : `초대 코드 ${code}를 복사했어요`) }} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onDelete={circleEditorOpen === 'edit' && (circle?.createdBy === (session?.user?.id || 'me') || circle?.members.find((member) => member.id === (session?.user?.id || 'me'))?.role === 'owner') ? requestRemoveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
+      {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
       </div>
     </section>
   </div>
