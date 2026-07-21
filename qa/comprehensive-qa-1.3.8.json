@@ -1,0 +1,15 @@
+{
+  "version": "1.3.8",
+  "htmlOracle": "18.4.8",
+  "executedAt": "2026-07-21 13:18 KST",
+  "functionalFlow": {"passed": 25, "total": 25, "runtimeErrors": 0},
+  "visualResponsive": {"passedStates": 14, "totalStates": 14, "viewports": [320, 390], "overflowFailures": 0},
+  "textAccessibilityPwa": {"releaseNotes": 12, "untranslatedReleaseEntries": 0, "unnamedVisibleButtons": 0, "dialogSemantics": true, "pwaIcons": 2},
+  "improvements": [
+    "Expanded Circle member reorder targets to 40px",
+    "Added dialog and alertdialog semantics",
+    "Localized all release notes in English mode",
+    "Localized coming-soon feedback in English mode"
+  ],
+  "pass": true
+}

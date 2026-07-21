@@ -17,7 +17,10 @@ export const supabase = hasSupabaseConfig
 
 export function getAuthRedirectUrl() {
   if (typeof window === 'undefined') return undefined
-  return new URL(import.meta.env.BASE_URL, window.location.origin).href
+  const url = new URL(import.meta.env.BASE_URL, window.location.origin)
+  const invite = new URLSearchParams(window.location.search).get('invite') || localStorage.getItem('kkiu-pending-invite-v1')
+  if (invite) url.searchParams.set('invite', invite)
+  return url.href
 }
 
 export function requireSupabase() {

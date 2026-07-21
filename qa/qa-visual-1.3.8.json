@@ -1,0 +1,157 @@
+{
+  "results": [
+    {
+      "width": 320,
+      "states": [
+        {
+          "name": "home",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "search",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "completed-sheet",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "circle-picker",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "circle-manage",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "more",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        },
+        {
+          "name": "release-notes",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 320
+          }
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "states": [
+        {
+          "name": "home",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "search",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "completed-sheet",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "circle-picker",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "circle-manage",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "more",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        },
+        {
+          "name": "release-notes",
+          "viewportOverflow": false,
+          "clipped": [],
+          "tiny": [],
+          "phone": {
+            "x": 0,
+            "w": 390
+          }
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "errors": [],
+  "pass": true
+}

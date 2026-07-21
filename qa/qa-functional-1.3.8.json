@@ -1,0 +1,33 @@
+{
+  "checks": {
+    "homeCards": true,
+    "composerOpens": true,
+    "added": true,
+    "edited": true,
+    "completed": true,
+    "completedSheet": true,
+    "restored": true,
+    "searchResult": true,
+    "searchHighlight": true,
+    "selectionMode": true,
+    "reorderFocus": true,
+    "reorderPersists": true,
+    "filterHandles": true,
+    "circleStep1": true,
+    "circleStep2": true,
+    "circleCreated": true,
+    "longInvite": true,
+    "shareMessage": true,
+    "codeCopy": true,
+    "deepLinkPrefill": true,
+    "joinProfileRequired": true,
+    "joinEnables": true,
+    "reactVersion": true,
+    "releaseNotes": true,
+    "persistence": true
+  },
+  "passed": 25,
+  "total": 25,
+  "errors": [],
+  "pass": true
+}

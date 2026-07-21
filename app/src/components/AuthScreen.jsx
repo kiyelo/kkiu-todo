@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { getAuthRedirectUrl, requireSupabase } from '../services/supabaseClient.js'
 
-export default function AuthScreen() {
+export default function AuthScreen({pendingInvite=''}) {
   const [mode, setMode] = useState('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -80,7 +80,7 @@ export default function AuthScreen() {
 
   return <div className="app-shell auth-shell"><section className="phone auth-phone">
     <main className="auth-screen">
-      <div className="auth-brand"><span>✓</span><h1>끼우</h1><p>할 일을 가볍게 끼워 넣어요</p></div>
+      <div className="auth-brand"><span>✓</span><h1>끼우</h1><p>할 일을 가볍게 끼워 넣어요</p></div>{pendingInvite&&<div className="auth-invite-notice"><b>끼리 초대를 보관했어요</b><code>{pendingInvite}</code><p>로그인 또는 가입을 마치면 프로필 설정과 초대 확인 화면이 자동으로 열립니다.</p></div>}
       <div className="auth-tabs" role="tablist">
         <button className={mode === 'login' ? 'active' : ''} onClick={() => changeMode('login')}>로그인</button>
         <button className={mode === 'signup' ? 'active' : ''} onClick={() => changeMode('signup')}>처음이에요</button>

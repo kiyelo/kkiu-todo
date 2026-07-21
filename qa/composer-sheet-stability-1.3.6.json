@@ -1,0 +1,15 @@
+{
+  "version": "1.3.6",
+  "runtimeErrors": 0,
+  "duplicateAdSlotReached": true,
+  "composerOpenRank": 11,
+  "queueSnapOnComposerOpen": false,
+  "composerVerticalRangePx": 0,
+  "queueTrackStable": true,
+  "sheetOpenedOnPointerDown": false,
+  "sheetOpenedOnClick": true,
+  "openingTouchScrimGuard": true,
+  "normalScrimClose": true,
+  "circlePickerStayedOpen": true,
+  "circleManageStayedOpen": true
+}

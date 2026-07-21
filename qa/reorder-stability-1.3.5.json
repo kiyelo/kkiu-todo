@@ -1,0 +1,17 @@
+{
+  "version": "1.3.5",
+  "runtimeErrors": 0,
+  "reorderFocusMode": {
+    "composerDisplay": "none",
+    "adDisplay": "none",
+    "ariaHidden": true,
+    "restoredAfterDrop": true
+  },
+  "stableTargets": ["#2", "#3", "#4"],
+  "boundaryJitterRanks": ["#4", "#4", "#4", "#4", "#4", "#4"],
+  "boundaryHysteresis": "pass",
+  "downwardDropIndex": 3,
+  "upwardDropRank": "#1",
+  "returnedToOrigin": true,
+  "positionHaptics": 4
+}

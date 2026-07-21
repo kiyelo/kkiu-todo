@@ -61,3 +61,24 @@
 @media(prefers-reduced-motion:reduce){.card.search-hit,.card.new-hit,.card.new-hit::after{animation:none!important}.card.search-hit{box-shadow:0 0 0 2px rgba(10,132,255,.32),var(--sh-card)}.card.new-hit{box-shadow:0 0 0 1px rgba(48,209,88,.28),var(--sh-card)}}
 
 .card.search-hit.new-hit{animation:kkiu-search-focus 1.8s cubic-bezier(.2,.75,.25,1) both!important}.card.search-hit.new-hit::after{display:none}
+
+
+/* v1.3.5 — distraction-free, stable card reordering */
+.stage.q.reordering .adcard,.stage.q.reordering .queue-composer-wrap{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+.stage.q.reordering .qfade{pointer-events:none}
+.stage.q.reordering{touch-action:none;user-select:none;-webkit-user-select:none}
+.stage.q.reordering .queue-task-row:not(.reorder-dragging){transition:transform .18s cubic-bezier(.2,.72,.25,1)!important}
+.stage.q.reordering .queue-task-row.reorder-dragging .card{box-shadow:0 20px 48px rgba(31,58,95,.22);transform:scale(1.025)}
+
+
+/* v1.3.7 — React release notes */
+.history-modal{max-height:min(82vh,720px);display:flex;flex-direction:column;overflow:hidden}
+.release-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.release-head span{font-size:10px;font-weight:850;letter-spacing:.12em;color:var(--accent)}.release-head h3{margin:2px 0 0}.release-head>b{padding:5px 9px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px}
+.release-list{min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 3px 16px}.release-entry{padding:13px 2px;border-bottom:1px solid rgba(120,130,145,.15)}.release-entry:last-child{border-bottom:0}.release-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}.release-meta>b{font-size:13px}.release-meta time{font-size:10.5px;color:var(--sub);font-variant-numeric:tabular-nums}.release-entry h4{margin:5px 0 6px;font-size:13px}.release-entry ul{margin:0;padding-left:18px}.release-entry li{margin:3px 0;color:var(--sub);font-size:11.5px;line-height:1.45}
+
+
+/* v1.3.7 — invite links and required Circle profiles */
+.invite-confirm-modal{max-height:min(88vh,720px);overflow:auto}.invite-code-action,.invite-code-inline{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin:10px 0;padding:11px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);text-align:left}.invite-code-action span{font-size:10px;font-weight:800;letter-spacing:.06em}.invite-code-action b,.invite-code-inline{font:750 13px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.invite-code-action em,.invite-code-inline small{font:600 10px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--sub)}.join-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 12px}.join-emoji-grid button{aspect-ratio:1;border-radius:10px;font-size:20px;background:rgba(120,130,145,.08)}.join-emoji-grid button.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}.invite-error{margin:6px 0;color:var(--danger);font-size:12px}.auth-invite-notice{margin:12px 0;padding:12px;border-radius:14px;background:var(--accent-soft);color:var(--accent-ink)}.auth-invite-notice b,.auth-invite-notice code,.auth-invite-notice p{display:block}.auth-invite-notice code{margin:5px 0;font-size:11px;overflow-wrap:anywhere}.auth-invite-notice p{margin:0;color:var(--sub);font-size:11px;line-height:1.45}
+
+/* v1.3.8 QA — accessible member reorder target */
+.member-grip{width:40px!important;height:40px!important;display:grid!important;place-items:center!important;border-radius:10px;touch-action:none}

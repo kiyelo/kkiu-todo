@@ -1,4 +1,5 @@
 import { requireSupabase } from './supabaseClient.js'
+import { generateInviteCode } from './invite.js'
 
 const taskFromRow = (row) => ({
   id: row.id,
@@ -64,13 +65,14 @@ export async function loadCircles(userId) {
 
 export async function createCircle(userId, { name, emoji, profileName, profileEmoji }) {
   const client = requireSupabase()
-  const inviteCode = `KKIU-${crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()}`
-  const { data: circle, error: circleError } = await client
-    .from('circles')
-    .insert({ name, emoji, invite_code: inviteCode, created_by: userId })
-    .select('id,name,emoji,invite_code,created_by')
-    .single()
-  if (circleError) throw circleError
+  let circle = null; let circleError = null
+  for (let attempt = 0; attempt < 3 && !circle; attempt += 1) {
+    const inviteCode = generateInviteCode()
+    const result = await client.from('circles').insert({ name, emoji, invite_code: inviteCode, created_by: userId }).select('id,name,emoji,invite_code,created_by').single()
+    circle = result.data; circleError = result.error
+    if (circleError?.code !== '23505') break
+  }
+  if (circleError || !circle) throw circleError || new Error('INVITE_CODE_GENERATION_FAILED')
 
   const { error: memberError } = await client.from('circle_members').insert({
     circle_id: circle.id,
