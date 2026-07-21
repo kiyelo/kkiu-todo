@@ -24,7 +24,11 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const lastYRef = useRef(0)
   const lastTimeRef = useRef(0)
   const velocityRef = useRef(0)
-  const dragRef = useRef(0)
+  const startPositionRef = useRef(0)
+  const effectivePositionRef = useRef(0)
+  const movedRef = useRef(false)
+  const suppressClickRef = useRef(false)
+  const wheelPositionRef = useRef(null)
   const wheelTimerRef = useRef(null)
 
   useEffect(() => { indexRef.current = index }, [index])
@@ -42,58 +46,96 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   }, [count, notify])
   useEffect(() => { if (indexRef.current > count) setIndex(count) }, [count, setIndex])
 
-  const onPointerDown = useCallback((event) => {
+  const onPointerDownCapture = useCallback((event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
-    if (event.target.closest('button, input, textarea, a, label, [role="button"]')) return
+    if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"], .grip')) return
+    const current = positionsRef.current[indexRef.current] || 0
     activeRef.current = true
     pointerRef.current = event.pointerId
     startYRef.current = event.clientY
     lastYRef.current = event.clientY
     lastTimeRef.current = performance.now()
     velocityRef.current = 0
-    dragRef.current = 0
+    startPositionRef.current = current
+    effectivePositionRef.current = current
+    movedRef.current = false
+    suppressClickRef.current = false
     setDragY(0)
-    setDragging(true)
-    try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
   }, [])
-  const onPointerMove = useCallback((event) => {
+
+  const onPointerMoveCapture = useCallback((event) => {
     if (!activeRef.current || pointerRef.current !== event.pointerId) return
+    const totalDelta = event.clientY - startYRef.current
+    if (!movedRef.current && Math.abs(totalDelta) < 5) return
+    if (!movedRef.current) {
+      movedRef.current = true
+      suppressClickRef.current = true
+      setDragging(true)
+      try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
+    }
+    if (event.cancelable) event.preventDefault()
     const now = performance.now()
     const elapsed = Math.max(1, now - lastTimeRef.current)
-    const delta = event.clientY - lastYRef.current
-    velocityRef.current = delta / elapsed
+    velocityRef.current = (event.clientY - lastYRef.current) / elapsed
     lastYRef.current = event.clientY
     lastTimeRef.current = now
-    dragRef.current = event.clientY - startYRef.current
-    setDragY(dragRef.current)
-  }, [])
+    const list = positionsRef.current
+    const min = list[0] || 0
+    const max = list[list.length - 1] || 0
+    const effective = clamp(startPositionRef.current - totalDelta, min, max)
+    effectivePositionRef.current = effective
+    const next = nearest(list, effective)
+    setIndex(next)
+    setDragY((list[next] || 0) - effective)
+  }, [setIndex])
+
   const finishPointer = useCallback((event) => {
-    if (!activeRef.current) return
+    if (!activeRef.current || (event && pointerRef.current !== event.pointerId)) return
+    const wasMoved = movedRef.current
+    const list = positionsRef.current
+    if (wasMoved) {
+      const min = list[0] || 0
+      const max = list[list.length - 1] || 0
+      const projected = clamp(effectivePositionRef.current - velocityRef.current * 165, min, max)
+      setIndex(nearest(list, projected))
+    }
     activeRef.current = false
     pointerRef.current = null
-    const current = positionsRef.current[indexRef.current] || 0
-    const projectedOffset = current - dragRef.current - velocityRef.current * 165
-    setIndex(nearest(positionsRef.current, projectedOffset))
-    dragRef.current = 0
+    movedRef.current = false
+    velocityRef.current = 0
     setDragY(0)
     setDragging(false)
     try { event?.currentTarget?.releasePointerCapture(event.pointerId) } catch {}
+    if (wasMoved) window.setTimeout(() => { suppressClickRef.current = false }, 0)
   }, [setIndex])
+
+  const onClickCapture = useCallback((event) => {
+    if (!suppressClickRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
+  }, [])
+
   const onWheel = useCallback((event) => {
     if (Math.abs(event.deltaY) < 2) return
-    const limit = Math.max(rowHeight * 1.4, 100)
-    dragRef.current = clamp(dragRef.current - event.deltaY, -limit, limit)
-    setDragY(dragRef.current)
+    event.preventDefault()
+    const list = positionsRef.current
+    const min = list[0] || 0
+    const max = list[list.length - 1] || 0
+    if (wheelPositionRef.current === null) wheelPositionRef.current = list[indexRef.current] || 0
+    wheelPositionRef.current = clamp(wheelPositionRef.current + event.deltaY, min, max)
+    const next = nearest(list, wheelPositionRef.current)
+    setIndex(next)
+    setDragY((list[next] || 0) - wheelPositionRef.current)
     setDragging(true)
     window.clearTimeout(wheelTimerRef.current)
     wheelTimerRef.current = window.setTimeout(() => {
-      const current = positionsRef.current[indexRef.current] || 0
-      setIndex(nearest(positionsRef.current, current - dragRef.current))
-      dragRef.current = 0
+      setIndex(nearest(positionsRef.current, wheelPositionRef.current ?? 0))
+      wheelPositionRef.current = null
       setDragY(0)
       setDragging(false)
     }, 95)
-  }, [rowHeight, setIndex])
+  }, [setIndex])
+
   const onKeyDown = useCallback((event) => {
     if (event.key === 'ArrowUp') { event.preventDefault(); setIndex(indexRef.current - 1) }
     if (event.key === 'ArrowDown') { event.preventDefault(); setIndex(indexRef.current + 1) }
@@ -101,5 +143,22 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (event.key === 'End') { event.preventDefault(); setIndex(count) }
   }, [count, setIndex])
 
-  return { index, dragY, dragging, setIndex, rowHeight, gestureProps: { onPointerDown, onPointerMove, onPointerUp: finishPointer, onPointerCancel: finishPointer, onWheel, onKeyDown, tabIndex: 0, 'aria-label': `삽입 위치 ${index + 1}` } }
+  return {
+    index,
+    dragY,
+    dragging,
+    setIndex,
+    rowHeight,
+    gestureProps: {
+      onPointerDownCapture,
+      onPointerMoveCapture,
+      onPointerUpCapture: finishPointer,
+      onPointerCancelCapture: finishPointer,
+      onClickCapture,
+      onWheel,
+      onKeyDown,
+      tabIndex: 0,
+      'aria-label': `삽입 위치 ${index + 1}`,
+    },
+  }
 }
