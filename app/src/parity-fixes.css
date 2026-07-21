@@ -31,3 +31,33 @@
 .more-qitem .rbtn,.more-qitem .pcard{background:rgba(250,252,255,.9)!important}
 .sheet{background:rgba(246,249,253,.96)!important}.modal{background:rgba(250,252,255,.97)!important}
 @media(prefers-color-scheme:dark){.ins,.ibar,.more-qitem .rbtn,.more-qitem .pcard{background:rgba(42,46,54,.94)!important}.sheet,.modal{background:rgba(29,33,40,.97)!important}}
+
+/* v1.3.3 — scoped handles, HIG-inspired focus, and slot character effects */
+.card.search-hit{animation:kkiu-search-focus 1.8s cubic-bezier(.2,.75,.25,1) both!important}
+@keyframes kkiu-search-focus{
+  0%{background:rgba(255,255,255,.92);box-shadow:0 0 0 0 rgba(10,132,255,0),var(--sh-card)}
+  22%{background:rgba(239,247,255,.96);box-shadow:0 0 0 2px rgba(10,132,255,.32),0 10px 28px rgba(10,132,255,.14)}
+  100%{background:rgba(255,255,255,.76);box-shadow:var(--sh-card)}
+}
+.card.new-hit{animation:kkiu-new-insert 1.7s cubic-bezier(.2,.78,.25,1) both!important}
+.card.new-hit::after{content:"";position:absolute;left:5px;top:13px;bottom:13px;width:3px;border-radius:3px;background:#30d158;animation:kkiu-new-marker 1.7s ease-out both;pointer-events:none}
+@keyframes kkiu-new-insert{
+  0%{opacity:.72;transform:translateY(8px) scale(.985);background:rgba(239,255,245,.96);box-shadow:0 0 0 1px rgba(48,209,88,.3),0 10px 26px rgba(48,209,88,.12)}
+  28%{opacity:1;transform:none;background:rgba(244,255,248,.96);box-shadow:0 0 0 1px rgba(48,209,88,.24),0 8px 22px rgba(48,209,88,.1)}
+  100%{opacity:1;transform:none;background:rgba(255,255,255,.76);box-shadow:var(--sh-card)}
+}
+@keyframes kkiu-new-marker{0%,45%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.5)}}
+.emoji-slot-btn.symbol-orange.combo-triple .emoji-reel{animation-name:slot-orange}
+.emoji-slot-btn.symbol-leaf.combo-triple .emoji-reel{animation-name:slot-leaf}
+.emoji-slot-btn.symbol-cat.combo-triple .emoji-reel{animation-name:slot-cat}
+.emoji-slot-btn.symbol-sock.combo-triple .emoji-reel{animation-name:slot-sock}
+.emoji-slot-btn.symbol-frog.combo-triple .emoji-reel{animation-name:slot-frog}
+@keyframes slot-orange{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 1px 2px rgba(255,149,0,.35))}45%{transform:translateY(-3px) scale(1.15,1.08);filter:drop-shadow(0 0 9px rgba(255,149,0,.72))}70%{transform:translateY(1px) scale(.96,1.04)}}
+@keyframes slot-leaf{0%,100%{transform:rotate(-7deg) translateY(0);filter:drop-shadow(0 0 2px rgba(48,209,88,.3))}50%{transform:rotate(8deg) translateY(-3px);filter:drop-shadow(0 0 8px rgba(48,209,88,.68))}}
+@keyframes slot-cat{0%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 1px 2px rgba(175,120,70,.3))}35%{transform:translateY(-4px) rotate(-5deg) scale(1.12)}65%{transform:translateY(-1px) rotate(5deg) scale(1.06)}}
+@keyframes slot-sock{0%,100%{transform:translateY(0) rotate(-5deg);filter:drop-shadow(0 1px 2px rgba(88,86,214,.28))}50%{transform:translateY(-3px) rotate(10deg) scale(1.12);filter:drop-shadow(0 0 8px rgba(88,86,214,.6))}}
+@keyframes slot-frog{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 1px 2px rgba(52,199,89,.3))}38%{transform:translateY(-6px) scale(1.1,.94);filter:drop-shadow(0 5px 8px rgba(52,199,89,.5))}65%{transform:translateY(1px) scale(.96,1.08)}}
+@media(prefers-color-scheme:dark){.card.search-hit{--sh-card:0 1px 0 rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.2)}.card.new-hit::after{background:#30d158}}
+@media(prefers-reduced-motion:reduce){.card.search-hit,.card.new-hit,.card.new-hit::after{animation:none!important}.card.search-hit{box-shadow:0 0 0 2px rgba(10,132,255,.32),var(--sh-card)}.card.new-hit{box-shadow:0 0 0 1px rgba(48,209,88,.28),var(--sh-card)}}
+
+.card.search-hit.new-hit{animation:kkiu-search-focus 1.8s cubic-bezier(.2,.75,.25,1) both!important}.card.search-hit.new-hit::after{display:none}

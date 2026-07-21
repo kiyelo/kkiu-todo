@@ -12,7 +12,7 @@ function splitAtWidth(text, width) {
   return [text.slice(0, low), text.slice(low).trim()]
 }
 
-export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, selecting, selected, onSelect, onLongPress, showRank = true, searchHit = false }) {
+export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, selecting, selected, onSelect, onLongPress, showRank = true, searchHit = false, newHit = false }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(task.title)
   const [leaving, setLeaving] = useState(false)
@@ -96,7 +96,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   const finish = () => { if (task.done || selecting) return; setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
   const assignedMembers = (task.assignees || [task.assignee]).map((id) => members.find((member) => member.id === id)).filter(Boolean)
   const [line1, line2] = splitAtWidth(task.title, titleWidth)
-  return <article ref={cardRef} data-task-id={task.id} className={`card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${selected ? ' sel-on' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}`} onPointerDown={startHold}>
+  return <article ref={cardRef} data-task-id={task.id} className={`card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${selected ? ' sel-on' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}`} onPointerDown={startHold}>
     <button className={`ck${task.done || selected || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={selecting ? `${selected ? '선택 해제' : '선택'}: ${task.title}` : `할 일 완료: ${task.title}`} data-act={selecting ? 'sel' : 'complete'} data-id={task.id} onClick={() => selecting ? onSelect(task.id) : finish()}>{(task.done || selected || leaving) && <CheckIcon />}</button>
     {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
     <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" data-act="title" data-id={task.id} onClick={() => selecting ? onSelect(task.id) : !task.done && setEditing(true)}><span className="t-main">{line1}</span>{line2 && <span className="t-rest">{line2}</span>}</button>}</div>

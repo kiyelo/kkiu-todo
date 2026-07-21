@@ -1,4 +1,4 @@
-# 끼우 React 1.3.2 — v18.4.8 Full Parity
+# 끼우 React 1.3.3 — v18.4.8 Full Parity
 
 HTML v18.4.8 완성 목업의 화면 구조와 상태 전이를 실제 React 컴포넌트로 이식한 출시 준비 버전입니다.
 

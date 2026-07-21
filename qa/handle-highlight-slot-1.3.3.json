@@ -1,0 +1,13 @@
+{
+  "version": "1.3.3",
+  "runtimeErrors": 0,
+  "circleFilteredGripCount": 0,
+  "homeGripAfterCircleFilterCount": 14,
+  "liveReorderShift": "pass",
+  "reorderPersistOnRelease": "pass",
+  "newTaskHighlight": "kkiu-new-insert",
+  "searchHighlight": "kkiu-search-focus",
+  "distinctHighlightDesigns": true,
+  "pairMatch": {"matchedReels": 2, "matchedEffect": "slot-pair", "otherEffect": "slot-dim"},
+  "tripleEffects": {"🌙":"slot-moon","🔥":"slot-fire","🍊":"slot-orange","🌿":"slot-leaf","🐈":"slot-cat","🧦":"slot-sock","🐸":"slot-frog"}
+}
