@@ -27,6 +27,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const startPositionRef = useRef(0)
   const effectivePositionRef = useRef(0)
   const movedRef = useRef(false)
+  const gestureTargetRef = useRef(null)
   const suppressClickRef = useRef(false)
   const wheelPositionRef = useRef(null)
   const wheelTimerRef = useRef(null)
@@ -48,7 +49,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
 
   const onPointerDownCapture = useCallback((event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
-    if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"], .grip')) return
+    if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"]')) return
     const current = positionsRef.current[indexRef.current] || 0
     activeRef.current = true
     pointerRef.current = event.pointerId
@@ -59,6 +60,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     startPositionRef.current = current
     effectivePositionRef.current = current
     movedRef.current = false
+    gestureTargetRef.current = event.target.closest('.grip')
+    if (gestureTargetRef.current) gestureTargetRef.current.dataset.queueMoved = 'false'
     suppressClickRef.current = false
     setDragY(0)
   }, [])
@@ -66,9 +69,11 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const onPointerMoveCapture = useCallback((event) => {
     if (!activeRef.current || pointerRef.current !== event.pointerId) return
     const totalDelta = event.clientY - startYRef.current
-    if (!movedRef.current && Math.abs(totalDelta) < 5) return
+    if (gestureTargetRef.current?.dataset.reorderArmed === 'true') return
+    if (!movedRef.current && Math.abs(totalDelta) < 9) return
     if (!movedRef.current) {
       movedRef.current = true
+      if (gestureTargetRef.current) gestureTargetRef.current.dataset.queueMoved = 'true'
       suppressClickRef.current = true
       setDragging(true)
       try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
@@ -102,6 +107,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     activeRef.current = false
     pointerRef.current = null
     movedRef.current = false
+    if (gestureTargetRef.current) { gestureTargetRef.current.dataset.queueMoved = 'false'; gestureTargetRef.current.dataset.reorderArmed = 'false' }
+    gestureTargetRef.current = null
     velocityRef.current = 0
     setDragY(0)
     setDragging(false)

@@ -71,12 +71,14 @@ export default function App() {
     const task = { id: crypto.randomUUID(), title, assignee, done: false, createdAt: Date.now() }
     const active = tasks.filter((item) => !item.done)
     const completed = tasks.filter((item) => item.done)
+    const at = Math.max(0, Math.min(position, active.length))
     const next = [...active]
-    next.splice(Math.max(0, Math.min(position, active.length)), 0, task)
+    next.splice(at, 0, task)
     updateTasks(() => [...next, ...completed])
-    setToast(`${Math.max(0, Math.min(position, active.length)) + 1}번째에 끼웠어요`)
+    setQueuePositions((current) => ({ ...current, [tab]: at + 1 }))
+    setToast(`${at + 1}번째에 끼웠어요`)
     if (session?.user) {
-      const create = tab === 'home' ? createPersonalTask(session.user.id, task, position) : createCircleTask(session.user.id, circle.id, task, position)
+      const create = tab === 'home' ? createPersonalTask(session.user.id, task, at) : createCircleTask(session.user.id, circle.id, task, at)
       create.then(() => updateTaskPositions(next)).catch(reportSyncError)
     }
   }
@@ -213,7 +215,7 @@ export default function App() {
   const persistSettings = (settings) => { if (session?.user) savePreferences(session.user.id,settings).catch(reportSyncError) }
   const toggleSetting = (id) => { const next={ ...settingValues, [id]: !settingValues[id] }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
   const setLanguage = (language) => { const next={ ...settingValues, language }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
-  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.3.0', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast('백업 파일을 만들었어요') }
+  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.3.2', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast('백업 파일을 만들었어요') }
   const restoreData = async (file) => { try { const parsed = JSON.parse(await file.text()); const next = parsed.data || parsed; if (!Array.isArray(next.personal) || !Array.isArray(next.circles)) throw new Error('끼우 백업 파일이 아니에요.'); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast('백업을 복원했어요'); return true } catch(error) { setToast(error instanceof SyntaxError?'JSON 파일 형식이 올바르지 않아요.':(error.message||'백업 파일을 복원하지 못했어요.')); return false } }
   const doResetData = () => { const next = freshStarterData(); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast('초기 데이터로 되돌렸어요') }
   const resetData = () => setConfirm({ title: '전체 초기화', message: '현재 데이터를 지우고 초기 데이터로 되돌릴까요?', danger: true, action: doResetData })

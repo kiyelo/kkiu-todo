@@ -1,0 +1,15 @@
+{
+  "version": "1.3.2",
+  "runtimeErrors": 0,
+  "gripArmDelay170ms": "pass",
+  "gripMoveCancelsBeforeArm": "pass",
+  "reorderLiftAndNeighborShift": "pass",
+  "selectionLongPress460msScrollCancel": "pass",
+  "firstTouchAppBars": "pass",
+  "moreSharedVariableSlotEngine": "pass",
+  "emojiPairMatchedReels": 2,
+  "emojiTripleEffects": "implemented",
+  "newTaskAboveComposer": "pass",
+  "identityActionsPinnedVisible": "pass",
+  "opaqueCriticalSurfaces": "pass"
+}

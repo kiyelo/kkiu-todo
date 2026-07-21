@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFloatingQueue from '../hooks/useFloatingQueue.js'
 import {t} from '../i18n.js'
 
@@ -11,7 +11,7 @@ function Row({icon,label,tail='›',onClick,danger=false,sub,action}){
 }
 
 export default function MoreScreen({values,onToggle,user,onSignOut,language='ko',onLanguage,onBackup,onRestore,onReset,onSeed,onEmpty,onUnread,onStub}){
- const fileRef=useRef(null),lastQueueIndex=useRef(null),initial=useMemo(loadSlot,[]),[locked,setLocked]=useState(initial.locked),[symbols,setSymbols]=useState(initial.symbols),[history,setHistory]=useState(false)
+ const fileRef=useRef(null),trackRef=useRef(null),lastQueueIndex=useRef(null),rollTimer=useRef(null),initial=useMemo(loadSlot,[]),[locked,setLocked]=useState(initial.locked),[symbols,setSymbols]=useState(initial.symbols),[rolling,setRolling]=useState(false),[history,setHistory]=useState(false),[heights,setHeights]=useState([])
  useEffect(()=>{localStorage.setItem(SLOT_KEY,JSON.stringify({locked,symbols}))},[locked,symbols])
  const restore=e=>{const file=e.target.files?.[0];if(file)onRestore?.(file);e.target.value=''}
  const stub=label=>()=>onStub?.(`${label} 기능을 준비하고 있어요`)
@@ -31,10 +31,14 @@ export default function MoreScreen({values,onToggle,user,onSignOut,language='ko'
   {h:54,node:<button className="more-version" data-act="history" onClick={()=>setHistory(true)}>{t(language,'version')} v18.4.8 <span>·</span><span>{t(language,'history')}</span><span>›</span></button>},
   ...(user?[{h:54,node:<button className="more-version signout" data-act="signout" onClick={onSignOut}>{language==='en'?'Sign out':'로그아웃'}</button>}]:[])
  ],[values.notifications,user,language,onToggle,onLanguage,onBackup,onReset,onSeed,onEmpty,onUnread,onSignOut,onStub])
- const positions=[];let cursor=0;items.forEach(item=>{positions.push(cursor);cursor+=item.h+8})
+ useLayoutEffect(()=>{const next=[...(trackRef.current?.querySelectorAll('.more-qitem')||[])].map(el=>Math.ceil(el.getBoundingClientRect().height));if(next.length&&next.some((h,i)=>h!==heights[i]))setHeights(next)},[items,language,user])
+ const positions=[];let cursor=0;items.forEach((item,i)=>{positions.push(cursor);cursor+=(heights[i]||item.h)+10})
  const slotPositions=[...positions,cursor]
  const q=useFloatingQueue(items.length,0,{positions:slotPositions,rowHeight:72});const offset=slotPositions[Math.min(q.index,slotPositions.length-1)]||0
- useEffect(()=>{if(lastQueueIndex.current===null){lastQueueIndex.current=q.index;return}if(lastQueueIndex.current!==q.index&&!locked){lastQueueIndex.current=q.index;const pool=['🌙','🍊','🌿','🔥','⭐'];setSymbols([0,1,2].map(()=>pool[Math.floor(Math.random()*pool.length)]))}},[q.index,locked])
- const roll=()=>{if(locked){setLocked(false);setSymbols(symbols.map(()=>['🌙','🍊','🌿','🔥','⭐'][Math.floor(Math.random()*5)]))}else setLocked(true)}
- return <div className={`stage q more-qstage${q.dragging?' dragging':''}`} {...q.gestureProps}><div className="qvp"><div className="qtrack more-qtrack" style={{top:'50%',transform:`translate3d(0,calc(-${offset}px + ${q.dragY}px),0)`}}>{items.map((item,i)=><div className="more-qitem" key={i} style={{top:`${positions[i]+69}px`}}>{item.node}</div>)}</div></div><div className="qfade t"/><div className="qfade b"/><div className="slotwrap" style={{top:'calc(50% + 30px)'}}><button className={`ins quip emoji-slot-btn${locked?' locked':''}`} data-act="quip-next" onClick={roll}><span className="emoji-reels">{symbols.map((s,i)=><i className="emoji-reel" key={i}>{s}</i>)}</span><span className="slot-mode">{locked?'🔒':'↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore}/>{history&&<div className="modalwrap on"><button className="scrim" data-act="modal-cancel" onClick={()=>setHistory(false)}/><div className="modal history-modal"><h3>{t(language,'history')}</h3><ul><li><b>v18.4.8</b> React 네이티브 전체 플로우 이식</li><li><b>v18.4.7</b> 끼리·완료·검색 동작 개선</li><li><b>v18.4.6</b> 모바일 큐와 접근성 보강</li></ul><div className="mrow"><button className="mbtn primary" onClick={()=>setHistory(false)}>{language==='en'?'Close':'닫기'}</button></div></div></div>}</div>
+ const spin=()=>{const pool=['🌙','🍊','🌿','🔥','🐈','🧦','🐸'];setSymbols([0,1,2].map(()=>pool[Math.floor(Math.random()*pool.length)]));setRolling(true);window.clearTimeout(rollTimer.current);rollTimer.current=window.setTimeout(()=>setRolling(false),220)}
+ useEffect(()=>{if(lastQueueIndex.current===null){lastQueueIndex.current=q.index;return}if(lastQueueIndex.current!==q.index){lastQueueIndex.current=q.index;if(!locked)spin()}},[q.index,locked])
+ useEffect(()=>()=>window.clearTimeout(rollTimer.current),[])
+ const roll=()=>{if(locked){setLocked(false);spin()}else setLocked(true)}
+ const counts=symbols.reduce((map,symbol)=>({...map,[symbol]:(map[symbol]||0)+1}),{}),max=Math.max(...Object.values(counts)),combo=max===3?'triple':max===2?'pair':'mixed',symbolClass=combo==='triple'&&symbols[0]==='🔥'?' symbol-fire':combo==='triple'&&symbols[0]==='🌙'?' symbol-moon':''
+ return <div className={`stage q more-qstage${q.dragging?' dragging':''}`} {...q.gestureProps}><div className="qvp"><div ref={trackRef} className="qtrack more-qtrack" style={{top:'50%',transform:`translate3d(0,calc(-${offset}px + ${q.dragY}px),0)`}}>{items.map((item,i)=><div className="more-qitem" key={i} style={{top:`${positions[i]+(positions[i]>=offset?81:2)}px`}}>{item.node}</div>)}</div></div><div className="qfade t"/><div className="qfade b"/><div className="slotwrap" style={{top:'calc(50% + 30px)'}}><button className={`ins quip emoji-slot-btn combo-${combo}${locked?' locked':''}${rolling?' rolling':''}${symbolClass}`} data-act="quip-next" onClick={roll}><span className="emoji-reels">{symbols.map((s,i)=><i className={`emoji-reel${counts[s]>1?' matched':''}`} key={i}>{s}</i>)}</span><span className="slot-mode">{locked?'🔒':'↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore}/>{history&&<div className="modalwrap on"><button className="scrim" data-act="modal-cancel" onClick={()=>setHistory(false)}/><div className="modal history-modal"><h3>{t(language,'history')}</h3><ul><li><b>v18.4.8</b> React 네이티브 전체 플로우 이식</li><li><b>v18.4.7</b> 끼리·완료·검색 동작 개선</li><li><b>v18.4.6</b> 모바일 큐와 접근성 보강</li></ul><div className="mrow"><button className="mbtn primary" onClick={()=>setHistory(false)}>{language==='en'?'Close':'닫기'}</button></div></div></div>}</div>
 }

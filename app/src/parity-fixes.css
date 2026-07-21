@@ -14,3 +14,20 @@
 .drow .source-unread-dot{margin:0 2px}
 .scrim:focus-visible,.ck:focus-visible,.identity-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.qtrack{transition:none}.card.leaving{transition:none}}
+
+/* v1.3.2 — v18.4.8 gesture and interaction parity */
+.ico.grip{width:40px;height:40px;opacity:1!important;color:#8e96a3!important;touch-action:none}
+.ico.grip svg{width:19px;height:19px;fill:currentColor;stroke:none}
+.queue-task-row{will-change:transform;transition:transform .16s cubic-bezier(.2,.7,.3,1)!important}
+.queue-task-row.reorder-dragging{z-index:45!important;transition:none!important}
+.queue-task-row.reorder-dragging .card{transform:scale(1.03);box-shadow:0 24px 55px rgba(31,58,95,.25);cursor:grabbing}
+.stage.q.dragging .queue-task-row:not(.reorder-dragging){transition:transform .16s cubic-bezier(.2,.7,.3,1)!important}
+.more-qitem{will-change:transform}
+.identity-modal{width:min(354px,calc(100vw - 24px))!important;max-height:min(720px,88vh)!important;padding:0!important;overflow:hidden!important}
+.identity-modal .identity-editor{max-height:min(720px,88vh);gap:0}
+.identity-modal .identity-editor-body{flex:1;min-height:0;overflow-y:auto}
+.identity-modal .identity-actions{position:relative;z-index:2}
+.ins,.ibar{background:rgba(250,252,255,.94)!important}
+.more-qitem .rbtn,.more-qitem .pcard{background:rgba(250,252,255,.9)!important}
+.sheet{background:rgba(246,249,253,.96)!important}.modal{background:rgba(250,252,255,.97)!important}
+@media(prefers-color-scheme:dark){.ins,.ibar,.more-qitem .rbtn,.more-qitem .pcard{background:rgba(42,46,54,.94)!important}.sheet,.modal{background:rgba(29,33,40,.97)!important}}
