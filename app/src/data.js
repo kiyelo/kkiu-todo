@@ -8,6 +8,6 @@ const homeTasks=homeTitles.map((title,i)=>({id:`c1t${i}`,title,assignee:members[
 export const starterData={
 personal:titles.map((title,i)=>({id:`p${i}`,title,done:false,createdAt:now-i*1000})),
 circles:[
-{id:'c1',name:'우리집',emoji:'🏠',code:'KKIU-HOME',unread:0,unreadDone:1,members,memberUnread:{me:2,su:1},tasks:homeTasks},
+{id:'c1',name:'우리집',emoji:'🏠',code:'KKIU-VOMZ',unread:0,unreadDone:1,members,memberUnread:{me:2,su:1},tasks:homeTasks},
 {id:'c2',name:'강릉 여행',emoji:'✈️',code:'KKIU-TRIP',unread:3,unreadDone:0,members:members.slice(0,3),memberUnread:{},tasks:tripTitles.map((title,i)=>({id:`c2t${i}`,title,assignee:['me','da','su','da','me'][i],done:false}))}
 ],settings:{compact:false,motion:true,notifications:true,language:'ko'}}

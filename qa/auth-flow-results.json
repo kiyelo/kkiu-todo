@@ -1,0 +1,1 @@
+{"summary":{"passed":7,"failed":0},"scenarios":["auth-login-layout","auth-signup-confirmation","auth-resend-confirmation","auth-reset-empty-email","auth-reset-email","auth-expired-link","auth-mobile-overflow"]}

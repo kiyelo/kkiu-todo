@@ -32,14 +32,14 @@ export async function loadCircles() {
   const client = requireSupabase()
   const { data: circles, error: circleError } = await client
     .from('circles')
-    .select('id,name,emoji,created_by,created_at')
+    .select('id,name,emoji,invite_code,created_by,created_at')
     .order('created_at', { ascending: true })
   if (circleError) throw circleError
   if (!circles.length) return []
 
   const ids = circles.map((circle) => circle.id)
   const [{ data: memberRows, error: memberError }, { data: taskRows, error: taskError }] = await Promise.all([
-    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,joined_at').in('circle_id', ids).order('joined_at', { ascending: true }),
+    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at').in('circle_id', ids).order('position', { ascending: true }),
     client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_at,created_at').in('circle_id', ids).order('position', { ascending: true }),
   ])
   if (memberError) throw memberError
@@ -49,6 +49,7 @@ export async function loadCircles() {
     id: circle.id,
     name: circle.name,
     emoji: circle.emoji,
+    code: circle.invite_code,
     createdBy: circle.created_by,
     unread: 0,
     memberUnread: {},
@@ -59,10 +60,11 @@ export async function loadCircles() {
 
 export async function createCircle(userId, { name, emoji, profileName, profileEmoji }) {
   const client = requireSupabase()
+  const inviteCode = `KKIU-${crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()}`
   const { data: circle, error: circleError } = await client
     .from('circles')
-    .insert({ name, emoji, created_by: userId })
-    .select('id,name,emoji,created_by')
+    .insert({ name, emoji, invite_code: inviteCode, created_by: userId })
+    .select('id,name,emoji,invite_code,created_by')
     .single()
   if (circleError) throw circleError
 
@@ -82,6 +84,7 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
     id: circle.id,
     name: circle.name,
     emoji: circle.emoji,
+    code: circle.invite_code,
     createdBy: circle.created_by,
     unread: 0,
     memberUnread: {},
@@ -103,6 +106,28 @@ export async function updateCircle(circleId, userId, { name, emoji, profileName,
 export async function deleteCircle(circleId) {
   const { error } = await requireSupabase().from('circles').delete().eq('id', circleId)
   if (error) throw error
+}
+
+export async function joinCircleByCode(code, profileName, profileEmoji) {
+  const { data, error } = await requireSupabase().rpc('join_circle_by_code', {
+    join_code: code,
+    member_name: profileName,
+    member_emoji: profileEmoji,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function leaveCircle(circleId, userId) {
+  const { error } = await requireSupabase().from('circle_members').delete().eq('circle_id', circleId).eq('user_id', userId)
+  if (error) throw error
+}
+
+export async function updateMemberPositions(circleId, members) {
+  const client = requireSupabase()
+  const results = await Promise.all(members.map((member, position) => client.from('circle_members').update({ position }).eq('circle_id', circleId).eq('user_id', member.id)))
+  const failed = results.find((result) => result.error)
+  if (failed?.error) throw failed.error
 }
 
 export async function createCircleTask(userId, circleId, task, position) {
@@ -154,3 +179,40 @@ export async function deletePersonalTasks(taskIds) {
 }
 
 export const deleteTasks = deletePersonalTasks
+
+export async function loadPreferences(userId) {
+  const { data, error } = await requireSupabase().from('profiles').select('preferences').eq('user_id', userId).single()
+  if (error) throw error
+  return data?.preferences || {}
+}
+
+export async function savePreferences(userId, preferences) {
+  const { error } = await requireSupabase().from('profiles').update({ preferences }).eq('user_id', userId)
+  if (error) throw error
+}
+
+export async function markTasksRead(userId, taskIds) {
+  if (!taskIds.length) return
+  const rows = taskIds.map((taskId) => ({ task_id: taskId, user_id: userId, seen_at: new Date().toISOString() }))
+  const { error } = await requireSupabase().from('task_read_receipts').upsert(rows, { onConflict: 'task_id,user_id' })
+  if (error) throw error
+}
+
+export async function loadReadTaskIds(userId, taskIds) {
+  if (!taskIds.length) return []
+  const { data, error } = await requireSupabase().from('task_read_receipts').select('task_id').eq('user_id', userId).in('task_id', taskIds)
+  if (error) throw error
+  return data.map((row) => row.task_id)
+}
+
+export async function logCompletionEvent(userId, task, circleId = null) {
+  const created = typeof task.createdAt === 'number' ? task.createdAt : new Date(task.createdAt || Date.now()).getTime()
+  const { error } = await requireSupabase().from('completion_events').insert({ task_id: task.id, user_id: userId, circle_id: circleId, title: task.title, lead_ms: Math.max(0, Date.now() - created) })
+  if (error) throw error
+}
+
+export async function loadCompletionEvents(userId, limit = 100) {
+  const { data, error } = await requireSupabase().from('completion_events').select('id,task_id,circle_id,title,lead_ms,completed_at').eq('user_id', userId).order('completed_at', { ascending: false }).limit(limit)
+  if (error) throw error
+  return data
+}

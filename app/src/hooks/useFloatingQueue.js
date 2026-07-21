@@ -79,7 +79,6 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   }, [rowHeight, setIndex])
 
   const onWheel = useCallback((event) => {
-    event.preventDefault()
     if (Math.abs(event.deltaY) < 2) return
     const preview = clamp(dragRef.current - event.deltaY, -rowHeight * 1.4, rowHeight * 1.4)
     dragRef.current = preview

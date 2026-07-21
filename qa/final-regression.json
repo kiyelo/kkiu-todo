@@ -1,0 +1,54 @@
+[
+  {
+    "name": "boot-layout",
+    "status": "pass"
+  },
+  {
+    "name": "add-edit-escape-outside",
+    "status": "pass"
+  },
+  {
+    "name": "complete-search-sheet",
+    "status": "pass"
+  },
+  {
+    "name": "circle-source-assignee",
+    "status": "pass"
+  },
+  {
+    "name": "task-pointer-drag",
+    "status": "pass"
+  },
+  {
+    "name": "member-pointer-drag",
+    "status": "pass"
+  },
+  {
+    "name": "selection-bulk",
+    "status": "pass"
+  },
+  {
+    "name": "more-stub-setting-slot",
+    "status": "pass"
+  },
+  {
+    "name": "restore-error-safe",
+    "status": "pass"
+  },
+  {
+    "name": "wheel-and-swipe",
+    "status": "pass"
+  },
+  {
+    "name": "a11y-home",
+    "status": "pass"
+  },
+  {
+    "name": "a11y-manage",
+    "status": "pass"
+  },
+  {
+    "name": "viewport-320",
+    "status": "pass"
+  }
+]
