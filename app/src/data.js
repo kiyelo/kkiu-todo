@@ -4,7 +4,8 @@ const titles=['프로젝트 킥오프 안건 정리','디자인 시스템 컬러
 const homeTitles=['주말 장보기 리스트 확정','세탁소에 코트 맡기기','공과금 이체','거실 전구 교체','분리수거 버리기','에어컨 필터 청소','약국에서 영양제 사오기','주말 데이트 식당 예약','화장실 수건 교체','베란다 화분 분갈이','차량 정기점검 예약','부모님 생신 선물 고르기']
 const tripTitles=['숙소 최종 결제','KTX 왕복 예매','렌터카 비교해서 예약','짐 체크리스트 만들기','첫날 저녁 횟집 예약']
 const now=Date.now()
-const homeTasks=homeTitles.map((title,i)=>({id:`c1t${i}`,title,assignee:members[i%members.length].id,done:i===homeTitles.length-1,doneAt:i,completedAt:i===homeTitles.length-1?new Date(now-7200000).toISOString():null,sourceUnread:i===1||i===4||i===homeTitles.length-1}))
+const homeAssignees=[['me'],['su'],['da'],['jh'],['ha'],['jw'],['sy'],['mj','yu'],['yu'],['dy'],['su'],['me']]
+const homeTasks=homeTitles.map((title,i)=>({id:`c1t${i}`,title,assignees:homeAssignees[i],assignee:homeAssignees[i][0],done:i===homeTitles.length-1,doneAt:i,completedAt:i===homeTitles.length-1?new Date(now-7200000).toISOString():null,sourceUnread:i===1||i===4||i===homeTitles.length-1}))
 export const starterData={
 personal:titles.map((title,i)=>({id:`p${i}`,title,done:false,createdAt:now-i*1000})),
 circles:[

@@ -42,8 +42,11 @@ export default function AuthScreen() {
   const resetPassword = async () => {
     if (!email) { setMessage('비밀번호를 재설정할 이메일을 먼저 적어주세요.'); return }
     setBusy(true)
-    try { const { error } = await requireSupabase().auth.resetPasswordForEmail(email, { redirectTo: getAuthRedirectUrl() }); if (error) throw error; setMessage('비밀번호 재설정 메일을 보냈어요.') }
-    catch (error) { setMessage(error.message || '재설정 메일을 보내지 못했어요.') }
+    try {
+      const { error } = await requireSupabase().auth.resetPasswordForEmail(email, { redirectTo: getAuthRedirectUrl() })
+      if (error) throw error
+      setMessage('비밀번호 재설정 메일을 보냈어요.')
+    } catch (error) { setMessage(error.message || '재설정 메일을 보내지 못했어요.') }
     finally { setBusy(false) }
   }
 

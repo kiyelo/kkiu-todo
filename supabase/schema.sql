@@ -246,3 +246,4 @@ grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update, delete on public.circles to authenticated;
 grant select, insert, update, delete on public.circle_members to authenticated;
 grant select, insert, update, delete on public.tasks to authenticated;
+

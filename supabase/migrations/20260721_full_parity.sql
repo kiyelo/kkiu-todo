@@ -48,3 +48,17 @@ drop policy if exists "completion_events_visible" on public.completion_events;
 create policy "completion_events_visible" on public.completion_events for select to authenticated using(user_id=(select auth.uid()) or (circle_id is not null and private.is_circle_member(circle_id)));
 drop policy if exists "completion_events_insert_self" on public.completion_events;
 create policy "completion_events_insert_self" on public.completion_events for insert to authenticated with check(user_id=(select auth.uid()));
+
+-- Preserve the task's active rank while completed and invalidate stale reads.
+alter table public.tasks add column if not exists completed_position bigint;
+create or replace function public.clear_task_read_receipts()
+returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if old.title is distinct from new.title or old.assignee_id is distinct from new.assignee_id or old.completed_at is distinct from new.completed_at then
+    delete from public.task_read_receipts where task_id=new.id;
+  end if;
+  return new;
+end $$;
+drop trigger if exists tasks_clear_read_receipts on public.tasks;
+create trigger tasks_clear_read_receipts after update on public.tasks for each row execute function public.clear_task_read_receipts();
+revoke all on function public.clear_task_read_receipts() from public;

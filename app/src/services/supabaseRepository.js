@@ -7,6 +7,9 @@ const taskFromRow = (row) => ({
   completedAt: row.completed_at,
   createdAt: new Date(row.created_at).getTime(),
   assignee: row.assignee_id,
+  doneAt: row.completed_position == null ? null : Number(row.completed_position),
+  position: Number(row.position || 0),
+  sourceUnread: Boolean(row.sourceUnread),
 })
 
 const memberFromRow = (row) => ({
@@ -19,7 +22,7 @@ const memberFromRow = (row) => ({
 export async function loadPersonalTasks(userId) {
   const { data, error } = await requireSupabase()
     .from('tasks')
-    .select('id,title,position,completed_at,created_at')
+    .select('id,title,position,completed_position,completed_at,created_at')
     .eq('owner_id', userId)
     .is('circle_id', null)
     .order('position', { ascending: true })
@@ -28,7 +31,7 @@ export async function loadPersonalTasks(userId) {
   return data.map(taskFromRow)
 }
 
-export async function loadCircles() {
+export async function loadCircles(userId) {
   const client = requireSupabase()
   const { data: circles, error: circleError } = await client
     .from('circles')
@@ -40,22 +43,23 @@ export async function loadCircles() {
   const ids = circles.map((circle) => circle.id)
   const [{ data: memberRows, error: memberError }, { data: taskRows, error: taskError }] = await Promise.all([
     client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at').in('circle_id', ids).order('position', { ascending: true }),
-    client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_at,created_at').in('circle_id', ids).order('position', { ascending: true }),
+    client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_position,completed_at,created_at,updated_at').in('circle_id', ids).order('position', { ascending: true }),
   ])
   if (memberError) throw memberError
   if (taskError) throw taskError
-
-  return circles.map((circle) => ({
-    id: circle.id,
-    name: circle.name,
-    emoji: circle.emoji,
-    code: circle.invite_code,
-    createdBy: circle.created_by,
-    unread: 0,
-    memberUnread: {},
-    members: memberRows.filter((row) => row.circle_id === circle.id).map(memberFromRow),
-    tasks: taskRows.filter((row) => row.circle_id === circle.id).map(taskFromRow),
-  }))
+  let readIds = new Set()
+  if (userId && taskRows.length) {
+    const { data: receipts, error: receiptError } = await client.from('task_read_receipts').select('task_id').eq('user_id', userId).in('task_id', taskRows.map((row) => row.id))
+    if (!receiptError) readIds = new Set((receipts || []).map((row) => row.task_id))
+  }
+  return circles.map((circle) => {
+    const rows = taskRows.filter((row) => row.circle_id === circle.id)
+    const tasks = rows.map((row) => taskFromRow({ ...row, sourceUnread: Boolean(userId && row.owner_id !== userId && !readIds.has(row.id)) }))
+    const activeUnread = tasks.filter((task) => !task.done && task.sourceUnread)
+    const memberUnread = {}
+    activeUnread.forEach((task) => (task.assignees || [task.assignee]).filter(Boolean).forEach((id) => { memberUnread[id] = (memberUnread[id] || 0) + 1 }))
+    return { id: circle.id, name: circle.name, emoji: circle.emoji, code: circle.invite_code, createdBy: circle.created_by, unread: activeUnread.length, unreadDone: tasks.filter((task) => task.done && task.sourceUnread).length, memberUnread, members: memberRows.filter((row) => row.circle_id === circle.id).map(memberFromRow), tasks }
+  })
 }
 
 export async function createCircle(userId, { name, emoji, profileName, profileEmoji }) {
@@ -155,7 +159,7 @@ export async function createPersonalTask(userId, task, position) {
 export async function updatePersonalTask(taskId, changes) {
   const payload = {}
   if (changes.title !== undefined) payload.title = changes.title
-  if (changes.done !== undefined) payload.completed_at = changes.done ? new Date().toISOString() : null
+  if (changes.done !== undefined) { payload.completed_at = changes.done ? new Date().toISOString() : null; payload.completed_position = changes.done ? (changes.doneAt ?? null) : null }
   if (changes.assignee !== undefined) payload.assignee_id = changes.assignee || null
   const { error } = await requireSupabase().from('tasks').update(payload).eq('id', taskId)
   if (error) throw error

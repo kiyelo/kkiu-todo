@@ -1,4 +1,4 @@
-# Supabase 적용 순서 — React 1.1.0
+# Supabase 적용 순서 — React 1.3.0
 
 ## 새 Supabase 프로젝트
 
@@ -21,6 +21,8 @@
 - `profiles.preferences`
 - `task_read_receipts`
 - `completion_events`
+- `tasks.completed_position`
+- 변경 시 읽음 영수증 무효화 트리거
 - `join_circle_by_code(...)` RPC
 
 ## 보안
