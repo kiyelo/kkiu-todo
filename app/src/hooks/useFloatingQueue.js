@@ -17,6 +17,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const [index, setIndexState] = useState(() => clamp(initialIndex, 0, count))
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [edgePull, setEdgePull] = useState({ edge: null, amount: 0 })
   const indexRef = useRef(index)
   const activeRef = useRef(false)
   const pointerRef = useRef(null)
@@ -32,6 +33,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const wheelPositionRef = useRef(null)
   const wheelTimerRef = useRef(null)
   const momentumRef = useRef(null)
+  const edgeNotifiedRef = useRef(false)
+  const edgeBounceTimerRef = useRef(null)
 
   const stopMomentum = useCallback(() => {
     if (momentumRef.current !== null) {
@@ -43,10 +46,16 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   useEffect(() => { indexRef.current = index }, [index])
   useEffect(() => () => {
     window.clearTimeout(wheelTimerRef.current)
+    window.clearTimeout(edgeBounceTimerRef.current)
     if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current)
   }, [])
   const notify = useCallback(() => {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(8)
+  }, [])
+  const pulseEdge = useCallback((edge) => {
+    window.clearTimeout(edgeBounceTimerRef.current)
+    setEdgePull({ edge, amount: 1 })
+    edgeBounceTimerRef.current = window.setTimeout(() => setEdgePull({ edge: null, amount: 0 }), 72)
   }, [])
   const setIndex = useCallback((next) => {
     const value = clamp(typeof next === 'function' ? next(indexRef.current) : next, 0, count)
@@ -62,6 +71,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (event.pointerType === 'mouse' && event.button !== 0) return
     if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"]')) return
     stopMomentum()
+    window.clearTimeout(edgeBounceTimerRef.current)
     setDragging(false)
     const current = positionsRef.current[indexRef.current] || 0
     activeRef.current = true
@@ -76,7 +86,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     gestureTargetRef.current = event.target.closest('.grip')
     if (gestureTargetRef.current) gestureTargetRef.current.dataset.queueMoved = 'false'
     suppressClickRef.current = false
+    edgeNotifiedRef.current = false
     setDragY(0)
+    setEdgePull({ edge: null, amount: 0 })
   }, [stopMomentum])
 
   const onPointerMoveCapture = useCallback((event) => {
@@ -100,12 +112,20 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     const list = positionsRef.current
     const min = list[0] || 0
     const max = list[list.length - 1] || 0
-    const effective = clamp(startPositionRef.current - totalDelta, min, max)
+    const rawPosition = startPositionRef.current - totalDelta
+    const effective = clamp(rawPosition, min, max)
+    const edge = rawPosition < min ? 'start' : rawPosition > max ? 'end' : null
+    const amount = edge ? Math.min(1, Math.abs(rawPosition - effective) / 64) : 0
+    if (amount >= 0.98 && !edgeNotifiedRef.current) {
+      edgeNotifiedRef.current = true
+      notify()
+    }
+    setEdgePull((current) => current.edge === edge && Math.abs(current.amount - amount) < 0.02 ? current : { edge, amount })
     effectivePositionRef.current = effective
     const next = nearest(list, effective)
     setIndex(next)
     setDragY((list[next] || 0) - effective)
-  }, [setIndex])
+  }, [notify, setIndex])
 
   // Momentum flick: decay velocity with friction so vertical swipes keep gliding
   // after release (할일/끼리/더보기 공통). Friction 0.994^ms integrates to ~166ms of
@@ -120,8 +140,18 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       const max = list[list.length - 1] || 0
       const elapsed = Math.min(50, Math.max(1, now - lastTime))
       lastTime = now
-      position = clamp(position - velocity * elapsed, min, max)
-      if (position === min || position === max) velocity = 0
+      const raw = position - velocity * elapsed
+      if (raw < min || raw > max) {
+        position = clamp(raw, min, max)
+        const next = nearest(list, position)
+        setIndex(next)
+        setDragY(0)
+        setDragging(false)
+        momentumRef.current = null
+        pulseEdge(raw < min ? 'start' : 'end')
+        return
+      }
+      position = raw
       velocity *= Math.pow(0.994, elapsed)
       const next = nearest(list, position)
       setIndex(next)
@@ -129,6 +159,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
         momentumRef.current = null
         setDragY(0)
         setDragging(false)
+        setEdgePull({ edge: null, amount: 0 })
         return
       }
       setDragY((list[next] || 0) - position)
@@ -136,7 +167,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
     stopMomentum()
     momentumRef.current = requestAnimationFrame(step)
-  }, [setIndex, stopMomentum])
+  }, [pulseEdge, setIndex, stopMomentum])
 
   const finishPointer = useCallback((event) => {
     if (!activeRef.current || (event && pointerRef.current !== event.pointerId)) return
@@ -159,10 +190,12 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (gestureTargetRef.current) { gestureTargetRef.current.dataset.queueMoved = 'false'; gestureTargetRef.current.dataset.reorderArmed = 'false' }
     gestureTargetRef.current = null
     velocityRef.current = 0
+    edgeNotifiedRef.current = false
     if (!flung) {
       setDragY(0)
       setDragging(false)
     }
+    setEdgePull({ edge: null, amount: 0 })
     try { event?.currentTarget?.releasePointerCapture(event.pointerId) } catch {}
     if (wasMoved) window.setTimeout(() => { suppressClickRef.current = false }, 0)
   }, [setIndex, startMomentum])
@@ -192,6 +225,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       wheelPositionRef.current = null
       setDragY(0)
       setDragging(false)
+      setEdgePull({ edge: null, amount: 0 })
     }, 95)
   }, [setIndex, stopMomentum])
 
@@ -206,6 +240,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     index,
     dragY,
     dragging,
+    edge: edgePull.edge,
+    edgeAmount: edgePull.amount,
     setIndex,
     rowHeight,
     gestureProps: {

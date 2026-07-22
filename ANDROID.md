@@ -6,31 +6,24 @@
 - `vite.config.js` — `CAPACITOR_BUILD=1`이면 상대 경로(`./`)로 빌드 (GitHub Pages용 `/kkiu-todo/` 베이스와 분리)
 - `package.json` — `build:android`, `android:add`, `android:open` 스크립트 추가
 
-> ⚠️ Capacitor 패키지는 일부러 `package.json` dependencies에 넣지 않았습니다.
-> GitHub Actions가 `pnpm install --frozen-lockfile`을 사용하므로, 로컬에서 아래 1단계로 설치한 뒤
-> `package.json`과 `pnpm-lock.yaml`이 함께 변경된 상태로 커밋하면 CI도 그대로 통과합니다.
+> Capacitor 패키지는 재현 가능한 빌드를 위해 `package.json`과 `pnpm-lock.yaml`에 정확한 버전으로 고정합니다.
 
 ## 사전 준비물
 
 - Node.js 22+, pnpm 10+
-- Android Studio (최신 안정버전) + Android SDK 34+
+- Android Studio (최신 안정버전) + Android SDK 36+
 - JDK 17
 
-## 1) Capacitor 설치
+## 1) 의존성 설치
 
 ```bash
-pnpm add @capacitor/core @capacitor/android
-pnpm add -D @capacitor/cli
+pnpm install --frozen-lockfile
 ```
 
 ## 2) 앱용 웹 빌드 (상대 경로 베이스)
 
 ```bash
-# macOS/Linux
-CAPACITOR_BUILD=1 pnpm build
-
-# Windows (PowerShell)
-$env:CAPACITOR_BUILD="1"; pnpm build
+pnpm build:android:web
 ```
 
 결과물은 `dist/`에 생성되며 `capacitor.config.json`의 `webDir`가 이미 `dist`를 가리킵니다.
@@ -48,7 +41,9 @@ npx cap sync android   # 웹 빌드 변경 때마다
 npx cap open android   # Android Studio에서 열기 → Run 또는 Build > Generate Signed App Bundle/APK
 ```
 
-이후에는 `pnpm build:android` 한 번으로 빌드+동기화가 됩니다.
+Android 프로젝트를 추가한 이후에는 `pnpm build:android` 한 번으로 웹 빌드와 Android 동기화를 수행합니다.
+
+전체 출시 단계와 정책 체크리스트는 [ANDROID_RELEASE_PLAN.md](./ANDROID_RELEASE_PLAN.md)를 참고하세요.
 
 ## Supabase 로그인 관련 메모
 

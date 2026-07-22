@@ -50,7 +50,7 @@ function AccountView({ user, language, onSignOut, onClose }) {
  const en = language === 'en'
  return <div className="info-doc">
   <section><h4>{en ? 'Signed-in account' : '로그인 계정'}</h4><p className="info-strong">{user?.email || (en ? 'Not signed in · stored on this device only' : '로그인하지 않음 · 이 기기에만 저장 중')}</p></section>
-  <section><h4>{en ? 'Where your data lives' : '데이터 저장 위치'}</h4><p>{user ? (en ? 'Your to-dos sync to the kkiu cloud (Supabase) and are cached on this device.' : '할 일이 끼우 클라우드(Supabase)에 동기화되고, 이 기기에도 캠시돼요.') : (en ? 'All to-dos are stored only in this browser. Back up before switching devices.' : '모든 할 일이 이 브라우저에만 저장돼요. 기기를 바꾸기 전에 백업해 주세요.')}</p></section>
+  <section><h4>{en ? 'Where your data lives' : '데이터 저장 위치'}</h4><p>{user ? (en ? 'Your to-dos sync to the kkiu cloud (Supabase) and are cached on this device.' : '할 일이 끼우 클라우드(Supabase)에 동기화되고, 이 기기에도 캐시돼요.') : (en ? 'All to-dos are stored only in this browser. Back up before switching devices.' : '모든 할 일이 이 브라우저에만 저장돼요. 기기를 바꾸기 전에 백업해 주세요.')}</p></section>
   <section><h4>{en ? 'Manage' : '관리'}</h4><ul><li>{en ? 'Back up or restore data anytime from the More tab.' : '더보기 탭에서 언제든 데이터를 백업·복원할 수 있어요.'}</li><li>{en ? 'Clearing the app or browser data removes local to-dos.' : '앱/브라우저 데이터를 지우면 이 기기의 할 일이 사라져요.'}</li></ul></section>
   {user && onSignOut && <button className="mbtn info-signout" data-act="signout" onClick={() => { onClose?.(); onSignOut() }}>{en ? 'Sign out' : '로그아웃'}</button>}
  </div>

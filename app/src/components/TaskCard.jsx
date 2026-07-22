@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowIcon, CheckIcon, GripIcon } from './Icons.jsx'
+import OverflowText from './OverflowText.jsx'
 
 function splitAtWidth(text, width) {
   if (!width || typeof document === 'undefined') return [text, '']
@@ -18,7 +19,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   const [leaving, setLeaving] = useState(false)
   const [titleWidth, setTitleWidth] = useState(0)
   const input = useRef(null); const cardRef = useRef(null); const titleRef = useRef(null)
-  const hold = useRef(null); const point = useRef(null); const grip = useRef(null)
+  const hold = useRef(null); const point = useRef(null); const grip = useRef(null); const suppressHoldClick = useRef(false)
 
   useEffect(() => { if (editing) { input.current?.focus(); input.current?.setSelectionRange(value.length, value.length) } }, [editing])
   useLayoutEffect(() => {
@@ -28,36 +29,53 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     measure(); const observer = new ResizeObserver(measure); observer.observe(element); return () => observer.disconnect()
   }, [editing])
   useEffect(() => { if (!editing) return undefined; const outside = (event) => { if (!cardRef.current?.contains(event.target)) { setValue(task.title); setEditing(false) } }; document.addEventListener('pointerdown', outside, true); return () => document.removeEventListener('pointerdown', outside, true) }, [editing, task.title])
-  useEffect(() => () => { window.clearTimeout(hold.current); window.clearTimeout(grip.current?.timer) }, [])
-
   const save = () => { const next = value.trim(); if (next) onEdit(task.id, next); setEditing(false) }
-  const clearHold = () => {
+  const clearHold = (event) => {
+    const current = point.current
+    if (event && current?.pointerId !== event.pointerId) return
     window.clearTimeout(hold.current)
     hold.current = null
     point.current = null
-    window.removeEventListener('pointermove', watchHold, true)
-    window.removeEventListener('pointerup', clearHold, true)
-    window.removeEventListener('pointercancel', clearHold, true)
-  }
-  const watchHold = (event) => {
-    const p = point.current
-    if (!p || p.pointerId !== event.pointerId) return
-    if (Math.abs(event.clientX - p.x) >= 8 || Math.abs(event.clientY - p.y) >= 8) clearHold()
+    current?.cleanup?.()
+    if (current?.triggered) window.setTimeout(() => { suppressHoldClick.current = false }, 0)
   }
   const startHold = (event) => {
     if (editing || task.done || selecting || event.target.closest('.grip,input,textarea')) return
     clearHold()
-    point.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
-    window.addEventListener('pointermove', watchHold, true)
-    window.addEventListener('pointerup', clearHold, true)
-    window.addEventListener('pointercancel', clearHold, true)
+    const state = { x: event.clientX, y: event.clientY, pointerId: event.pointerId, triggered: false, cleanup: null }
+    const move = (nextEvent) => {
+      if (point.current !== state || state.pointerId !== nextEvent.pointerId || state.triggered) return
+      if (Math.abs(nextEvent.clientX - state.x) >= 8 || Math.abs(nextEvent.clientY - state.y) >= 8) clearHold(nextEvent)
+    }
+    const end = (nextEvent) => { if (point.current === state) clearHold(nextEvent) }
+    state.cleanup = () => {
+      window.removeEventListener('pointermove', move, true)
+      window.removeEventListener('pointerup', end, true)
+      window.removeEventListener('pointercancel', end, true)
+    }
+    point.current = state
+    window.addEventListener('pointermove', move, true)
+    window.addEventListener('pointerup', end, true)
+    window.addEventListener('pointercancel', end, true)
     hold.current = window.setTimeout(() => {
-      if (!point.current) return
-      clearHold()
+      const current = point.current
+      if (!current) return
+      hold.current = null
+      current.triggered = true
+      suppressHoldClick.current = true
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20)
       onLongPress?.(task.id)
     }, 460)
   }
+
+  useEffect(() => () => {
+    window.clearTimeout(hold.current)
+    window.clearTimeout(grip.current?.timer)
+    point.current?.cleanup?.()
+    const current = grip.current
+    if (current?.element) { current.element.dataset.reorderArmed = 'false'; current.element.dataset.queueMoved = 'false' }
+    hold.current = null; point.current = null; grip.current = null; suppressHoldClick.current = false
+  }, [])
 
   const startGrip = (event) => {
     if (!reorderable || selecting) return
@@ -96,11 +114,11 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   const finish = () => { if (task.done || selecting) return; setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
   const assignedMembers = (task.assignees || [task.assignee]).map((id) => members.find((member) => member.id === id)).filter(Boolean)
   const [line1, line2] = splitAtWidth(task.title, titleWidth)
-  return <article ref={cardRef} data-task-id={task.id} className={`card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${selected ? ' sel-on' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}`} onPointerDown={startHold}>
+  return <article ref={cardRef} data-task-id={task.id} className={`card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${selected ? ' sel-on' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}`} onPointerDown={startHold} onClickCapture={(event) => { if (suppressHoldClick.current) { event.preventDefault(); event.stopPropagation() } }}>
     <button className={`ck${task.done || selected || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={selecting ? `${selected ? (language==='en'?'Deselect':'선택 해제') : (language==='en'?'Select':'선택')}: ${task.title}` : `${language==='en'?'Complete to-do':'할 일 완료'}: ${task.title}`} data-act={selecting ? 'sel' : 'complete'} data-id={task.id} onClick={() => selecting ? onSelect(task.id) : finish()}>{(task.done || selected || leaving) && <CheckIcon />}</button>
     {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
     <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" data-act="title" data-id={task.id} onClick={() => selecting ? onSelect(task.id) : !task.done && setEditing(true)}><span className="t-main">{line1}</span>{line2 && <span className="t-rest">{line2}</span>}</button>}</div>
     <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className="who">{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className="who" key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
-    {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{members.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span>{member.name}</button>)}</div>}
+    {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{members.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText></button>)}</div>}
   </article>
 }

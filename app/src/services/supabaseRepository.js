@@ -93,6 +93,7 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
     code: circle.invite_code,
     createdBy: circle.created_by,
     unread: 0,
+    unreadDone: 0,
     memberUnread: {},
     members: [{ id: userId, name: profileName, emoji: profileEmoji, role: 'owner' }],
     tasks: [],
@@ -169,10 +170,17 @@ export async function updatePersonalTask(taskId, changes) {
 
 export const updateTask = updatePersonalTask
 
-export async function updatePersonalPositions(tasks) {
+export async function updatePersonalPositions(tasks, notifyTaskId = null) {
   const client = requireSupabase()
-  const results = await Promise.all(tasks.map((task, position) => client.from('tasks').update({ position }).eq('id', task.id)))
+  const notificationAt = notifyTaskId ? new Date().toISOString() : null
+  const results = await Promise.all(tasks.map((task, position) => client.from('tasks').update(task.id === notifyTaskId ? { position, notification_at: notificationAt } : { position }).eq('id', task.id)))
   const failed = results.find((result) => result.error)
+  if (failed?.error && notifyTaskId && (failed.error.code === 'PGRST204' || /notification_at/i.test(failed.error.message || ''))) {
+    const fallback = await Promise.all(tasks.map((task, position) => client.from('tasks').update({ position }).eq('id', task.id)))
+    const fallbackFailed = fallback.find((result) => result.error)
+    if (fallbackFailed?.error) throw fallbackFailed.error
+    return
+  }
   if (failed?.error) throw failed.error
 }
 

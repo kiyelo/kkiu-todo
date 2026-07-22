@@ -5,18 +5,29 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "build:android": "CAPACITOR_BUILD=1 vite build && cap sync android",
+    "verify:web": "vite build",
+    "build:android:web": "cross-env CAPACITOR_BUILD=1 vite build",
+    "build:android": "pnpm run build:android:web && cap sync android",
     "android:add": "cap add android",
+    "android:run": "cap run android",
     "android:open": "cap open android"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.7",
-    "@vitejs/plugin-react": "latest",
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "vite": "latest"
+    "@capacitor/android": "8.4.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.4.2",
+    "@supabase/supabase-js": "2.110.7",
+    "lucide-react": "1.25.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.4.2",
+    "@vitejs/plugin-react": "6.0.3",
+    "cross-env": "10.1.0",
+    "vite": "8.1.5"
   }
 }
