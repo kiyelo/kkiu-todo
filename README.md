@@ -35,3 +35,7 @@ GitHub Pages 배포 경로는 `vite.config.js`의 `/kkiu-todo/`로 설정되어 
 ## 검수 결과
 
 `qa/PARITY_REPORT.md`, `qa/intent-parity-results.json`, `qa/flow-results.json`, `qa/pixel-diff.json`에 최종 결과가 있습니다.
+
+## 안드로이드 앱
+
+Capacitor 기반 안드로이드 빌드 방법은 [ANDROID.md](./ANDROID.md)를 참고하세요.

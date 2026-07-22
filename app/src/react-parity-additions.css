@@ -14,3 +14,58 @@
 .head.search-mode{padding-top:0!important}.phone.searching .nav{bottom:50px!important}
 
 .member-order-row .who{font-size:12.5px!important}.member-grip{color:var(--faint);font-size:17px;line-height:1}
+
+/* v1.4.0 — multi-assignee composer: selection-order badges + together/each mode radio */
+.asgc{position:relative}
+.asg-order{position:absolute;top:-5px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--accent);color:#fff;font-size:9px;font-weight:850;font-style:normal;display:grid;place-items:center;border:1.5px solid var(--paper);font-variant-numeric:tabular-nums}
+.assign-mode{position:absolute;z-index:5;bottom:calc(100% + 52px);left:2px;right:2px;display:flex;flex-direction:column;gap:4px;padding:7px;border-radius:15px;background:var(--surface);box-shadow:var(--sh-slot);animation:asgmodein .18s ease}
+@keyframes asgmodein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.assign-mode-opt{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--sub);text-align:left;transition:.14s}
+.assign-mode-opt.on{background:var(--accent-soft);color:var(--accent-ink)}
+.assign-mode-opt:active{transform:scale(.985)}
+.assign-mode-opt .asg-radio{flex:none;width:15px;height:15px;border-radius:50%;border:2px solid #d8d0c0;background:transparent;transition:.14s}
+.assign-mode-opt.on .asg-radio{border-color:var(--accent);box-shadow:0 0 0 3.5px var(--accent) inset}
+.assign-mode-opt span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(prefers-color-scheme:dark){.assign-mode-opt .asg-radio{border-color:rgba(235,239,247,.3)}}
+
+/* v1.4.0 — emoji picker category tabs + recent list */
+.emoji-cat-tabs{display:flex;gap:5px;margin:2px 0 9px;overflow-x:auto;scrollbar-width:none;padding:2px 1px;-webkit-overflow-scrolling:touch}
+.emoji-cat-tabs::-webkit-scrollbar{display:none}
+.emoji-cat-tabs button{flex:none;height:32px;padding:0 11px;border-radius:999px;background:rgba(70,55,30,.05);color:var(--sub);font-size:11.5px;font-weight:750;white-space:nowrap;transition:.14s}
+.emoji-cat-tabs button.on{background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 0 0 1px rgba(10,132,255,.25) inset}
+@media(prefers-color-scheme:dark){.emoji-cat-tabs button{background:rgba(255,255,255,.07)}}
+
+/* v1.4.0 — 트리플매치 슬롯 애니메이션 v3 포팅 (kkiu_custom_emoji_match_animations_v3와 동일) */
+.emoji-slot-btn.combo-triple .emoji-reel:nth-child(2){animation-delay:-.22s!important}
+.emoji-slot-btn.combo-triple .emoji-reel:nth-child(3){animation-delay:-.44s!important}
+.emoji-slot-btn.symbol-moon.combo-triple .emoji-reel{animation:moon-orbit 1.8s ease-in-out infinite}
+.emoji-slot-btn.symbol-orange.combo-triple .emoji-reel{animation:orange-squish 1.35s cubic-bezier(.25,.8,.3,1) infinite}
+.emoji-slot-btn.symbol-leaf.combo-triple .emoji-reel{animation:leaf-breeze 1.6s ease-in-out infinite;transform-origin:50% 80%}
+.emoji-slot-btn.symbol-fire.combo-triple .emoji-reel{animation:fire-flicker 1.05s cubic-bezier(.3,.7,.25,1) infinite;transform-origin:50% 90%}
+.emoji-slot-btn.symbol-cat.combo-triple .emoji-reel{animation:cat-curious 1.9s cubic-bezier(.22,.78,.24,1) infinite}
+.emoji-slot-btn.symbol-sock.combo-triple .emoji-reel{animation:sock-flap 1.45s ease-in-out infinite;transform-origin:60% 25%}
+.emoji-slot-btn.symbol-frog.combo-triple .emoji-reel{animation:frog-jump-fluid 1.75s cubic-bezier(.45,0,.2,1) infinite}
+.emoji-slot-btn.symbol-frog.combo-triple .emoji-reel:nth-child(2){animation-delay:-.10s!important}
+.emoji-slot-btn.symbol-frog.combo-triple .emoji-reel:nth-child(3){animation-delay:-.20s!important}
+@keyframes moon-orbit{0%,100%{transform:translate(-2px,1px) rotate(-5deg);filter:drop-shadow(0 0 2px rgba(120,169,255,.35))}35%{transform:translate(1px,-4px) rotate(1deg);filter:drop-shadow(0 0 9px rgba(140,187,255,.72))}70%{transform:translate(3px,-1px) rotate(5deg)}}
+@keyframes orange-squish{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 1px 2px rgba(255,149,0,.3))}28%{transform:translateY(2px) scale(1.08,.88)}52%{transform:translateY(-5px) scale(.96,1.16);filter:drop-shadow(0 5px 9px rgba(255,149,0,.6))}72%{transform:translateY(1px) scale(1.04,.96)}}
+@keyframes leaf-breeze{0%,100%{transform:rotate(-9deg) translateY(1px);filter:drop-shadow(0 1px 2px rgba(48,209,88,.24))}32%{transform:rotate(5deg) translateY(-2px)}65%{transform:rotate(11deg) translateY(-3px);filter:drop-shadow(0 0 8px rgba(48,209,88,.56))}}
+@keyframes fire-flicker{0%,100%{transform:translateY(1px) rotate(-3deg) scale(1,.96);filter:drop-shadow(0 0 3px rgba(255,138,61,.6))}28%{transform:translateY(-3px) rotate(4deg) scale(.94,1.12);filter:drop-shadow(0 0 10px rgba(255,74,31,.85))}58%{transform:translateY(-1px) rotate(-2deg) scale(1.05,.98)}80%{transform:translateY(-4px) rotate(2deg) scale(.97,1.08)}}
+@keyframes cat-curious{0%,100%{transform:translate(0,0) rotate(0) scale(1);filter:drop-shadow(0 1px 2px rgba(175,120,70,.28))}16%{transform:translate(-2px,1px) rotate(-8deg) scale(1.02,.98)}30%{transform:translate(2px,0) rotate(6deg) scale(1.01,.99)}44%{transform:translate(-1px,2px) rotate(-3deg) scale(1.05,.92)}58%{transform:translate(4px,-5px) rotate(8deg) scale(.98,1.08);filter:drop-shadow(0 6px 8px rgba(175,120,70,.44))}72%{transform:translate(2px,-2px) rotate(2deg) scale(1.01,1.01)}86%{transform:translate(0,1px) rotate(-2deg) scale(1.03,.96)}}
+@keyframes sock-flap{0%,100%{transform:translateY(0) rotate(-8deg);filter:drop-shadow(0 1px 2px rgba(88,86,214,.28))}30%{transform:translateY(-2px) rotate(11deg)}55%{transform:translateY(-4px) rotate(-4deg) scale(1.08);filter:drop-shadow(0 0 8px rgba(88,86,214,.58))}78%{transform:translateY(-1px) rotate(7deg)}}
+@keyframes frog-jump-fluid{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 1px 2px rgba(52,199,89,.28))}24%{transform:translateY(1.5px) scale(1.06,.94)}48%{transform:translateY(-6px) scale(.98,1.06);filter:drop-shadow(0 6px 9px rgba(52,199,89,.46))}72%{transform:translateY(-1.5px) scale(1.01,.99)}88%{transform:translateY(.8px) scale(1.025,.975)}}
+/* 일회성 트리플 당첨 진입 효과 */
+.emoji-slot-btn.trigger{animation:match-hit .48s cubic-bezier(.2,.8,.25,1)}
+@keyframes match-hit{0%{transform:scale(.98);box-shadow:0 0 0 0 rgba(10,132,255,0),var(--sh-slot)}45%{transform:scale(1.025);box-shadow:0 0 0 2px rgba(10,132,255,.32),0 10px 34px rgba(10,132,255,.28),var(--sh-slot)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.emoji-slot-btn.trigger{animation:none!important}}
+
+/* v1.4.0 — 계정/약관/개인정보/문의 정보 모달 */
+.info-modal .info-body{max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.info-doc section{margin:0 0 14px}
+.info-doc h4{margin:0 0 5px;font-size:12.5px;letter-spacing:-.02em}
+.info-doc p{margin:0 0 6px;color:var(--ink2);font-size:12px;line-height:1.62}
+.info-doc ul{margin:0;padding-left:16px;color:var(--ink2);font-size:12px;line-height:1.62}
+.info-doc li{margin:2px 0}
+.info-strong{font-weight:750;color:var(--ink)}
+.info-mail{color:var(--accent-ink);font-weight:750;text-decoration:underline}
+.info-signout{width:100%;margin-top:2px;background:rgba(255,59,48,.08);color:#c03b31;font-weight:750}

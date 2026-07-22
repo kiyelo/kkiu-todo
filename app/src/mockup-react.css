@@ -660,4 +660,3 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 .identity-actions .seltxt{height:46px;padding:0 14px;border-radius:14px;text-align:center;background:rgba(70,55,30,.06);font-size:13.5px;font-weight:780;color:var(--ink2)}
 .identity-actions .identity-save{background:var(--accent);color:#fff;box-shadow:0 7px 15px rgba(10,132,255,.22)}
 @media(max-width:350px){.modal:has(.identity-editor){width:calc(100vw - 18px);max-height:90vh}.identity-editor{max-height:90vh}.identity-editor-head{padding:15px 15px 12px}.identity-editor-body{padding:13px 15px 11px}.identity-actions{padding:10px 15px calc(13px + var(--safe))}.identity-emoji-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;max-height:190px}}
-

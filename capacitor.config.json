@@ -1,0 +1,12 @@
+{
+  "appId": "app.kkiu.todo",
+  "appName": "끼우",
+  "webDir": "dist",
+  "backgroundColor": "#ffffff",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

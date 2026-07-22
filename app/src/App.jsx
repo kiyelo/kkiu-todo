@@ -79,20 +79,28 @@ export default function App() {
     return { ...current, circles: current.circles.map((item) => item.id === circle?.id ? { ...item, tasks: updater(item.tasks) } : item) }
   })
 
-  const addTask = (title, assignee = 'me', position) => {
-    const task = { id: crypto.randomUUID(), title, assignee, done: false, createdAt: Date.now() }
-    setNewTaskId(task.id); window.setTimeout(() => setNewTaskId((current) => current === task.id ? null : current), 1800)
+  const addTask = (title, assignee = 'me', position, mode = 'together') => {
+    const picked = (Array.isArray(assignee) ? assignee : [assignee]).filter(Boolean)
+    const owners = picked.length ? picked : ['me']
+    const stamp = Date.now()
+    // "each" duplicates the task per assignee in selection order (selection order = queue priority).
+    const created = mode === 'each' && owners.length > 1
+      ? owners.map((member, index) => ({ id: crypto.randomUUID(), title, assignee: member, done: false, createdAt: stamp + index }))
+      : [{ id: crypto.randomUUID(), title, assignee: owners[0], ...(owners.length > 1 ? { assignees: owners } : {}), done: false, createdAt: stamp }]
+    setNewTaskId(created[0].id); window.setTimeout(() => setNewTaskId((current) => current === created[0].id ? null : current), 1800)
     const active = tasks.filter((item) => !item.done)
     const completed = tasks.filter((item) => item.done)
     const at = Math.max(0, Math.min(position, active.length))
     const next = [...active]
-    next.splice(at, 0, task)
+    next.splice(at, 0, ...created)
     updateTasks(() => [...next, ...completed])
-    setQueuePositions((current) => ({ ...current, [tab]: at + 1 }))
-    setToast(language === 'en' ? `Inserted at #${at + 1}` : `${at + 1}번째에 끼웠어요`)
+    setQueuePositions((current) => ({ ...current, [tab]: at + created.length }))
+    setToast(created.length > 1
+      ? (language === 'en' ? `Inserted ${created.length} tasks from #${at + 1}` : `${at + 1}번째부터 할 일 ${created.length}개를 끼웠어요`)
+      : (language === 'en' ? `Inserted at #${at + 1}` : `${at + 1}번째에 끼웠어요`))
     if (session?.user) {
-      const create = tab === 'home' ? createPersonalTask(session.user.id, task, at) : createCircleTask(session.user.id, circle.id, task, at)
-      create.then(() => updateTaskPositions(next)).catch(reportSyncError)
+      const creates = created.map((task, index) => tab === 'home' ? createPersonalTask(session.user.id, task, at + index) : createCircleTask(session.user.id, circle.id, task, at + index))
+      Promise.all(creates).then(() => updateTaskPositions(next)).catch(reportSyncError)
     }
   }
 
@@ -270,7 +278,7 @@ export default function App() {
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} onStub={setToast} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
+      {remoteLoading ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} onCopyCode={copyInviteCode} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}

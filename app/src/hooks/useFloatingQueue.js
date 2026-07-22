@@ -31,9 +31,20 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const suppressClickRef = useRef(false)
   const wheelPositionRef = useRef(null)
   const wheelTimerRef = useRef(null)
+  const momentumRef = useRef(null)
+
+  const stopMomentum = useCallback(() => {
+    if (momentumRef.current !== null) {
+      cancelAnimationFrame(momentumRef.current)
+      momentumRef.current = null
+    }
+  }, [])
 
   useEffect(() => { indexRef.current = index }, [index])
-  useEffect(() => () => window.clearTimeout(wheelTimerRef.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(wheelTimerRef.current)
+    if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current)
+  }, [])
   const notify = useCallback(() => {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(8)
   }, [])
@@ -50,6 +61,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const onPointerDownCapture = useCallback((event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"]')) return
+    stopMomentum()
+    setDragging(false)
     const current = positionsRef.current[indexRef.current] || 0
     activeRef.current = true
     pointerRef.current = event.pointerId
@@ -64,7 +77,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (gestureTargetRef.current) gestureTargetRef.current.dataset.queueMoved = 'false'
     suppressClickRef.current = false
     setDragY(0)
-  }, [])
+  }, [stopMomentum])
 
   const onPointerMoveCapture = useCallback((event) => {
     if (!activeRef.current || pointerRef.current !== event.pointerId) return
@@ -94,15 +107,51 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     setDragY((list[next] || 0) - effective)
   }, [setIndex])
 
+  // Momentum flick: decay velocity with friction so vertical swipes keep gliding
+  // after release (할일/끼리/더보기 공통). Friction 0.994^ms integrates to ~166ms of
+  // travel, matching the previous single 165ms projection for gentle releases.
+  const startMomentum = useCallback((initialVelocity) => {
+    let velocity = initialVelocity
+    let position = effectivePositionRef.current
+    let lastTime = performance.now()
+    const step = (now) => {
+      const list = positionsRef.current
+      const min = list[0] || 0
+      const max = list[list.length - 1] || 0
+      const elapsed = Math.min(50, Math.max(1, now - lastTime))
+      lastTime = now
+      position = clamp(position - velocity * elapsed, min, max)
+      if (position === min || position === max) velocity = 0
+      velocity *= Math.pow(0.994, elapsed)
+      const next = nearest(list, position)
+      setIndex(next)
+      if (Math.abs(velocity) < 0.02) {
+        momentumRef.current = null
+        setDragY(0)
+        setDragging(false)
+        return
+      }
+      setDragY((list[next] || 0) - position)
+      momentumRef.current = requestAnimationFrame(step)
+    }
+    stopMomentum()
+    momentumRef.current = requestAnimationFrame(step)
+  }, [setIndex, stopMomentum])
+
   const finishPointer = useCallback((event) => {
     if (!activeRef.current || (event && pointerRef.current !== event.pointerId)) return
     const wasMoved = movedRef.current
     const list = positionsRef.current
+    let flung = false
     if (wasMoved) {
-      const min = list[0] || 0
-      const max = list[list.length - 1] || 0
-      const projected = clamp(effectivePositionRef.current - velocityRef.current * 165, min, max)
-      setIndex(nearest(list, projected))
+      const stale = performance.now() - lastTimeRef.current > 90
+      const releaseVelocity = stale ? 0 : velocityRef.current
+      if (Math.abs(releaseVelocity) > 0.05) {
+        startMomentum(releaseVelocity)
+        flung = true
+      } else {
+        setIndex(nearest(list, effectivePositionRef.current))
+      }
     }
     activeRef.current = false
     pointerRef.current = null
@@ -110,11 +159,13 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (gestureTargetRef.current) { gestureTargetRef.current.dataset.queueMoved = 'false'; gestureTargetRef.current.dataset.reorderArmed = 'false' }
     gestureTargetRef.current = null
     velocityRef.current = 0
-    setDragY(0)
-    setDragging(false)
+    if (!flung) {
+      setDragY(0)
+      setDragging(false)
+    }
     try { event?.currentTarget?.releasePointerCapture(event.pointerId) } catch {}
     if (wasMoved) window.setTimeout(() => { suppressClickRef.current = false }, 0)
-  }, [setIndex])
+  }, [setIndex, startMomentum])
 
   const onClickCapture = useCallback((event) => {
     if (!suppressClickRef.current) return
@@ -125,6 +176,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const onWheel = useCallback((event) => {
     if (Math.abs(event.deltaY) < 2) return
     event.preventDefault()
+    stopMomentum()
     const list = positionsRef.current
     const min = list[0] || 0
     const max = list[list.length - 1] || 0
@@ -141,7 +193,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       setDragY(0)
       setDragging(false)
     }, 95)
-  }, [setIndex])
+  }, [setIndex, stopMomentum])
 
   const onKeyDown = useCallback((event) => {
     if (event.key === 'ArrowUp') { event.preventDefault(); setIndex(indexRef.current - 1) }
