@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BottomNav from './components/BottomNav.jsx'
 import AuthScreen from './components/AuthScreen.jsx'
+import TermsGate from './components/TermsGate.jsx'
 import Header from './components/Header.jsx'
 import MoreScreen from './components/MoreScreen.jsx'
 import QueueScreen from './components/QueueScreen.jsx'
@@ -8,6 +9,7 @@ import { CircleEditor, CirclePicker, CompletedSheet, ConfirmDialog } from './com
 import { starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
 import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
+import { hasAcceptedRequiredTerms, loadAcceptedTermsVersions } from './services/termsRepository.js'
 import { classifySyncError, userFacingSyncError } from './services/syncError.js'
 import { buildInviteMessage, clearPendingInvite, generateInviteCode, normalizeInviteCode, readPendingInvite } from './services/invite.js'
 import { createCircle, createCircleTask, createPersonalTask, deleteCircle, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateMemberPositions, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
@@ -24,6 +26,7 @@ const withUnreadCounts = (circle) => {
 
 export default function App() {
   const [session, setSession] = useState(undefined)
+  const [termsAccepted, setTermsAccepted] = useState(undefined)
   const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
   const [syncError, setSyncError] = useState('')
   const [toast, setToast] = useState('')
@@ -66,6 +69,18 @@ export default function App() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => listener.subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !session?.user) { setTermsAccepted(undefined); return undefined }
+    let cancelled = false
+    loadAcceptedTermsVersions(session.user.id)
+      .then((accepted) => { if (!cancelled) setTermsAccepted(hasAcceptedRequiredTerms(accepted)) })
+      .catch((error) => {
+        reportSyncError(error)
+        if (!cancelled) setTermsAccepted(true)
+      })
+    return () => { cancelled = true }
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) return
@@ -326,6 +341,16 @@ export default function App() {
 
   if (hasSupabaseConfig && session === undefined) return <div className="app-shell"><section className="phone loading-screen">끼우를 준비하고 있어요…</section></div>
   if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />
+
+  if (hasSupabaseConfig && session?.user && termsAccepted === false) {
+    return (
+      <TermsGate
+        userId={session.user.id}
+        language={settingValues.language}
+        onAccepted={() => setTermsAccepted(true)}
+      />
+    )
+  }
 
   return <div className="wrap">
     <section className={`phone${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}${query!==null?' searching':''}`} onPointerDownCapture={startSwipe} onPointerUpCapture={endSwipe} onPointerCancelCapture={() => { swipeRef.current = null }}>
