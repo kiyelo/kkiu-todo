@@ -1098,6 +1098,18 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 .circle-picker-row .circle-badge{position:static;justify-self:end}
 .completed-head-button .alert-dot{position:absolute;top:5px;right:5px;border:2px solid var(--surface)}
 
+.auth-hero { text-align: center; margin-bottom: 24px; }
+.auth-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+.auth-hero p { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+.auth-invite-hint { color: var(--accent); font-weight: 600; }
+.auth-social { display: flex; flex-direction: column; gap: 10px; }
+.auth-social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 15px; font-weight: 750; font-size: 14.5px; border: 1px solid transparent; }
+.auth-social-btn:disabled { opacity: .55; }
+.auth-social-google { background: #fff; color: #1f1f1f; border-color: #dadce0; }
+.auth-social-apple { background: #000; color: #fff; }
+.auth-social-kakao { background: #FEE500; color: #191600; }
+.auth-message { margin-top: 14px; text-align: center; color: #d0453d; font-size: 13px; }
+
 /* Circle title: preserve the full button hit area while keeping the chevron attached to text. */
 .circle-head .ttlbtn{align-self:stretch}
 .circle-title-control{display:flex;align-items:center;flex:0 1 auto;width:max-content;max-width:calc(100% - 31px);min-width:0}
