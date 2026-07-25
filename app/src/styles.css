@@ -1143,3 +1143,40 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 .terms-gate-error { color: #d0453d; font-size: 13px; margin: 0 0 10px; }
 .terms-gate-submit { width: 100%; height: 50px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 800; }
 .terms-gate-submit:disabled { opacity: .5; }
+
+.account-danger-zone {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.06);
+}
+.account-danger-zone h3 {
+  margin: 0 0 8px;
+  color: #dc2626;
+  font-size: 14px;
+}
+.account-danger-zone p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.account-danger-button {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.account-danger-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.account-danger-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin: 0 0 12px;
+}

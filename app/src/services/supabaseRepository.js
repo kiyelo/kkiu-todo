@@ -230,3 +230,9 @@ export async function loadCompletionEvents(userId, limit = 100) {
   if (error) throw error
   return data
 }
+
+export async function deleteMyAccount() {
+  const { data, error } = await requireSupabase().rpc('delete_my_account')
+  if (error) throw error
+  return data
+}

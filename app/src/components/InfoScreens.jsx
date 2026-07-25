@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { REACT_VERSION } from '../versionHistory.js'
+import { ConfirmDialog } from './Sheets.jsx'
+import { deleteMyAccount } from '../services/supabaseRepository.js'
 
 // TODO: 실제 운영 문의 주소로 교체하세요.
 const CONTACT_EMAIL = 'contact@kkiu.app'
@@ -48,11 +51,63 @@ function Doc({ sections }) {
 
 function AccountView({ user, language, onSignOut, onClose }) {
  const en = language === 'en'
+ const [confirmingDelete, setConfirmingDelete] = useState(false)
+ const [deletingAccount, setDeletingAccount] = useState(false)
+ const [deleteError, setDeleteError] = useState(null)
+
+ const handleDeleteAccount = async () => {
+  if (deletingAccount) return
+  setDeletingAccount(true)
+  setDeleteError(null)
+  try {
+   await deleteMyAccount()
+   setConfirmingDelete(false)
+   onClose?.()
+   onSignOut?.()
+  } catch (err) {
+   setDeletingAccount(false)
+   setDeleteError(en
+    ? 'Failed to delete your account. Please try again.'
+    : '회원 탈퇴에 실패했어요. 다시 시도해 주세요.')
+  }
+ }
+
  return <div className="info-doc">
   <section><h4>{en ? 'Signed-in account' : '로그인 계정'}</h4><p className="info-strong">{user?.email || (en ? 'Not signed in · stored on this device only' : '로그인하지 않음 · 이 기기에만 저장 중')}</p></section>
   <section><h4>{en ? 'Where your data lives' : '데이터 저장 위치'}</h4><p>{user ? (en ? 'Your to-dos sync to the kkiu cloud (Supabase) and are cached on this device.' : '할 일이 끼우 클라우드(Supabase)에 동기화되고, 이 기기에도 캐시돼요.') : (en ? 'All to-dos are stored only in this browser. Back up before switching devices.' : '모든 할 일이 이 브라우저에만 저장돼요. 기기를 바꾸기 전에 백업해 주세요.')}</p></section>
   <section><h4>{en ? 'Manage' : '관리'}</h4><ul><li>{en ? 'Back up or restore data anytime from the More tab.' : '더보기 탭에서 언제든 데이터를 백업·복원할 수 있어요.'}</li><li>{en ? 'Clearing the app or browser data removes local to-dos.' : '앱/브라우저 데이터를 지우면 이 기기의 할 일이 사라져요.'}</li></ul></section>
   {user && onSignOut && <button className="mbtn info-signout" data-act="signout" onClick={() => { onClose?.(); onSignOut() }}>{en ? 'Sign out' : '로그아웃'}</button>}
+  {user && (
+   <div className="account-danger-zone">
+    <h3>{en ? 'Delete account' : '회원 탈퇴'}</h3>
+    <p>
+     {en
+      ? 'This permanently deletes your account and personal to-dos. Circle data you own may transfer to another member.'
+      : '계정과 개인 할 일이 영구적으로 삭제돼요. 소유한 끼리 데이터는 다른 멤버에게 이전될 수 있어요.'}
+    </p>
+    {deleteError && <p className="account-danger-error">{deleteError}</p>}
+    <button
+     type="button"
+     className="account-danger-button"
+     disabled={deletingAccount}
+     onClick={() => setConfirmingDelete(true)}
+    >
+     {en ? 'Delete my account' : '회원 탈퇴하기'}
+    </button>
+   </div>
+  )}
+  {confirmingDelete && (
+   <ConfirmDialog
+    title={en ? 'Delete your account?' : '계정을 삭제할까요?'}
+    message={en
+     ? 'This cannot be undone. Your personal to-dos will be deleted and you will be signed out immediately.'
+     : '이 작업은 되돌릴 수 없어요. 개인 할 일이 삭제되고 즉시 로그아웃돼요.'}
+    danger
+    language={language}
+    onCancel={() => { if (!deletingAccount) setConfirmingDelete(false) }}
+    onConfirm={handleDeleteAccount}
+   />
+  )}
  </div>
 }
 
