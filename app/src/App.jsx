@@ -48,12 +48,15 @@ export default function App() {
   const [newTaskIds, setNewTaskIds] = useState(() => new Set())
   const newTaskId = newTaskIds
   const [completedFocusId, setCompletedFocusId] = useState(null)
+  const [pendingCompletedDelete, setPendingCompletedDelete] = useState(null)
   const [testMode, setTestMode] = useState(false)
   const swipeRef = useRef(null)
   const authRecoveryRef = useRef(false)
   const testSnapshotRef = useRef(null)
   const activeReadScopeRef = useRef(null)
   const completedReadScopeRef = useRef(null)
+  const completedDeleteRef = useRef(null)
+  const completedDeleteTimerRef = useRef(null)
   const remoteUser = testMode ? null : session?.user
   const actorId = remoteUser?.id || 'me'
 
@@ -236,8 +239,44 @@ export default function App() {
     setCircleId(found.id); setTab('circle'); setCirclePickerOpen(false); finishPendingInvite(); setToast(language === 'en' ? `Joined '${found.name}'` : `${found.name}에 참여했어요`); return true
   }
   const completed = tasks.filter((task) => task.done)
-  const clearCompleted = (ids = completed.map((task) => task.id)) => { const idSet = new Set(ids); updateTasks((current) => current.filter((task) => !idSet.has(task.id))); if (remoteUser) deleteTasks(ids).catch(reportSyncError) }
-  const requestClearCompleted = (ids = completed.map((task) => task.id)) => setConfirm({ title: language === 'en' ? 'Clear completed tasks' : '완료 목록 비우기', message: language === 'en' ? `Clear ${ids.length} completed tasks?` : `완료된 할 일 ${ids.length}개를 삭제할까요?`, danger:true, action:()=>clearCompleted(ids) })
+  const commitCompletedDelete = () => {
+    const pending = completedDeleteRef.current
+    if (!pending) return
+    window.clearTimeout(completedDeleteTimerRef.current)
+    completedDeleteRef.current = null
+    completedDeleteTimerRef.current = null
+    setPendingCompletedDelete(null)
+    if (pending.remote) deleteTasks([pending.task.id]).catch(reportSyncError)
+  }
+  const deleteCompletedTask = (id) => {
+    const index = tasks.findIndex((task) => task.id === id)
+    if (index < 0) return
+    commitCompletedDelete()
+    const pending = { task: tasks[index], index, circleId: tab === 'circle' ? circle?.id : null, remote: Boolean(remoteUser) }
+    setData((current) => pending.circleId
+      ? { ...current, circles: current.circles.map((item) => item.id === pending.circleId ? { ...item, tasks: item.tasks.filter((task) => task.id !== id) } : item) }
+      : { ...current, personal: current.personal.filter((task) => task.id !== id) })
+    completedDeleteRef.current = pending
+    setPendingCompletedDelete(pending)
+    completedDeleteTimerRef.current = window.setTimeout(commitCompletedDelete, 5000)
+  }
+  const undoCompletedDelete = () => {
+    const pending = completedDeleteRef.current
+    if (!pending) return
+    window.clearTimeout(completedDeleteTimerRef.current)
+    completedDeleteRef.current = null
+    completedDeleteTimerRef.current = null
+    setPendingCompletedDelete(null)
+    const restore = (items) => {
+      if (items.some((task) => task.id === pending.task.id)) return items
+      const next = [...items]
+      next.splice(Math.min(pending.index, next.length), 0, pending.task)
+      return next
+    }
+    setData((current) => pending.circleId
+      ? { ...current, circles: current.circles.map((item) => item.id === pending.circleId ? { ...item, tasks: restore(item.tasks) } : item) }
+      : { ...current, personal: restore(current.personal) })
+  }
 
   const saveCircle = async ({ name, emoji, profileName, profileEmoji }) => {
     const safeName = limitGraphemes(name?.trim(), CIRCLE_NAME_LIMIT)
@@ -377,9 +416,9 @@ export default function App() {
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
       {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
-      {toast && <div className="app-toast" role="status">{toast}</div>}
+      {pendingCompletedDelete ? <div className="app-toast undo-toast" role="status"><span>{language === 'en' ? 'Completed task deleted' : '완료한 일을 삭제했어요'}</span><button type="button" onClick={undoCompletedDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button></div> : toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} onCopyCode={copyInviteCode} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
-      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={(id) => clearCompleted([id])} onClear={requestClearCompleted} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
+      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
       {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onDelete={circleEditorOpen === 'edit' && (circle?.createdBy === actorId || circle?.members.find((member) => member.id === actorId)?.role === 'owner') ? requestRemoveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
       {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
       </div>

@@ -107,7 +107,7 @@ export default function App() {
   const switchTab = (next) => { setTab(next); setQuery(null); setFilter(null); setCompletedOpen(false); cancelSelect() }
   const selectCircle = (id) => { setCircleId(id); setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === id ? { ...item, unread: 0 } : item) })); setCirclePickerOpen(false); setFilter(null); setQuery(null) }
   const completed = tasks.filter((task) => task.done)
-  const clearCompleted = (ids = completed.map((task) => task.id)) => { const idSet = new Set(ids); updateTasks((current) => current.filter((task) => !idSet.has(task.id))); if (session?.user) deleteTasks(ids).catch(reportSyncError); if (ids.length === completed.length) setCompletedOpen(false) }
+  const deleteCompletedTask = (id) => { updateTasks((current) => current.filter((task) => task.id !== id)); if (session?.user) deleteTasks([id]).catch(reportSyncError) }
 
   const saveCircle = async ({ name, emoji, profileName, profileEmoji }) => {
     const payload = { name, emoji, profileName, profileEmoji }
@@ -163,7 +163,7 @@ export default function App() {
       <BottomNav tab={tab} unread={unread} onChange={switchTab} />
       {toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
-      {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onDelete={(id) => clearCompleted([id])} onClear={() => clearCompleted()} onClose={() => setCompletedOpen(false)} />}
+      {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onDelete={deleteCompletedTask} onClose={() => setCompletedOpen(false)} />}
       {circleEditorOpen && <CircleEditor circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === (session?.user?.id || 'me')) : null} onSave={saveCircle} onDelete={circleEditorOpen === 'edit' ? removeCircle : null} onClose={() => setCircleEditorOpen(null)} />}
     </section>
   </div>
