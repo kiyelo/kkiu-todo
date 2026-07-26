@@ -227,6 +227,27 @@ export async function loadCompletionEvents(userId, limit = 100) {
   return data
 }
 
+export async function loadCircleActivityLogs(circleId, offset = 0, limit = 30) {
+  const cutoff = new Date(Date.now() - 90 * 864e5).toISOString()
+  const { data, error } = await requireSupabase()
+    .from('circle_activity_logs')
+    .select('id,circle_id,actor_id,action,payload,created_at')
+    .eq('circle_id', circleId)
+    .gte('created_at', cutoff)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + limit - 1)
+  if (error) throw error
+  return (data || []).map((row) => ({
+    id: row.id,
+    circleId: row.circle_id,
+    actorId: row.actor_id,
+    action: row.action,
+    payload: row.payload || {},
+    createdAt: row.created_at,
+  }))
+}
+
 export async function regenerateInviteCode(circleId) {
   const { data, error } = await requireSupabase().rpc('regenerate_invite_code', { target_circle_id: circleId })
   if (error) throw error

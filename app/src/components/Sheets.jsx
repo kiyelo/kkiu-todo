@@ -48,7 +48,7 @@ function LegacyCircleEditor({circle,profile,onSave,onInvite,onCopyCode,onReorder
  return <Sheet language={language} title={`${emoji} ${name}`} subtitle={en?'Manage circle':'끼리 관리'} onClose={onClose} hideClose><div className="pcard invite-card"><h3>{en?'Invite code':'초대 코드'}</h3><button className="code-chip invite-code-inline" data-act="invite-code-copy" onClick={()=>onCopyCode?.(circle.code||'KKIU-HOME')}>{circle.code||'KKIU-HOME'} <small>{en?'Tap to copy':'눌러서 복사'}</small></button><p>{en?'Share one message containing the inviter, Circle, deep link, and code.':'초대한 사람·끼리 이름·설치 및 가입 후 복원되는 링크·코드를 한 메시지로 공유합니다.'}</p><button className="rbtn" data-act="invite" onClick={()=>onInvite?.({code:circle.code||'KKIU-HOME',circleName:name,inviterName:pn||profile?.name||'나'})}>{en?'Share invitation':'초대 메시지 공유'} <span>⎘</span></button></div><button className="rbtn identity-setting" data-act="circle-identity-edit" onClick={()=>setEditing('circle')}><span className="mlead"><span className="mrank">{emoji}</span><span><b>{en?'Circle':'끼리'}</b><em>{name}</em></span></span><span>{en?'Edit':'편집'} ›</span></button><button className="rbtn identity-setting" data-act="profile-identity-edit" onClick={()=>setEditing('profile')}><span className="mlead"><span className="mrank">{pe}</span><span><b>{en?'My profile':'내 프로필'}</b><em>{pn}</em></span></span><span>{en?'Edit':'편집'} ›</span></button><div className="ghead"><span>{en?`${circle.members?.length||0} members`:`멤버 ${circle.members?.length||0}명`}</span></div><div className="member-order-list">{circle.members?.map((m,i)=>{const n=circle.tasks.filter(t=>!t.done&&(t.assignee||t.assignees?.[0])===m.id).length;return <div className="suprow member-order-row" data-member={m.id} key={m.id}><span className="who">{m.emoji}</span><span className="smid"><b>{m.name}{i===0?(en?' (me)':' (나)'):''}</b><span>{en?`${n} active`:`진행 중 ${n}개`}</span></span><span className="member-handle">{i===0?(en?'fixed':'고정'):<button className="member-grip" aria-label={`${m.name} 순서 변경`} onPointerDown={e=>{memberDrag.current={id:m.id,pointerId:e.pointerId};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.closest('.member-order-row')?.classList.add('dragging')}} onPointerMove={e=>{if(!memberDrag.current||memberDrag.current.pointerId!==e.pointerId)return;const list=e.currentTarget.closest('.member-order-list'),row=list?.querySelector(`[data-member="${memberDrag.current.id}"]`),target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.member-order-row');if(!row||!target||target===row||target.dataset.member===circle.members[0]?.id)return;const r=target.getBoundingClientRect();list.insertBefore(row,e.clientY<r.top+r.height/2?target:target.nextSibling)}} onPointerUp={e=>{const list=e.currentTarget.closest('.member-order-list'),order=[...(list?.querySelectorAll('.member-order-row')||[])].map(row=>row.dataset.member),next=order.map(id=>circle.members.find(member=>member.id===id)).filter(Boolean);list?.querySelector('.dragging')?.classList.remove('dragging');if(next.length===circle.members.length)onReorder?.(next);memberDrag.current=null}} onPointerCancel={e=>{e.currentTarget.closest('.member-order-list')?.querySelector('.dragging')?.classList.remove('dragging');memberDrag.current=null}} onKeyDown={e=>{if(e.key==='ArrowUp')moveMember(i,i-1);if(e.key==='ArrowDown')moveMember(i,i+1)}}>⠿</button>}</span></div>})}</div><div className="mdiv"/><button className="rbtn" data-act="circle-leave" onClick={onLeave}>{en?'Leave circle':'나가기'} <span>›</span></button></Sheet>
 }
 
-export function CircleEditor({circle,profile,onSave,onInvite,onCopyCode,onRegenerate,onJoinLock,onReorder,onLeave,onClose,language='ko'}) {
+export function CircleEditor({circle,profile,onSave,onInvite,onCopyCode,onRegenerate,onJoinLock,onActivity,onReorder,onLeave,onClose,language='ko'}) {
  const en=language==='en'
  const [name,setName]=useState(circle?.name||''),[emoji,setEmoji]=useState(circle?.emoji||'🌿'),[pn,setPn]=useState(profile?.name||''),[pe,setPe]=useState(profile?.emoji||'🙂'),[editing,setEditing]=useState(null),[createStep,setCreateStep]=useState('circle'),[createDirection,setCreateDirection]=useState('forward'),[memberReorder,setMemberReorder]=useState(null),[inviteBusy,setInviteBusy]=useState(false),[lockBusy,setLockBusy]=useState(false)
  const memberDrag=useRef(null)
@@ -92,6 +92,7 @@ export function CircleEditor({circle,profile,onSave,onInvite,onCopyCode,onRegene
   <button className="rbtn identity-setting" data-act="circle-identity-edit" onClick={()=>setEditing('circle')}><span className="mlead"><span className="mrank">{emoji}</span><span><b>{en?'Circle':'끼리'}</b><em>{name}</em></span></span><span>{en?'Edit':'편집'} ›</span></button>
   <button className="rbtn identity-setting" data-act="profile-identity-edit" onClick={()=>setEditing('profile')}><span className="mlead"><span className="mrank">{pe}</span><span><b>{en?'My profile':'내 프로필'}</b><em>{pn}</em></span></span><span>{en?'Edit':'편집'} ›</span></button>
   <button className="rbtn join-lock-setting" data-act="circle-join-lock" aria-pressed={Boolean(circle.joinLocked)} disabled={lockBusy} onClick={toggleJoinLock}><span className="mlead"><span className="mrank">🔒</span><span><b>{en?'Accept new members':'새 멤버 받기'}</b><em>{circle.joinLocked?(en?'New members cannot join':'새로 들어올 수 없어요'):(en?'Members can join with the code':'코드로 들어올 수 있어요')}</em></span></span><span className={`setting-switch${circle.joinLocked?' on':''}`} aria-hidden="true"><i/></span></button>
+  {onActivity&&<button className="rbtn identity-setting activity-entry" data-act="circle-activity" onClick={onActivity}><span className="mlead"><span className="mrank">🕘</span><span><b>{en?'Activity log':'활동 기록'}</b><em>{en?'See changes from the last 90 days':'최근 90일의 변경 내역 보기'}</em></span></span><span>›</span></button>}
   <div className="ghead"><span>{en?`${circle.members?.length||0} members`:`멤버 ${circle.members?.length||0}명`}</span></div>
   <div className={`member-order-list${memberReorder?' reordering':''}`}>{circle.members?.map((member,index)=>{
    const activeCount=circle.tasks.filter(task=>!task.done&&(task.assignee||task.assignees?.[0])===member.id).length
@@ -100,6 +101,82 @@ export function CircleEditor({circle,profile,onSave,onInvite,onCopyCode,onRegene
    return <div className={`suprow member-order-row${member.id===memberReorder?.id?' dragging':''}${member.leftAt?' former-member':''}`} data-member={member.id} key={member.id} style={{transform:`translate3d(0,${translate}px,0)${member.id===memberReorder?.id?' scale(1.025)':''}`}}><span className="who">{member.emoji}</span><span className="smid"><b>{member.name}{index===0?(en?' (me)':' (나)'):''}</b><span>{en?`${activeCount} active`:`진행 중 ${activeCount}개`}</span></span><span className="member-handle">{index===0?(en?'fixed':'고정'):member.leftAt?null:<button className="member-grip" aria-label={`${member.name} 순서 변경`} onPointerDown={event=>startMemberReorder(member,index,event)} onPointerMove={moveMemberReorder} onPointerUp={event=>finishMemberReorder(event)} onPointerCancel={event=>finishMemberReorder(event,true)} onKeyDown={event=>{if(event.key==='ArrowUp')moveMember(index,index-1);if(event.key==='ArrowDown')moveMember(index,index+1)}}>⠿</button>}</span></div>
   })}</div>
   <div className="mdiv"/><button className="rbtn" data-act="circle-leave" onClick={onLeave}>{en?'Leave circle':'나가기'} <span>›</span></button>
+ </Sheet>
+}
+
+const activityDateKey=(value)=>{const date=new Date(value);return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`}
+const activityDateLabel=(value,language)=>new Intl.DateTimeFormat(language==='en'?'en-US':'ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(new Date(value))
+const activityTimeLabel=(value,language)=>new Intl.DateTimeFormat(language==='en'?'en-US':'ko-KR',{hour:'2-digit',minute:'2-digit'}).format(new Date(value))
+const activityPayloadValue=(payload,...keys)=>keys.map(key=>payload?.[key]).find(value=>value!==undefined&&value!==null&&value!=='')
+const activityActorName=(log,circle)=>{
+ const payloadName=activityPayloadValue(log.payload,'actor_name','actorName','member_name','memberName')
+ return payloadName||circle.members?.find(member=>member.id===log.actorId)?.name||'누군가'
+}
+const activitySentence=(log,circle,language)=>{
+ const en=language==='en',payload=log.payload||{},actor=activityActorName(log,circle)
+ const title=activityPayloadValue(payload,'title','task_title','taskTitle')|| (en?'a to-do':'할 일')
+ const circleName=activityPayloadValue(payload,'name','new_name','newName','circle_name','circleName')||circle.name
+ const assigneeId=activityPayloadValue(payload,'assignee_id','new_assignee_id','assigneeId','newAssigneeId')
+ const assignee=activityPayloadValue(payload,'assignee_name','new_assignee_name','assigneeName','newAssigneeName')||circle.members?.find(member=>member.id===assigneeId)?.name||(en?'unassigned':'담당자 없음')
+ if(en){
+  const sentences={circle_renamed:`${actor} renamed the Circle to '${circleName}'`,invite_code_regenerated:`${actor} regenerated the invite code`,join_lock_on:`${actor} stopped accepting new members`,join_lock_off:`${actor} started accepting new members`,member_joined:`${actor} joined`,member_left:`${actor} left`,task_deleted:`${actor} deleted '${title}'`,task_reassigned:`${actor} reassigned '${title}' to ${assignee}`,task_edited:`${actor} edited '${title}'`,task_completed:`${actor} completed '${title}'`}
+  return sentences[log.action]||activityPayloadValue(payload,'message')||`${actor} made a change`
+ }
+ const named=actor.endsWith('님')?actor:`${actor}님`,assigneeLabel=assignee==='담당자 없음'||assignee.endsWith('님')?assignee:`${assignee}님`
+ const sentences={circle_renamed:`${named}이 그룹 이름을 '${circleName}'으로 바꿨어요`,invite_code_regenerated:`${named}이 초대 코드를 새로 받았어요`,join_lock_on:`${named}이 새 멤버 받기를 잠갔어요`,join_lock_off:`${named}이 새 멤버 받기를 풀었어요`,member_joined:`${named}이 들어왔어요`,member_left:`${named}이 나갔어요`,task_deleted:`${named}이 '${title}'를 지웠어요`,task_reassigned:`${named}이 '${title}' 담당을 ${assigneeLabel}으로 바꿨어요`,task_edited:`${named}이 '${title}'를 고쳤어요`,task_completed:`${named}이 '${title}'를 끝냈어요`}
+ return sentences[log.action]||activityPayloadValue(payload,'message')||`${named}이 변경했어요`
+}
+
+export function ActivityLogSheet({circle,loadPage,onClose,language='ko'}){
+ const en=language==='en'
+ const[logs,setLogs]=useState([]),[loading,setLoading]=useState(true),[hasMore,setHasMore]=useState(true),[error,setError]=useState('')
+ const loadingRef=useRef(null),offsetRef=useRef(0),generationRef=useRef(0),sentinelRef=useRef(null)
+ const fetchPage=async(offset,generation=generationRef.current)=>{
+  if(loadingRef.current===generation)return
+  loadingRef.current=generation
+  setLoading(true)
+  setError('')
+  try{
+   const page=await loadPage(offset,30)
+   if(generation!==generationRef.current)return
+   setLogs(current=>offset===0?page:[...current,...page.filter(item=>!current.some(existing=>existing.id===item.id))])
+   offsetRef.current=offset+page.length
+   setHasMore(page.length===30)
+  }catch(fetchError){
+   if(generation===generationRef.current){setError(en?'Could not load activity.':'활동 기록을 불러오지 못했어요.');setHasMore(false)}
+  }finally{
+   if(generation===generationRef.current)setLoading(false)
+   if(loadingRef.current===generation)loadingRef.current=null
+  }
+ }
+ useEffect(()=>{
+  const generation=generationRef.current+1
+  generationRef.current=generation
+  offsetRef.current=0
+  setLogs([])
+  setHasMore(true)
+  void fetchPage(0,generation)
+  return()=>{generationRef.current+=1;if(loadingRef.current===generation)loadingRef.current=null}
+ },[circle.id])
+ useEffect(()=>{
+  const sentinel=sentinelRef.current
+  if(!sentinel||!hasMore||loading)return undefined
+  const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))void fetchPage(offsetRef.current)},{root:sentinel.closest('.sheetbody'),rootMargin:'180px 0px'})
+  observer.observe(sentinel)
+  return()=>observer.disconnect()
+ },[hasMore,loading,logs.length])
+ const groups=useMemo(()=>{
+  const grouped=[]
+  logs.forEach(log=>{const key=activityDateKey(log.createdAt);let group=grouped[grouped.length-1];if(!group||group.key!==key){group={key,label:activityDateLabel(log.createdAt,language),items:[]};grouped.push(group)}group.items.push(log)})
+  return grouped
+ },[logs,language])
+ return <Sheet className="activity-log-sheet" language={language} title={en?'Activity log':'활동 기록'} subtitle={`${circle.emoji} ${circle.name}`} onClose={onClose}>
+  <div className="activity-log-list">{groups.map(group=><section className="activity-day" key={group.key}><h3>{group.label}</h3>{group.items.map(log=><article className="activity-item" key={log.id}><span className="activity-dot" aria-hidden="true"/><div><p>{activitySentence(log,circle,language)}</p><time dateTime={log.createdAt}>{activityTimeLabel(log.createdAt,language)}</time></div></article>)}</section>)}</div>
+  {!logs.length&&!loading&&!error&&<div className="empty activity-empty"><b>{en?'No activity yet':'아직 활동 기록이 없어요'}</b></div>}
+  {error&&<p className="activity-error" role="alert">{error}</p>}
+  {loading&&<p className="activity-loading">{en?'Loading…':'불러오는 중…'}</p>}
+  <div className="activity-sentinel" ref={sentinelRef} aria-hidden="true"/>
+  <p className="activity-retention">{en?'Activity logs are kept for 90 days.':'활동 기록은 90일까지 보관돼요'}</p>
  </Sheet>
 }
 
