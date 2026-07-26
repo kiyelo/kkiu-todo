@@ -12,7 +12,7 @@ import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
 import { hasAcceptedRequiredTerms, loadAcceptedTermsVersions } from './services/termsRepository.js'
 import { classifySyncError, userFacingSyncError } from './services/syncError.js'
 import { buildInviteMessage, clearPendingInvite, generateInviteCode, normalizeInviteCode, readPendingInvite } from './services/invite.js'
-import { createCircle, createCircleTask, createPersonalTask, deleteCircle, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateMemberPositions, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
+import { createCircle, createCircleTask, createPersonalTask, deleteCircle, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
 import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes } from './utils/text.js'
 
 const tabs = ['home', 'circle', 'more']
@@ -127,7 +127,18 @@ export default function App() {
     setSyncError(userFacingSyncError(error, language))
   }
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
-  const activeMembers = circle?.members || []
+  const activeMembers = useMemo(() => {
+    const members = circle?.members || []
+    const savedOrder = data.settings?.memberOrderByCircle?.[circle?.id]
+    const memberById = new Map(members.map((member) => [member.id, member]))
+    const orderedIds = Array.isArray(savedOrder) ? savedOrder.filter((id) => memberById.has(id) && id !== actorId) : []
+    const orderedSet = new Set(orderedIds)
+    const ordered = orderedIds.map((id) => memberById.get(id))
+    const newMembers = members.filter((member) => member.id !== actorId && !orderedSet.has(member.id))
+    const self = memberById.get(actorId)
+    return self ? [self, ...ordered, ...newMembers] : [...ordered, ...newMembers]
+  }, [actorId, circle?.id, circle?.members, data.settings?.memberOrderByCircle])
+  const displayCircle = circle ? { ...circle, members: activeMembers } : circle
   const tasks = tab === 'circle' ? circle?.tasks || [] : data.personal
   const unread = useMemo(() => data.circles.reduce((sum, item) => sum + (item.unread || 0) + (item.unreadDone || 0), 0), [data.circles])
 
@@ -263,8 +274,15 @@ export default function App() {
   const requestLeaveCircle = () => setConfirm({ title: language === 'en' ? 'Leave circle' : '끼리 나가기', message: language === 'en' ? `Leave '${circle?.name || 'Circle'}'?` : `${circle?.name || '끼리'}에서 나갈까요?`, danger: true, action: leaveCircle })
   const reorderMembers = (members) => {
     if (!circle) return
-    setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, members } : item) }))
-    if (remoteUser) updateMemberPositions(circle.id, members).catch(reportSyncError)
+    const nextSettings = {
+      ...(data.settings || {}),
+      memberOrderByCircle: {
+        ...(data.settings?.memberOrderByCircle || {}),
+        [circle.id]: members.map((member) => member.id).filter((id) => id !== actorId),
+      },
+    }
+    setData((current) => ({ ...current, settings: nextSettings }))
+    if (remoteUser) savePreferences(remoteUser.id, nextSettings).catch(reportSyncError)
   }
 
   const copyInviteCode = async (code) => { try { await navigator.clipboard.writeText(normalizeInviteCode(code)); setToast(language === 'en' ? 'Invite code copied' : '초대 코드를 복사했어요') } catch { setToast(language === 'en' ? 'Could not copy code' : '코드를 복사하지 못했어요') } }
@@ -357,12 +375,12 @@ export default function App() {
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? circle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
+      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} onCopyCode={copyInviteCode} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
-      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onDelete={(id) => clearCompleted([id])} onClear={requestClearCompleted} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
-      {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onDelete={circleEditorOpen === 'edit' && (circle?.createdBy === actorId || circle?.members.find((member) => member.id === actorId)?.role === 'owner') ? requestRemoveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
+      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={(id) => clearCompleted([id])} onClear={requestClearCompleted} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
+      {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onDelete={circleEditorOpen === 'edit' && (circle?.createdBy === actorId || circle?.members.find((member) => member.id === actorId)?.role === 'owner') ? requestRemoveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
       {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
       </div>
     </section>
