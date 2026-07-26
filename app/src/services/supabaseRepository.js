@@ -18,6 +18,7 @@ const memberFromRow = (row) => ({
   name: row.nickname || '멤버',
   emoji: row.emoji || '🙂',
   role: row.role,
+  leftAt: row.left_at || null,
 })
 
 export async function loadPersonalTasks(userId) {
@@ -43,7 +44,7 @@ export async function loadCircles(userId) {
 
   const ids = circles.map((circle) => circle.id)
   const [{ data: memberRows, error: memberError }, { data: taskRows, error: taskError }] = await Promise.all([
-    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,joined_at').in('circle_id', ids).order('joined_at', { ascending: true }),
+    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at,left_at').in('circle_id', ids).order('position', { ascending: true }),
     client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_position,completed_at,created_at,updated_at').in('circle_id', ids).order('position', { ascending: true }),
   ])
   if (memberError) throw memberError
@@ -126,8 +127,15 @@ export async function joinCircleByCode(code, profileName, profileEmoji) {
 }
 
 export async function leaveCircle(circleId, userId) {
-  const { error } = await requireSupabase().from('circle_members').delete().eq('circle_id', circleId).eq('user_id', userId)
+  const { data, error } = await requireSupabase()
+    .from('circle_members')
+    .update({ left_at: new Date().toISOString() })
+    .eq('circle_id', circleId)
+    .eq('user_id', userId)
+    .is('left_at', null)
+    .select('user_id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error('LEAVE_CIRCLE_NO_ROW')
 }
 
 export async function createCircleTask(userId, circleId, task, position) {

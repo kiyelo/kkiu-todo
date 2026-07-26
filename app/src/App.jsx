@@ -131,7 +131,7 @@ export default function App() {
   }
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
   const activeMembers = useMemo(() => {
-    const members = circle?.members || []
+    const members = (circle?.members || []).filter((member) => !member.leftAt || circle.tasks.some((task) => !task.done && (task.assignees || [task.assignee]).includes(member.id)))
     const savedOrder = data.settings?.memberOrderByCircle?.[circle?.id]
     const memberById = new Map(members.map((member) => [member.id, member]))
     const orderedIds = Array.isArray(savedOrder) ? savedOrder.filter((id) => memberById.has(id) && id !== actorId) : []
@@ -140,7 +140,7 @@ export default function App() {
     const newMembers = members.filter((member) => member.id !== actorId && !orderedSet.has(member.id))
     const self = memberById.get(actorId)
     return self ? [self, ...ordered, ...newMembers] : [...ordered, ...newMembers]
-  }, [actorId, circle?.id, circle?.members, data.settings?.memberOrderByCircle])
+  }, [actorId, circle?.id, circle?.members, circle?.tasks, data.settings?.memberOrderByCircle])
   const displayCircle = circle ? { ...circle, members: activeMembers } : circle
   const tasks = tab === 'circle' ? circle?.tasks || [] : data.personal
   const unread = useMemo(() => data.circles.reduce((sum, item) => sum + (item.unread || 0) + (item.unreadDone || 0), 0), [data.circles])
