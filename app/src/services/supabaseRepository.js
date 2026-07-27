@@ -1,5 +1,4 @@
 import { requireSupabase } from './supabaseClient.js'
-import { generateInviteCode } from './invite.js'
 
 const taskFromRow = (row) => ({
   id: row.id,
@@ -65,26 +64,16 @@ export async function loadCircles(userId) {
 }
 
 export async function createCircle(userId, { name, emoji, profileName, profileEmoji }) {
-  const client = requireSupabase()
-  let circle = null; let circleError = null
-  for (let attempt = 0; attempt < 3 && !circle; attempt += 1) {
-    const inviteCode = generateInviteCode()
-    const result = await client.from('circles').insert({ name, emoji, invite_code: inviteCode, created_by: userId }).select('id,name,emoji,invite_code,created_by').single()
-    circle = result.data; circleError = result.error
-    if (circleError?.code !== '23505') break
-  }
-  if (circleError || !circle) throw circleError || new Error('INVITE_CODE_GENERATION_FAILED')
-
-  const { error: memberError } = await client.from('circle_members').insert({
-    circle_id: circle.id,
-    user_id: userId,
-    nickname: profileName,
-    emoji: profileEmoji,
+  const { data, error } = await requireSupabase().rpc('create_circle_with_member', {
+    circle_name: name,
+    circle_emoji: emoji,
+    member_nickname: profileName,
+    member_emoji: profileEmoji,
   })
-  if (memberError) {
-    await client.from('circles').delete().eq('id', circle.id)
-    throw memberError
-  }
+  if (error) throw error
+
+  const circle = Array.isArray(data) ? data[0] : data
+  if (!circle) throw new Error('CIRCLE_CREATION_FAILED')
 
   return {
     id: circle.id,

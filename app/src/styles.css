@@ -423,8 +423,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   .empty-c,.pcard{width:100%;padding:30px 26px;border-radius:20px;background:var(--surface);box-shadow:var(--sh-card)}
   .empty-c{text-align:center}
   .empty-c h3{margin:0 0 7px;font-size:18px;font-weight:680;letter-spacing:-.03em}
-  .empty-c p{margin:0;font-size:13px;line-height:1.6;font-weight:560;color:var(--sub);word-break:keep-all}
-  .queueempty{position:absolute;left:18px;right:18px;top:15%;z-index:2;text-align:center;pointer-events:none}
+.empty-c p{margin:0;font-size:13px;line-height:1.6;font-weight:560;color:var(--sub);word-break:keep-all}
+.empty-circle-actions{display:flex;flex-direction:column;gap:8px;width:100%}
+.empty-circle-actions .featins{margin:0}
+.queueempty{position:absolute;left:18px;right:18px;top:15%;z-index:2;text-align:center;pointer-events:none}
   .queueempty .empty-c{padding:24px 20px}.queueempty .empty-c p{margin-bottom:14px}
   .queueempty button{pointer-events:auto;height:38px;padding:0 14px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:800}
   .pcard{padding:17px 18px}
@@ -1111,6 +1113,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
 .auth-social-apple { background: #000; color: #fff; }
 .auth-social-kakao { background: #FEE500; color: #191600; }
 .auth-message { margin-top: 14px; text-align: center; color: #d0453d; font-size: 13px; }
+.qa-account-badge{position:fixed;z-index:1000;top:max(8px,env(safe-area-inset-top));left:50%;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 16px);padding:7px 9px;border:1px solid rgba(224,137,74,.3);border-radius:12px;background:rgba(255,250,244,.94);box-shadow:0 6px 18px rgba(82,62,45,.14);color:var(--accent-ink);font-size:10px;line-height:1.2;transform:translateX(-50%);backdrop-filter:blur(12px)}.qa-account-badge span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qa-account-badge a{flex:none;padding:4px 6px;border-radius:7px;background:var(--accent-soft);color:var(--accent-ink);font-weight:750}.qa-login-error{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center}.qa-login-error>span{font-size:36px}.qa-login-error h1{margin:0;font-size:20px}.qa-login-error code{padding:7px 9px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink)}.qa-login-error p{max-width:300px;margin:0;color:var(--danger);font-size:13px;line-height:1.5}.qa-login-error a{width:100%;max-width:280px;padding:12px;border-radius:12px;background:var(--accent);color:#fff;font-weight:750}.qa-login-error a+a{background:var(--paper);color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--line)}
 
 /* Circle title: preserve the full button hit area while keeping the chevron attached to text. */
 .circle-head .ttlbtn{align-self:stretch}

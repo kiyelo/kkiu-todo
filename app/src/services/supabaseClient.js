@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getQaAuthStorageKey } from './qaAuth.js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
@@ -11,6 +12,7 @@ export const supabase = hasSupabaseConfig
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        ...(getQaAuthStorageKey() ? { storageKey: getQaAuthStorageKey() } : {}),
       },
     })
   : null

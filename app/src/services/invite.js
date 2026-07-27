@@ -10,6 +10,14 @@ export function generateInviteCode() {
 
 export function normalizeInviteCode(value = '') {
   const text = String(value).trim().toUpperCase()
+  const inviteParam = text.match(/[?&]INVITE=([^&#\s]+)/)
+  if (inviteParam) {
+    try {
+      return normalizeInviteCode(decodeURIComponent(inviteParam[1]))
+    } catch {
+      return normalizeInviteCode(inviteParam[1])
+    }
+  }
   try {
     const url = new URL(text, typeof window === 'undefined' ? 'https://kkiu.invalid/' : window.location.href)
     const fromUrl = url.searchParams.get('invite')
@@ -17,6 +25,9 @@ export function normalizeInviteCode(value = '') {
   } catch {}
   const match = text.match(/KKIU(?:-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}){1,4}/)
   if (match) return match[0]
+  const labeled = text.match(/(?:INVITE\s*CODE|초대\s*코드)\s*[:：]?\s*([A-Z0-9-]{6,64})/)
+  if (labeled) return normalizeInviteCode(labeled[1])
+  if (/^[A-Z0-9]{6,64}$/.test(text)) return text
   const compact = text.replace(/[^A-Z0-9]/g, '')
   if (!compact.startsWith('KKIU') || compact.length < 8) return ''
   const body = compact.slice(4)

@@ -14,9 +14,31 @@ import { classifySyncError, userFacingSyncError } from './services/syncError.js'
 import { buildInviteMessage, clearPendingInvite, generateInviteCode, normalizeInviteCode, readPendingInvite } from './services/invite.js'
 import { createCircle, createCircleTask, createPersonalTask, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircleActivityLogs, loadCircles, loadPersonalTasks, regenerateInviteCode, setCircleJoinLock, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
 import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes } from './utils/text.js'
+import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
+async function writeClipboard(text) {
+  if (!text) throw new Error('EMPTY_CLIPBOARD_TEXT')
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return
+    }
+  } catch {}
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  const copied = document.execCommand('copy')
+  textarea.remove()
+  if (!copied) throw new Error('CLIPBOARD_COPY_FAILED')
+}
+
 const withUnreadCounts = (circle) => {
   const unreadTasks = circle.tasks.filter((task) => !task.done && task.sourceUnread)
   const memberUnread = {}
@@ -25,7 +47,9 @@ const withUnreadCounts = (circle) => {
 }
 
 export default function App() {
+  const qaAccount = getSelectedQaAccount()
   const [session, setSession] = useState(undefined)
+  const [qaLoginError, setQaLoginError] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(undefined)
   const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
   const [syncError, setSyncError] = useState('')
@@ -69,13 +93,42 @@ export default function App() {
 
   useEffect(() => {
     if (!hasSupabaseConfig) { setSession(null); setRemoteLoading(false); return undefined }
-    supabase.auth.getSession().then(({ data: authData, error }) => { if (error) reportSyncError(error); setSession(authData.session) })
+    let cancelled = false
+    const startSession = async () => {
+      const { data: authData, error } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (error) reportSyncError(error)
+      if (authData.session || !qaAccount) {
+        setSession(authData.session)
+        return
+      }
+      if (!qaAccount.password) {
+        setQaLoginError(`${qaAccount.label} 비밀번호가 .env.local에 설정되지 않았어요.`)
+        setSession(null)
+        setRemoteLoading(false)
+        return
+      }
+      const { data: signedIn, error: signInError } = await supabase.auth.signInWithPassword({
+        email: qaAccount.email,
+        password: qaAccount.password,
+      })
+      if (cancelled) return
+      if (signInError) {
+        setQaLoginError(signInError.message || 'QA 자동 로그인에 실패했어요.')
+        setSession(null)
+        setRemoteLoading(false)
+        return
+      }
+      setSession(signedIn.session)
+    }
+    startSession()
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
-    return () => listener.subscription.unsubscribe()
+    return () => { cancelled = true; listener.subscription.unsubscribe() }
   }, [])
 
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) { setTermsAccepted(undefined); return undefined }
+    if (qaAccount) { setTermsAccepted(true); return undefined }
     let cancelled = false
     loadAcceptedTermsVersions(session.user.id)
       .then((accepted) => { if (!cancelled) setTermsAccepted(hasAcceptedRequiredTerms(accepted)) })
@@ -132,7 +185,7 @@ export default function App() {
   }
   const circle = data.circles.find((item) => item.id === circleId) || data.circles[0]
   const activeMembers = useMemo(() => {
-    const members = (circle?.members || []).filter((member) => !member.leftAt || circle.tasks.some((task) => !task.done && (task.assignees || [task.assignee]).includes(member.id)))
+    const members = (circle?.members || []).filter((member) => !member.leftAt || circle.tasks.some((task) => (task.assignees || [task.assignee]).includes(member.id)))
     const savedOrder = data.settings?.memberOrderByCircle?.[circle?.id]
     const memberById = new Map(members.map((member) => [member.id, member]))
     const orderedIds = Array.isArray(savedOrder) ? savedOrder.filter((id) => memberById.has(id) && id !== actorId) : []
@@ -354,12 +407,12 @@ export default function App() {
     if (remoteUser) savePreferences(remoteUser.id, nextSettings).catch(reportSyncError)
   }
 
-  const copyInviteCode = async (code) => { try { await navigator.clipboard.writeText(normalizeInviteCode(code)); setToast(language === 'en' ? 'Invite code copied' : '초대 코드를 복사했어요') } catch { setToast(language === 'en' ? 'Could not copy code' : '코드를 복사하지 못했어요') } }
+  const copyInviteCode = async (code) => { try { await writeClipboard(normalizeInviteCode(code)); setToast(language === 'en' ? 'Invite code copied' : '초대 코드를 복사했어요') } catch { setToast(language === 'en' ? 'Could not copy code' : '코드를 복사하지 못했어요') } }
   const shareInvite = async (payload) => {
     const message = buildInviteMessage({ ...payload, language })
     try {
       if (navigator.share) await navigator.share({ title: language === 'en' ? 'Kkiu Todo invitation' : '끼우 투두 초대', text: message })
-      else { await navigator.clipboard.writeText(message); setToast(language === 'en' ? 'Invitation copied' : '초대 메시지를 복사했어요') }
+      else { await writeClipboard(message); setToast(language === 'en' ? 'Invitation copied' : '초대 메시지를 복사했어요') }
     } catch (error) { if (error?.name !== 'AbortError') setToast(language === 'en' ? 'Could not share invitation' : '초대 메시지를 공유하지 못했어요') }
   }
 
@@ -427,6 +480,7 @@ export default function App() {
   }
 
   if (hasSupabaseConfig && session === undefined) return <div className="app-shell"><section className="phone loading-screen">끼우를 준비하고 있어요…</section></div>
+  if (hasSupabaseConfig && qaAccount && !session && qaLoginError) return <QaLoginError account={qaAccount} message={qaLoginError} />
   if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />
 
   if (hasSupabaseConfig && session?.user && termsAccepted === false) {
@@ -440,14 +494,15 @@ export default function App() {
   }
 
   return <div className="wrap">
+    {qaAccount && session && <QaAccountBadge account={qaAccount} />}
     <section className={`phone${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}${query!==null?' searching':''}`} onPointerDownCapture={startSwipe} onPointerUpCapture={endSwipe} onPointerCancelCapture={() => { swipeRef.current = null }}>
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={session?.user} onSignOut={() => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
+      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {pendingDelete ? <div className="app-toast undo-toast" role="status"><span>{language === 'en' ? `${pendingDelete.items.length} deleted ·` : `${pendingDelete.items.length}개 삭제됨 ·`}</span><button type="button" onClick={undoTaskDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button></div> : toast && <div className="app-toast" role="status">{toast}</div>}
-      {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} onCopyCode={copyInviteCode} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
+      {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
       {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onRegenerate={refreshInviteCode} onJoinLock={changeJoinLock} onActivity={circleEditorOpen === 'edit' ? () => { setCircleEditorOpen(null); setActivityOpen(true) } : null} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
       {activityOpen && circle && <ActivityLogSheet language={settingValues.language} circle={circle} loadPage={(offset, limit) => remoteUser ? loadCircleActivityLogs(circle.id, offset, limit) : Promise.resolve([])} onClose={() => { setActivityOpen(false); setCircleEditorOpen('edit') }} />}
@@ -455,4 +510,31 @@ export default function App() {
       </div>
     </section>
   </div>
+}
+
+function QaAccountBadge({ account }) {
+  const other = account.id === 'a' ? 'b' : 'a'
+  return (
+    <aside className="qa-account-badge" aria-label="개발 QA 계정">
+      <span><b>{account.label}</b> · {account.email}</span>
+      <a href={getQaUrl(other)} target="_blank" rel="noreferrer">QA {other.toUpperCase()} 새 탭</a>
+      <a href={getNormalLoginUrl()}>로그인 화면</a>
+    </aside>
+  )
+}
+
+function QaLoginError({ account, message }) {
+  const other = account.id === 'a' ? 'b' : 'a'
+  return (
+    <div className="app-shell">
+      <section className="phone qa-login-error">
+        <span>🧪</span>
+        <h1>{account.label} 자동 로그인 실패</h1>
+        <code>{account.email}</code>
+        <p>{message}</p>
+        <a href={getQaUrl(other)}>QA {other.toUpperCase()}로 시도</a>
+        <a href={getNormalLoginUrl()}>일반 로그인 화면 열기</a>
+      </section>
+    </div>
+  )
 }
