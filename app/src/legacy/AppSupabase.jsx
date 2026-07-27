@@ -8,7 +8,7 @@ import { CircleEditor, CirclePicker, CompletedSheet } from './components/Sheets.
 import { starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
 import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
-import { createCircle, createCircleTask, createPersonalTask, deleteCircle, deleteTasks, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions } from './services/supabaseRepository.js'
+import { createCircle, createCircleTask, createPersonalTask, deleteTasks, loadCircles, loadPersonalTasks, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions } from './services/supabaseRepository.js'
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
@@ -115,7 +115,7 @@ export default function App() {
       if (session?.user) {
         try { const created = await createCircle(session.user.id, payload); setData((current) => ({ ...current, circles: [...current.circles, created] })); setCircleId(created.id) } catch (error) { reportSyncError(error); return }
       } else {
-        const created = { id: crypto.randomUUID(), name, emoji, code: `KKIU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, members: [{ id: 'me', name: profileName, emoji: profileEmoji, role: 'owner' }], tasks: [], unread: 0, memberUnread: {} }
+        const created = { id: crypto.randomUUID(), name, emoji, code: `KKIU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, members: [{ id: 'me', name: profileName, emoji: profileEmoji }], tasks: [], unread: 0, memberUnread: {} }
         setData((current) => ({ ...current, circles: [...current.circles, created] })); setCircleId(created.id)
       }
     } else if (circle) {
@@ -123,13 +123,6 @@ export default function App() {
       setData((current) => ({ ...current, circles: current.circles.map((item) => item.id === circle.id ? { ...item, name, emoji, members: item.members.map((member) => member.id === (session?.user?.id || 'me') ? { ...member, name: profileName, emoji: profileEmoji } : member) } : item) }))
     }
     setCircleEditorOpen(null); setCirclePickerOpen(false); setToast('저장했어요')
-  }
-
-  const removeCircle = async () => {
-    if (!circle) return
-    if (session?.user) { try { await deleteCircle(circle.id) } catch (error) { reportSyncError(error); return } }
-    const remaining = data.circles.filter((item) => item.id !== circle.id)
-    setData((current) => ({ ...current, circles: remaining })); setCircleId(remaining[0]?.id); setCircleEditorOpen(null); setToast('끼리를 삭제했어요')
   }
 
   const settingValues = { compact: false, motion: true, notifications: true, language: 'ko', slotLocked: false, slotSymbols: ['🌙', '🍊', '🌿'], ...(data.settings || {}) }
@@ -164,7 +157,7 @@ export default function App() {
       {toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker circles={data.circles} selected={circle?.id} onSelect={selectCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet tasks={completed} members={activeMembers} circle={tab === 'circle' ? circle : null} onRestore={completeTask} onDelete={deleteCompletedTask} onClose={() => setCompletedOpen(false)} />}
-      {circleEditorOpen && <CircleEditor circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === (session?.user?.id || 'me')) : null} onSave={saveCircle} onDelete={circleEditorOpen === 'edit' ? removeCircle : null} onClose={() => setCircleEditorOpen(null)} />}
+      {circleEditorOpen && <CircleEditor circle={circleEditorOpen === 'edit' ? circle : null} profile={circleEditorOpen === 'edit' ? circle?.members.find((member) => member.id === (session?.user?.id || 'me')) : null} onSave={saveCircle} onClose={() => setCircleEditorOpen(null)} />}
     </section>
   </div>
 }
