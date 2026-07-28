@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon } from './Icons.jsx'
 import { t } from '../i18n.js'
 import OverflowText from './OverflowText.jsx'
+import { TASK_TITLE_LIMIT, limitGraphemes, normalizeTaskTitle } from '../utils/text.js'
 
 export default function Composer({ count, circle, members, onAdd, position = count, onOpenChange, language = 'ko' }) {
   const assignableMembers = members.filter((member) => !member.leftAt)
@@ -9,6 +10,7 @@ export default function Composer({ count, circle, members, onAdd, position = cou
   const [value, setValue] = useState('')
   const [assignees, setAssignees] = useState(() => (assignableMembers[0]?.id ? [assignableMembers[0].id] : ['me']))
   const ref = useRef(null)
+  const reopenBlockedUntil = useRef(0)
   useEffect(() => { if (open) ref.current?.focus(); onOpenChange?.(open) }, [open, onOpenChange])
   useEffect(() => {
     setAssignees((current) => {
@@ -27,13 +29,14 @@ export default function Composer({ count, circle, members, onAdd, position = cou
   const close = () => { setValue(''); setOpen(false) }
   const multi = Boolean(circle) && assignees.length > 1
   const submit = () => {
-    const next = value.trim()
+    const next = normalizeTaskTitle(value)
     if (!next) return
+    reopenBlockedUntil.current = performance.now() + 450
     onAdd(next, circle ? assignees : 'me', position)
     close()
   }
   return <div className={`slotwrap${open ? ' open' : ''}`}>
-    <button className="ins" data-act="slot-open" onClick={() => setOpen(true)}><span className="p">+</span><span>{t(language, 'insert', position + 1)}</span></button>
+    <button className="ins" data-act="slot-open" onClick={() => { if (performance.now() >= reopenBlockedUntil.current) setOpen(true) }}><span className="p">+</span><span>{t(language, 'insert', position + 1)}</span></button>
     <div className="ibar">
       {circle && <div className="asgrow" aria-label={language === 'en' ? 'Choose assignees' : '담당자 선택'}>{assignableMembers.map((member) => {
         const order = assignees.indexOf(member.id)
@@ -43,7 +46,7 @@ export default function Composer({ count, circle, members, onAdd, position = cou
         </button>
       })}</div>}
       <span className="ipos">{position + 1}</span>
-      <textarea ref={ref} className="si" rows="1" value={value} onChange={(event) => setValue(event.target.value)} placeholder={t(language, 'placeholder')} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submit() } if (event.key === 'Escape') close() }} />
+      <textarea ref={ref} className="si" rows="1" value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} placeholder={t(language, 'placeholder')} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submit() } if (event.key === 'Escape') close() }} />
       <button className="save" aria-label={language === 'en' ? 'Add task' : '할 일 추가'} data-act="add-submit" onClick={submit}><ArrowIcon /></button>
     </div>
   </div>

@@ -1,15 +1,17 @@
+import { validateBackupData } from './backup.js'
+
 const STORAGE_KEY = 'kkiu-react-0.7'
 const LEGACY_KEYS = ['kkiu-react-0.6', 'kkiu-react-0.5', 'kkiu-react-0.1']
 
 const normalize = (value, fallback) => {
   if (!value || typeof value !== 'object') return fallback
-  return {
+  return validateBackupData({
     ...fallback,
     ...value,
     personal: Array.isArray(value.personal) ? value.personal : fallback.personal,
     circles: Array.isArray(value.circles) ? value.circles.map((circle) => ({ members: [], tasks: [], unread: 0, memberUnread: {}, ...circle })) : fallback.circles,
     settings: { ...fallback.settings, ...(value.settings || {}) },
-  }
+  })
 }
 
 export function loadLocalData(fallback) {
@@ -28,5 +30,12 @@ export function loadLocalData(fallback) {
   } catch { return fallback }
 }
 
-export function saveLocalData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) }
+export function saveLocalData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    return true
+  } catch {
+    return false
+  }
+}
 export const localRepository = { load: loadLocalData, save: saveLocalData }

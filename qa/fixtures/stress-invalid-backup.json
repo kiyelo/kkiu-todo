@@ -1,0 +1,15 @@
+{
+  "version": "1.4.0",
+  "data": {
+    "personal": [],
+    "circles": [
+      {
+        "id": "broken-circle",
+        "name": "Broken",
+        "emoji": "⚠️",
+        "members": [],
+        "tasks": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "date": "2026-07-28",
+  "scope": "functional, UI, UX, accessibility, usability, stress and edge-case QA",
+  "environment": {
+    "browser": "Chromium in-app browser",
+    "viewports": ["280x640", "desktop"],
+    "dataset": "2,000 personal tasks"
+  },
+  "automated": {
+    "command": "pnpm run test:stress",
+    "checks": 10,
+    "result": "pass",
+    "backupValidationMs": 46.11
+  },
+  "performance": {
+    "largeQueueBefore": {
+      "renderMs": 2348,
+      "renderedRows": 2000
+    },
+    "largeQueueAfter": {
+      "renderMs": 366,
+      "renderedRows": 23
+    },
+    "broadSearchBefore": {
+      "renderMs": 341,
+      "renderedResults": 2000
+    },
+    "broadSearchAfter": {
+      "renderMs": 65,
+      "renderedResults": 200,
+      "totalMatchesAnnounced": 2000
+    }
+  },
+  "passedScenarios": [
+    "2,000-task queue start, end-key navigation, and final rank",
+    "2,000-result broad search with an announced display cap",
+    "280-grapheme Korean, emoji, and combining-character create/edit/complete/restore",
+    "double-click submission without duplicate creation or composer reopening",
+    "whitespace trimming and empty-title rejection",
+    "empty backup restore",
+    "malformed, duplicate-ID, oversized-count, and invalid-member backup rejection",
+    "corrupted local data fallback and quota-write failure handling",
+    "280px viewport without horizontal overflow",
+    "localized queue-slider and task-control accessibility semantics"
+  ],
+  "verification": {
+    "productionBuild": "pass",
+    "diffCheck": "pass",
+    "runtimeErrors": 0
+  },
+  "residualRisks": [
+    "The main production JavaScript chunk is about 530 KB and still triggers the bundler size warning.",
+    "Physical iOS/Android devices and remote Supabase concurrency were not part of this local pass."
+  ]
+}

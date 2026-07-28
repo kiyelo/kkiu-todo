@@ -13,7 +13,8 @@ import { hasAcceptedRequiredTerms, loadAcceptedTermsVersions } from './services/
 import { classifySyncError, userFacingSyncError } from './services/syncError.js'
 import { buildInviteMessage, clearPendingInvite, generateInviteCode, normalizeInviteCode, readPendingInvite } from './services/invite.js'
 import { createCircle, createCircleTask, createPersonalTask, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircleActivityLogs, loadCircles, loadPersonalTasks, regenerateInviteCode, setCircleJoinLock, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
-import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes } from './utils/text.js'
+import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes, normalizeTaskTitle } from './utils/text.js'
+import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBackupData } from './services/backup.js'
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 
 const tabs = ['home', 'circle', 'more']
@@ -153,7 +154,11 @@ export default function App() {
 
   useEffect(() => { if (!pendingInvite || remoteLoading || (hasSupabaseConfig && !session?.user)) return; setCirclePickerOpen(true) }, [pendingInvite, remoteLoading, session?.user?.id])
 
-  useEffect(() => { if (!hasSupabaseConfig) localRepository.save(data) }, [data])
+  useEffect(() => {
+    if (!hasSupabaseConfig && !localRepository.save(data)) {
+      setSyncError(data.settings?.language === 'en' ? 'Local storage is full. Your latest change was not saved.' : '저장 공간이 부족해 최근 변경을 저장하지 못했어요.')
+    }
+  }, [data])
   useEffect(() => { localStorage.setItem('kkiu-ui-v1', JSON.stringify({ tab, circleId, filter, queuePositions })) }, [tab, circleId, filter, queuePositions])
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 1700); return () => window.clearTimeout(timer) }, [toast])
   useEffect(() => { if (!syncError) return undefined; const timer = window.setTimeout(() => setSyncError(''), 3200); return () => window.clearTimeout(timer) }, [syncError])
@@ -205,10 +210,12 @@ export default function App() {
   })
 
   const addTask = (title, assignee = 'me', position) => {
+    const safeTitle = normalizeTaskTitle(title)
+    if (!safeTitle) return
     const picked = (Array.isArray(assignee) ? assignee : [assignee]).filter(Boolean)
     const owners = picked.length ? picked : ['me']
     const stamp = Date.now()
-    const created = owners.map((member, index) => ({ id: crypto.randomUUID(), title, assignee: member, done: false, createdAt: stamp + index }))
+    const created = owners.map((member, index) => ({ id: crypto.randomUUID(), title: safeTitle, assignee: member, done: false, createdAt: stamp + index }))
     const createdIds = new Set(created.map((task) => task.id))
     setNewTaskIds(createdIds)
     window.setTimeout(() => setNewTaskIds((current) => current === createdIds ? new Set() : current), 1800)
@@ -250,7 +257,7 @@ export default function App() {
       if (!currentTask.done) logCompletionEvent(remoteUser.id, currentTask, tab === 'circle' ? circle?.id : null).catch(reportSyncError)
     }
   }
-  const editTask = (id, title) => { updateTasks((current) => current.map((task) => task.id === id ? { ...task, title } : task)); if (remoteUser) updateTask(id, { title }).then(() => markTasksRead(remoteUser.id, [id])).catch(reportSyncError) }
+  const editTask = (id, title) => { const safeTitle = normalizeTaskTitle(title); if (!safeTitle) return; updateTasks((current) => current.map((task) => task.id === id ? { ...task, title: safeTitle } : task)); if (remoteUser) updateTask(id, { title: safeTitle }).then(() => markTasksRead(remoteUser.id, [id])).catch(reportSyncError) }
   const setAssignee = (id, assignee) => { updateTasks((current) => current.map((task) => task.id === id ? { ...task, assignee } : task)); if (remoteUser) updateTask(id, { assignee }).then(() => markTasksRead(remoteUser.id, [id])).catch(reportSyncError) }
   const moveTask = (id, direction) => {
     const active = tasks.filter((task) => !task.done), completedItems = tasks.filter((task) => task.done)
@@ -456,8 +463,19 @@ export default function App() {
   const persistSettings = (settings) => { if (remoteUser) savePreferences(remoteUser.id,settings).catch(reportSyncError) }
   const toggleSetting = (id) => { const next={ ...settingValues, [id]: !settingValues[id] }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
   const setLanguage = (language) => { const next={ ...settingValues, language }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
-  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.3.8', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast(language === 'en' ? 'Backup file created' : '백업 파일을 만들었어요') }
-  const restoreData = async (file) => { try { const parsed = JSON.parse(await file.text()); const next = parsed.data || parsed; if (!Array.isArray(next.personal) || !Array.isArray(next.circles)) throw new Error('끼우 백업 파일이 아니에요.'); setData(next); setCircleId(next.circles[0]?.id); switchTab('home'); setToast(language === 'en' ? 'Backup restored' : '백업을 복원했어요'); return true } catch(error) { setToast(error instanceof SyntaxError?'JSON 파일 형식이 올바르지 않아요.':(error.message||'백업 파일을 복원하지 못했어요.')); return false } }
+  const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.4.0', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast(language === 'en' ? 'Backup file created' : '백업 파일을 만들었어요') }
+  const restoreData = async (file) => {
+    try {
+      if (file.size > MAX_BACKUP_BYTES) throw new BackupValidationError('BACKUP_TOO_LARGE')
+      const next = validateBackupData(JSON.parse(await file.text()))
+      setData(next); setCircleId(next.circles[0]?.id); switchTab('home')
+      setToast(language === 'en' ? 'Backup restored' : '백업을 복원했어요')
+      return true
+    } catch (error) {
+      setToast(backupErrorMessage(error, language))
+      return false
+    }
+  }
   const enterTestMode = (next) => { if (!testMode) testSnapshotRef.current = data; setTestMode(true); setData(next); setCircleId(next.circles[0]?.id); setFilter(null); setSyncError(''); switchTab('home') }
   const exitTestMode = () => { const snapshot = testSnapshotRef.current; setTestMode(false); testSnapshotRef.current = null; if (snapshot) { setData(snapshot); setCircleId(snapshot.circles[0]?.id) } else if (session?.user) window.location.reload(); setToast(language === 'en' ? 'Returned to server data' : '서버 데이터로 돌아왔어요') }
   const doResetData = () => { const next = freshStarterData(); if (session?.user) enterTestMode(next); else { setData(next); setCircleId(next.circles[0]?.id); switchTab('home') } setToast(language === 'en' ? 'Test data added' : '테스트 데이터를 넣었어요') }

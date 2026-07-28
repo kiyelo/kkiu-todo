@@ -1,0 +1,11 @@
+{
+  "version": "1.4.0",
+  "data": {
+    "personal": [],
+    "circles": [],
+    "settings": {
+      "language": "ko",
+      "notifications": true
+    }
+  }
+}

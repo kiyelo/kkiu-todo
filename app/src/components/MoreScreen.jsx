@@ -8,8 +8,8 @@ const icons={account:'👤',bell:'🔔',shield:'🛡️',mail:'✉️',reset:'�
 const SLOT_KEY='kkiu-more-slot-v1'
 const loadSlot=()=>{try{return JSON.parse(localStorage.getItem(SLOT_KEY))||{locked:false,symbols:['🌙','🍊','🌿']}}catch{return{locked:false,symbols:['🌙','🍊','🌿']}}}
 
-function Row({icon,label,tail='›',onClick,danger=false,sub,action}){
- return <button className={`rbtn more-row${danger?' danger':''}`} data-act={action} onClick={onClick}><span className="mlead"><span className="mrank">{icon}</span><span>{label}{sub&&<em>{sub}</em>}</span></span><span>{tail}</span></button>
+function Row({icon,label,tail='›',onClick,danger=false,sub,action,pressed}){
+ return <button type="button" className={`rbtn more-row${danger?' danger':''}`} data-act={action} aria-pressed={pressed} onClick={onClick}><span className="mlead"><span className="mrank" aria-hidden="true">{icon}</span><span>{label}{sub&&<em>{sub}</em>}</span></span><span aria-hidden="true">{tail}</span></button>
 }
 
 export default function MoreScreen({values,onToggle,user,onSignOut,language='ko',onLanguage,onBackup,onRestore,onReset,onSeed,onEmpty,onUnread,testMode=false,onExitTestMode}){
@@ -18,8 +18,8 @@ export default function MoreScreen({values,onToggle,user,onSignOut,language='ko'
  const restore=e=>{const file=e.target.files?.[0];if(file)onRestore?.(file);e.target.value=''}
  const items=useMemo(()=>[
   {h:82,node:<div className="more-qsection"><p className="more-section-label">{t(language,'account')}</p><Row action="account" icon={icons.account} label={t(language,'accountManage')} sub={user?.email||t(language,'soon')} onClick={()=>setDoc('account')}/></div>},
-  {h:64,node:<Row action="notifications" icon={icons.bell} label={t(language,'notification')} sub={values.notifications?(language==='en'?'On':'사용'):(language==='en'?'Off':'끔')} onClick={()=>onToggle('notifications')}/>},
-  {h:116,node:<div className="more-qsection"><p className="more-section-label">{t(language,'preferences')}</p><div className="pcard more-language"><div className="mlead"><span className="mrank">🌐</span><h3>{t(language,'language')}</h3></div><div className="more-langbar"><button data-act="lang" className={`more-lang${language==='ko'?' on':''}`} onClick={()=>onLanguage?.('ko')}>한국어</button><button data-act="lang" className={`more-lang${language==='en'?' on':''}`} onClick={()=>onLanguage?.('en')}>English</button></div></div></div>},
+  {h:64,node:<Row action="notifications" icon={icons.bell} label={t(language,'notification')} sub={values.notifications?(language==='en'?'On':'사용'):(language==='en'?'Off':'끔')} pressed={Boolean(values.notifications)} onClick={()=>onToggle('notifications')}/>},
+  {h:116,node:<div className="more-qsection"><p className="more-section-label">{t(language,'preferences')}</p><div className="pcard more-language"><div className="mlead"><span className="mrank" aria-hidden="true">🌐</span><h3>{t(language,'language')}</h3></div><div className="more-langbar" aria-label={language==='en'?'Language':'언어'}><button type="button" data-act="lang" aria-pressed={language==='ko'} className={`more-lang${language==='ko'?' on':''}`} onClick={()=>onLanguage?.('ko')}>한국어</button><button type="button" data-act="lang" aria-pressed={language==='en'} className={`more-lang${language==='en'?' on':''}`} onClick={()=>onLanguage?.('en')}>English</button></div></div></div>},
   {h:64,node:<Row action="terms" icon={icons.shield} label={t(language,'terms')} onClick={()=>setDoc('terms')}/>},
   {h:64,node:<Row action="privacy" icon="🔏" label={language==='en'?'Privacy policy':'개인정보처리방침'} onClick={()=>setDoc('privacy')}/>},
   {h:64,node:<Row action="contact" icon={icons.mail} label={t(language,'contact')} onClick={()=>setDoc('contact')}/>},
@@ -36,7 +36,7 @@ export default function MoreScreen({values,onToggle,user,onSignOut,language='ko'
  useLayoutEffect(()=>{const next=[...(trackRef.current?.querySelectorAll('.more-qitem')||[])].map(el=>Math.ceil(el.getBoundingClientRect().height));if(next.length&&next.some((h,i)=>h!==heights[i]))setHeights(next)},[items,language,user])
  const positions=[];let cursor=0;items.forEach((item,i)=>{positions.push(cursor);cursor+=(heights[i]||item.h)+10})
  const slotPositions=[...positions,cursor]
- const q=useFloatingQueue(items.length,0,{positions:slotPositions,rowHeight:72});const offset=slotPositions[Math.min(q.index,slotPositions.length-1)]||0
+ const q=useFloatingQueue(items.length,0,{positions:slotPositions,rowHeight:72,ariaLabel:language==='en'?'Settings position':'설정 목록 위치',ariaValueText:(current,total)=>language==='en'?`Position ${current} of ${total}`:`전체 ${total}곳 중 ${current}번째`});const offset=slotPositions[Math.min(q.index,slotPositions.length-1)]||0
  useLayoutEffect(()=>{if(entryAligned.current||heights.length!==items.length||!stageRef.current)return;entryAligned.current=true;const desired=Math.max(0,stageRef.current.clientHeight/2-10);let nearest=0,best=Infinity;slotPositions.forEach((position,index)=>{const distance=Math.abs(position-desired);if(distance<best){best=distance;nearest=index}});q.setIndex(nearest)},[heights.length,items.length])
  const spin=()=>{const pool=['🌙','🍊','🌿','🔥','🐈','🧦','🐸'];const next=[0,1,2].map(()=>pool[Math.floor(Math.random()*pool.length)]);const isTriple=next[0]===next[1]&&next[1]===next[2];setSymbols(next);setHit(false);setRolling(true);window.clearTimeout(rollTimer.current);window.clearTimeout(hitTimer.current);rollTimer.current=window.setTimeout(()=>{setRolling(false);if(isTriple){setHit(true);hitTimer.current=window.setTimeout(()=>setHit(false),500)}},220)}
  useEffect(()=>{if(lastQueueIndex.current===null){lastQueueIndex.current=q.index;return}if(lastQueueIndex.current!==q.index){lastQueueIndex.current=q.index;if(!locked)spin()}},[q.index,locked])

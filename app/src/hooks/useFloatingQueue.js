@@ -15,6 +15,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const positionsRef = useRef(positions)
   positionsRef.current = positions
   const [index, setIndexState] = useState(() => clamp(initialIndex, 0, count))
+  const ariaLabel = options.ariaLabel || 'Queue position'
+  const ariaValueText = options.ariaValueText?.(index + 1, count + 1) || `${index + 1} of ${count + 1}`
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [edgePull, setEdgePull] = useState({ edge: null, amount: 0 })
@@ -253,7 +255,13 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       onWheel,
       onKeyDown,
       tabIndex: 0,
-      'aria-label': `삽입 위치 ${index + 1}`,
+      role: 'slider',
+      'aria-label': ariaLabel,
+      'aria-orientation': 'vertical',
+      'aria-valuemin': 1,
+      'aria-valuemax': count + 1,
+      'aria-valuenow': index + 1,
+      'aria-valuetext': ariaValueText,
     },
   }
 }

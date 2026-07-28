@@ -8,6 +8,7 @@
     "dev:host": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
+    "test:stress": "node scripts/stress-test.mjs",
     "verify:web": "vite build",
     "build:android:web": "cross-env CAPACITOR_BUILD=1 vite build",
     "build:android": "pnpm run build:android:web && cap sync android",
