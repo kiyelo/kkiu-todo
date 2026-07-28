@@ -4,16 +4,17 @@ import { t } from '../i18n.js'
 import OverflowText from './OverflowText.jsx'
 
 export default function Composer({ count, circle, members, onAdd, position = count, onOpenChange, language = 'ko' }) {
+  const assignableMembers = members.filter((member) => !member.leftAt)
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
-  const [assignees, setAssignees] = useState(() => (members[0]?.id ? [members[0].id] : ['me']))
+  const [assignees, setAssignees] = useState(() => (assignableMembers[0]?.id ? [assignableMembers[0].id] : ['me']))
   const ref = useRef(null)
   useEffect(() => { if (open) ref.current?.focus(); onOpenChange?.(open) }, [open, onOpenChange])
   useEffect(() => {
     setAssignees((current) => {
-      const valid = current.filter((id) => members.some((member) => member.id === id))
+      const valid = current.filter((id) => assignableMembers.some((member) => member.id === id))
       if (valid.length) return valid.length === current.length ? current : valid
-      return members[0]?.id ? [members[0].id] : ['me']
+      return assignableMembers[0]?.id ? [assignableMembers[0].id] : ['me']
     })
   }, [members])
   const toggleAssignee = (id) => setAssignees((current) => {
@@ -34,7 +35,7 @@ export default function Composer({ count, circle, members, onAdd, position = cou
   return <div className={`slotwrap${open ? ' open' : ''}`}>
     <button className="ins" data-act="slot-open" onClick={() => setOpen(true)}><span className="p">+</span><span>{t(language, 'insert', position + 1)}</span></button>
     <div className="ibar">
-      {circle && <div className="asgrow" aria-label={language === 'en' ? 'Choose assignees' : '담당자 선택'}>{members.map((member) => {
+      {circle && <div className="asgrow" aria-label={language === 'en' ? 'Choose assignees' : '담당자 선택'}>{assignableMembers.map((member) => {
         const order = assignees.indexOf(member.id)
         return <button key={member.id} className={`asgc${order >= 0 ? ' on' : ''}`} data-act="asg-pick" data-m={member.id} aria-pressed={order >= 0} onClick={() => toggleAssignee(member.id)}>
           <span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText>

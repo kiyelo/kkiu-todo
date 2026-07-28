@@ -18,6 +18,7 @@ const memberFromRow = (row) => ({
   name: row.nickname || '멤버',
   emoji: row.emoji || '🙂',
   role: row.role,
+  leftAt: row.left_at || null,
 })
 
 export async function loadPersonalTasks(userId) {
@@ -36,14 +37,14 @@ export async function loadCircles(userId) {
   const client = requireSupabase()
   const { data: circles, error: circleError } = await client
     .from('circles')
-    .select('id,name,emoji,invite_code,created_by,created_at')
+    .select('id,name,emoji,invite_code,join_locked,created_by,created_at')
     .order('created_at', { ascending: true })
   if (circleError) throw circleError
   if (!circles.length) return []
 
   const ids = circles.map((circle) => circle.id)
   const [{ data: memberRows, error: memberError }, { data: taskRows, error: taskError }] = await Promise.all([
-    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,joined_at').in('circle_id', ids).order('joined_at', { ascending: true }),
+    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at,left_at').in('circle_id', ids).order('position', { ascending: true }),
     client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_position,completed_at,created_at,updated_at').in('circle_id', ids).order('position', { ascending: true }),
   ])
   if (memberError) throw memberError
@@ -59,7 +60,7 @@ export async function loadCircles(userId) {
     const activeUnread = tasks.filter((task) => !task.done && task.sourceUnread)
     const memberUnread = {}
     activeUnread.forEach((task) => (task.assignees || [task.assignee]).filter(Boolean).forEach((id) => { memberUnread[id] = (memberUnread[id] || 0) + 1 }))
-    return { id: circle.id, name: circle.name, emoji: circle.emoji, code: circle.invite_code, createdBy: circle.created_by, unread: activeUnread.length, unreadDone: tasks.filter((task) => task.done && task.sourceUnread).length, memberUnread, members: memberRows.filter((row) => row.circle_id === circle.id).map(memberFromRow), tasks }
+    return { id: circle.id, name: circle.name, emoji: circle.emoji, code: circle.invite_code, joinLocked: Boolean(circle.join_locked), createdBy: circle.created_by, unread: activeUnread.length, unreadDone: tasks.filter((task) => task.done && task.sourceUnread).length, memberUnread, members: memberRows.filter((row) => row.circle_id === circle.id).map(memberFromRow), tasks }
   })
 }
 
@@ -77,7 +78,6 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
   const { error: memberError } = await client.from('circle_members').insert({
     circle_id: circle.id,
     user_id: userId,
-    role: 'owner',
     nickname: profileName,
     emoji: profileEmoji,
   })
@@ -91,11 +91,12 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
     name: circle.name,
     emoji: circle.emoji,
     code: circle.invite_code,
+    joinLocked: false,
     createdBy: circle.created_by,
     unread: 0,
     unreadDone: 0,
     memberUnread: {},
-    members: [{ id: userId, name: profileName, emoji: profileEmoji, role: 'owner' }],
+    members: [{ id: userId, name: profileName, emoji: profileEmoji }],
     tasks: [],
   }
 }
@@ -110,11 +111,6 @@ export async function updateCircle(circleId, userId, { name, emoji, profileName,
   if (memberError) throw memberError
 }
 
-export async function deleteCircle(circleId) {
-  const { error } = await requireSupabase().from('circles').delete().eq('id', circleId)
-  if (error) throw error
-}
-
 export async function joinCircleByCode(code, profileName, profileEmoji) {
   const { data, error } = await requireSupabase().rpc('join_circle_by_code', {
     join_code: code,
@@ -126,8 +122,15 @@ export async function joinCircleByCode(code, profileName, profileEmoji) {
 }
 
 export async function leaveCircle(circleId, userId) {
-  const { error } = await requireSupabase().from('circle_members').delete().eq('circle_id', circleId).eq('user_id', userId)
+  const { data, error } = await requireSupabase()
+    .from('circle_members')
+    .update({ left_at: new Date().toISOString() })
+    .eq('circle_id', circleId)
+    .eq('user_id', userId)
+    .is('left_at', null)
+    .select('user_id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error('LEAVE_CIRCLE_NO_ROW')
 }
 
 export async function createCircleTask(userId, circleId, task, position) {
@@ -222,6 +225,41 @@ export async function loadCompletionEvents(userId, limit = 100) {
   const { data, error } = await requireSupabase().from('completion_events').select('id,task_id,circle_id,title,lead_ms,completed_at').eq('user_id', userId).order('completed_at', { ascending: false }).limit(limit)
   if (error) throw error
   return data
+}
+
+export async function loadCircleActivityLogs(circleId, offset = 0, limit = 30) {
+  const cutoff = new Date(Date.now() - 90 * 864e5).toISOString()
+  const { data, error } = await requireSupabase()
+    .from('circle_activity_logs')
+    .select('id,circle_id,actor_id,action,payload,created_at')
+    .eq('circle_id', circleId)
+    .gte('created_at', cutoff)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + limit - 1)
+  if (error) throw error
+  return (data || []).map((row) => ({
+    id: row.id,
+    circleId: row.circle_id,
+    actorId: row.actor_id,
+    action: row.action,
+    payload: row.payload || {},
+    createdAt: row.created_at,
+  }))
+}
+
+export async function regenerateInviteCode(circleId) {
+  const { data, error } = await requireSupabase().rpc('regenerate_invite_code', { target_circle_id: circleId })
+  if (error) throw error
+  const value = Array.isArray(data) ? data[0] : data
+  const code = typeof value === 'string' ? value : value?.invite_code || value?.code
+  if (!code) throw new Error('INVITE_CODE_REGENERATION_NO_VALUE')
+  return code
+}
+
+export async function setCircleJoinLock(circleId, locked) {
+  const { error } = await requireSupabase().rpc('set_circle_join_lock', { target_circle_id: circleId, locked })
+  if (error) throw error
 }
 
 export async function deleteMyAccount() {
