@@ -16,6 +16,30 @@ export default function AuthScreen({ pendingInvite = '' }) {
   }, [])
   const [message, setMessage] = useState(initialMessage)
   const [pendingProvider, setPendingProvider] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordPending, setPasswordPending] = useState(false)
+
+  const signInWithPassword = async (event) => {
+    event.preventDefault()
+    if (!email.trim() || !password) {
+      setMessage('이메일과 비밀번호를 모두 입력해주세요.')
+      return
+    }
+
+    setMessage('')
+    setPasswordPending(true)
+    try {
+      const { error } = await requireSupabase().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (error) throw error
+    } catch (error) {
+      setMessage(error.message || '로그인 중 문제가 생겼어요.')
+      setPasswordPending(false)
+    }
+  }
 
   const signInWith = async (provider) => {
     setMessage('')
@@ -32,6 +56,8 @@ export default function AuthScreen({ pendingInvite = '' }) {
     }
   }
 
+  const disabled = Boolean(pendingProvider) || passwordPending
+
   return (
     <div className="auth-screen">
       <div className="auth-hero">
@@ -45,13 +71,44 @@ export default function AuthScreen({ pendingInvite = '' }) {
           </p>
         )}
       </div>
+
+      <form className="auth-social" onSubmit={signInWithPassword}>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="이메일"
+          autoComplete="username"
+          disabled={disabled}
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="비밀번호"
+          autoComplete="current-password"
+          disabled={disabled}
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
+        />
+        <button type="submit" className="auth-social-btn" disabled={disabled}>
+          <span>{passwordPending ? '로그인 중…' : '이메일로 로그인'}</span>
+        </button>
+      </form>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: '#8b857c', fontSize: 13 }}>
+        <span style={{ height: 1, flex: 1, background: '#ded8ce' }} />
+        <span>또는</span>
+        <span style={{ height: 1, flex: 1, background: '#ded8ce' }} />
+      </div>
+
       <div className="auth-social">
         {PROVIDERS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             className={`auth-social-btn auth-social-${id}`}
-            disabled={Boolean(pendingProvider)}
+            disabled={disabled}
             onClick={() => signInWith(id)}
           >
             <ProviderIcon id={id} />
@@ -71,7 +128,7 @@ function ProviderIcon({ id }) {
         <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.12-.85 2.07-1.82 2.71v2.26h2.93c1.72-1.58 2.69-3.91 2.69-6.61z" />
         <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.93-2.26c-.81.55-1.85.87-3.03.87-2.33 0-4.3-1.57-5-3.68H1v2.33C2.47 15.98 5.48 18 9 18z" />
         <path fill="#FBBC05" d="M4 10.74a5.4 5.4 0 0 1 0-3.48V4.93H1a9 9 0 0 0 0 8.14l3-2.33z" />
-        <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.6-2.6C13.46.89 11.43 0 9 0 5.48 0 2.47 2.02 1 4.93l3 2.33c.7-2.11 2.67-3.68 5-3.68z" />
+        <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.6-2.6C13.46.89 11.43 0 9 0 5.48 0 2.02 1 4.93l3 2.33c.7-2.11 2.67-3.68 5-3.68z" />
       </svg>
     )
   }
