@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { REACT_VERSION } from '../versionHistory.js'
 import { ConfirmDialog } from './Sheets.jsx'
 import { deleteMyAccount } from '../services/supabaseRepository.js'
+import DialogSurface from './DialogSurface.jsx'
 
 // TODO: 실제 운영 문의 주소로 교체하세요.
 const CONTACT_EMAIL = 'contact@kkiu.app'
@@ -123,5 +124,5 @@ export default function InfoModal({ kind, user, language = 'ko', onClose, onSign
  const en = language === 'en'
  const titles = { account: en ? 'Account' : '계정 관리', terms: en ? 'Terms of service' : '이용약관', privacy: en ? 'Privacy policy' : '개인정보처리방침', contact: en ? 'Contact us' : '문의하기' }
  const kickers = { account: 'ACCOUNT', terms: 'TERMS', privacy: 'PRIVACY', contact: 'CONTACT' }
- return <div className="modalwrap on"><button className="scrim" aria-label={en ? 'Close' : '닫기'} data-act="modal-cancel" onClick={onClose} /><div className="modal history-modal info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title"><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div><b>v{REACT_VERSION}</b></div><div className="release-list info-body">{kind === 'account' ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : kind === 'contact' ? <ContactView language={language} /> : <Doc sections={DOCS[kind][en ? 'en' : 'ko']} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></div></div>
+ return <DialogSurface className="history-modal info-modal" labelledBy="info-modal-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div><b>v{REACT_VERSION}</b></div><div className="release-list info-body">{kind === 'account' ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : kind === 'contact' ? <ContactView language={language} /> : <Doc sections={DOCS[kind][en ? 'en' : 'ko']} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
 }
