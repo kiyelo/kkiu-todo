@@ -302,51 +302,66 @@ export default function App() {
   }
   const completed = tasks.filter((task) => task.done)
   const commitPendingDelete = () => {
-    const pending = pendingDeleteRef.current
-    if (!pending) return
-    window.clearTimeout(pendingDeleteTimerRef.current)
-    pendingDeleteRef.current = null
-    pendingDeleteTimerRef.current = null
-    setPendingDelete(null)
-    if (pending.remote) deleteTasks(pending.items.map((item) => item.task.id)).catch(reportSyncError)
+  const pending = pendingDeleteRef.current
+  if (!pending) return
+  window.clearTimeout(pendingDeleteTimerRef.current)
+  pendingDeleteRef.current = null
+  pendingDeleteTimerRef.current = null
+  setPendingDelete(null)
+  if (pending.remoteIds.length) deleteTasks([...new Set(pending.remoteIds)]).catch(reportSyncError)
+}
+const stageTaskDelete = (ids) => {
+  const idSet = new Set(ids)
+  if (!idSet.size) return
+  const circleIdAtDelete = tab === 'circle' ? circle?.id : null
+  const source = circleIdAtDelete ? data.circles.find((item) => item.id === circleIdAtDelete)?.tasks || [] : data.personal
+  const items = source.map((task, index) => ({ task, index })).filter((item) => idSet.has(item.task.id))
+  if (!items.length) return
+  window.clearTimeout(pendingDeleteTimerRef.current)
+  const deletedIds = new Set(items.map((item) => item.task.id))
+  const previous = pendingDeleteRef.current
+  const batch = { items, circleId: circleIdAtDelete }
+  const pending = {
+    batches: [...(previous?.batches || []), batch],
+    count: (previous?.count || 0) + items.length,
+    remoteIds: [...(previous?.remoteIds || []), ...(remoteUser ? items.map((item) => item.task.id) : [])],
   }
-  const stageTaskDelete = (ids) => {
-    const idSet = new Set(ids)
-    if (!idSet.size) return
-    const circleIdAtDelete = tab === 'circle' ? circle?.id : null
-    const source = circleIdAtDelete ? data.circles.find((item) => item.id === circleIdAtDelete)?.tasks || [] : data.personal
-    const items = source.map((task, index) => ({ task, index })).filter((item) => idSet.has(item.task.id))
-    if (!items.length) return
-    commitPendingDelete()
-    const deletedIds = new Set(items.map((item) => item.task.id))
-    const pending = { items, circleId: circleIdAtDelete, remote: Boolean(remoteUser) }
-    setData((current) => pending.circleId
-      ? { ...current, circles: current.circles.map((item) => item.id === pending.circleId ? { ...item, tasks: item.tasks.filter((task) => !deletedIds.has(task.id)) } : item) }
-      : { ...current, personal: current.personal.filter((task) => !deletedIds.has(task.id)) })
-    pendingDeleteRef.current = pending
-    setPendingDelete(pending)
-    pendingDeleteTimerRef.current = window.setTimeout(commitPendingDelete, 5000)
+  setData((current) => batch.circleId
+    ? { ...current, circles: current.circles.map((item) => item.id === batch.circleId ? { ...item, tasks: item.tasks.filter((task) => !deletedIds.has(task.id)) } : item) }
+    : { ...current, personal: current.personal.filter((task) => !deletedIds.has(task.id)) })
+  pendingDeleteRef.current = pending
+  setPendingDelete(pending)
+  pendingDeleteTimerRef.current = window.setTimeout(commitPendingDelete, 5000)
+}
+const deleteCompletedTask = (id) => stageTaskDelete([id])
+const undoTaskDelete = () => {
+  const pending = pendingDeleteRef.current
+  if (!pending) return
+  window.clearTimeout(pendingDeleteTimerRef.current)
+  pendingDeleteRef.current = null
+  pendingDeleteTimerRef.current = null
+  setPendingDelete(null)
+  const restoreBatch = (currentItems, batch) => {
+    const existingIds = new Set(currentItems.map((task) => task.id))
+    const restoredItems = batch.items.filter((item) => !existingIds.has(item.task.id)).sort((a, b) => a.index - b.index)
+    if (!restoredItems.length) return currentItems
+    const next = [...currentItems]
+    restoredItems.forEach((item) => next.splice(Math.min(item.index, next.length), 0, item.task))
+    return next
   }
-  const deleteCompletedTask = (id) => stageTaskDelete([id])
-  const undoTaskDelete = () => {
-    const pending = pendingDeleteRef.current
-    if (!pending) return
-    window.clearTimeout(pendingDeleteTimerRef.current)
-    pendingDeleteRef.current = null
-    pendingDeleteTimerRef.current = null
-    setPendingDelete(null)
-    const restore = (currentItems) => {
-      const existingIds = new Set(currentItems.map((task) => task.id))
-      const restoredItems = pending.items.filter((item) => !existingIds.has(item.task.id)).sort((a, b) => a.index - b.index)
-      if (!restoredItems.length) return currentItems
-      const next = [...currentItems]
-      restoredItems.forEach((item) => next.splice(Math.min(item.index, next.length), 0, item.task))
-      return next
-    }
-    setData((current) => pending.circleId
-      ? { ...current, circles: current.circles.map((item) => item.id === pending.circleId ? { ...item, tasks: restore(item.tasks) } : item) }
-      : { ...current, personal: restore(current.personal) })
-  }
+  setData((current) => {
+    let personal = current.personal
+    let circles = current.circles
+    ;[...pending.batches].reverse().forEach((batch) => {
+      if (batch.circleId) {
+        circles = circles.map((item) => item.id === batch.circleId ? { ...item, tasks: restoreBatch(item.tasks, batch) } : item)
+      } else {
+        personal = restoreBatch(personal, batch)
+      }
+    })
+    return { ...current, personal, circles }
+  })
+}
 
   const saveCircle = async ({ name, emoji, profileName, profileEmoji }) => {
     const safeName = limitGraphemes(name?.trim(), CIRCLE_NAME_LIMIT)
@@ -519,7 +534,7 @@ export default function App() {
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
       {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
-      {pendingDelete ? <div className="app-toast undo-toast" role="status"><span>{language === 'en' ? `${pendingDelete.items.length} deleted ·` : `${pendingDelete.items.length}개 삭제됨 ·`}</span><button type="button" onClick={undoTaskDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button></div> : toast && <div className="app-toast" role="status">{toast}</div>}
+      {pendingDelete ? <div className="app-toast undo-toast" role="status"><span>{language === 'en' ? `${pendingDelete.count} deleted ·` : `${pendingDelete.count}개 삭제됨 ·`}</span><button type="button" onClick={undoTaskDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button></div> : toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
       {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
       {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onRegenerate={refreshInviteCode} onJoinLock={changeJoinLock} onActivity={circleEditorOpen === 'edit' ? () => { setCircleEditorOpen(null); setActivityOpen(true) } : null} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
