@@ -91,13 +91,14 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
 }
 
 export async function updateCircle(circleId, userId, { name, emoji, profileName, profileEmoji }) {
-  const client = requireSupabase()
-  const [{ error: circleError }, { error: memberError }] = await Promise.all([
-    client.from('circles').update({ name, emoji }).eq('id', circleId),
-    client.from('circle_members').update({ nickname: profileName, emoji: profileEmoji }).eq('circle_id', circleId).eq('user_id', userId),
-  ])
-  if (circleError) throw circleError
-  if (memberError) throw memberError
+  const { error } = await requireSupabase().rpc('update_circle_identity', {
+    target_circle_id: circleId,
+    circle_name: name,
+    circle_emoji: emoji,
+    member_nickname: profileName,
+    member_emoji: profileEmoji,
+  })
+  if (error) throw error
 }
 
 export async function joinCircleByCode(code, profileName, profileEmoji) {

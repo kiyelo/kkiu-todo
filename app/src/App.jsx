@@ -212,6 +212,7 @@ export default function App() {
   const addTask = (title, assignee = 'me', position) => {
     const safeTitle = normalizeTaskTitle(title)
     if (!safeTitle) return
+    setFocusTaskId(null)
     const picked = (Array.isArray(assignee) ? assignee : [assignee]).filter(Boolean)
     const owners = picked.length ? picked : ['me']
     const stamp = Date.now()
@@ -265,7 +266,7 @@ export default function App() {
     const from = active.findIndex((task) => task.id === id), to = Math.max(0, Math.min(active.length - 1, from + direction))
     if (from < 0 || from === to) return
     const next = [...active], [moved] = next.splice(from, 1); next.splice(to, 0, moved)
-    updateTasks(() => [...next, ...completedItems]); if (remoteUser) updateTaskPositions(next).catch(reportSyncError)
+    updateTasks(() => [...next, ...completedItems]); if (remoteUser) updateTaskPositions(next, id).catch(reportSyncError)
   }
   const moveTaskTo = (sourceId, targetId) => {
     const active = tasks.filter((task) => !task.done), completedItems = tasks.filter((task) => task.done)
@@ -298,6 +299,7 @@ export default function App() {
     const found = data.circles.find((item) => normalizeInviteCode(item.code) === normalized)
     if (!found) { setToast(language === 'en' ? 'No matching invite code found' : '초대 코드를 찾을 수 없어요'); return false }
     if (found.joinLocked) { setToast(language === 'en' ? 'This Circle is not accepting new members' : '지금은 새로 들어갈 수 없어요'); return false }
+    if (found.members.some((member) => member.id !== 'me' && !member.leftAt && member.name.trim().toLocaleLowerCase() === profileName.toLocaleLowerCase())) { setToast(language === 'en' ? 'That Circle nickname is already in use.' : '이 끼리에서 이미 사용 중인 프로필 이름이에요.'); return false }
     setData((current) => ({ ...current, circles: current.circles.map((item) => item.id !== found.id ? item : { ...item, members: item.members.some((member) => member.id === 'me') ? item.members.map((member) => member.id === 'me' ? { ...member, name: profileName, emoji: profileEmoji } : member) : [...item.members, { id:'me', name:profileName, emoji:profileEmoji }] }) }))
     setCircleId(found.id); setTab('circle'); setCirclePickerOpen(false); finishPendingInvite(); setToast(language === 'en' ? `Joined '${found.name}'` : `${found.name}에 참여했어요`); return true
   }
@@ -326,6 +328,7 @@ const stageTaskDelete = (ids) => {
     batches: [...(previous?.batches || []), batch],
     count: (previous?.count || 0) + items.length,
     remoteIds: [...(previous?.remoteIds || []), ...(remoteUser ? items.map((item) => item.task.id) : [])],
+    countdownKey: crypto.randomUUID(),
   }
   setData((current) => batch.circleId
     ? { ...current, circles: current.circles.map((item) => item.id === batch.circleId ? { ...item, tasks: item.tasks.filter((task) => !deletedIds.has(task.id)) } : item) }
@@ -368,6 +371,8 @@ const undoTaskDelete = () => {
     const safeName = limitGraphemes(name?.trim(), CIRCLE_NAME_LIMIT)
     const safeProfileName = limitGraphemes(profileName?.trim(), PROFILE_NAME_LIMIT)
     if (!safeName || !safeProfileName || !emoji || !profileEmoji || graphemeLength(name?.trim()) > CIRCLE_NAME_LIMIT || graphemeLength(profileName?.trim()) > PROFILE_NAME_LIMIT) { setToast(language === 'en' ? 'Please shorten the name.' : '이름을 조금 줄여 주세요.'); return }
+    const duplicateProfile = circleEditorOpen !== 'create' && circle?.members.some((member) => member.id !== actorId && !member.leftAt && member.name.trim().toLocaleLowerCase() === safeProfileName.toLocaleLowerCase())
+    if (duplicateProfile) { setToast(language === 'en' ? 'That Circle nickname is already in use.' : '이 끼리에서 이미 사용 중인 프로필 이름이에요.'); return }
     const payload = { name: safeName, emoji, profileName: safeProfileName, profileEmoji }
     if (circleEditorOpen === 'create') {
       if (remoteUser) {
@@ -527,6 +532,8 @@ const undoTaskDelete = () => {
     )
   }
 
+  const renderUndoNotice = (className) => pendingDelete ? <div className={className} role="status"><span className="undo-toast-icon" aria-hidden="true">↶</span><span className="undo-toast-copy"><b>{language === 'en' ? `${pendingDelete.count} deleted` : `${pendingDelete.count}개 삭제됨`}</b><small>{language === 'en' ? 'Undo available for 5 seconds' : '5초 동안 되돌릴 수 있어요'}</small></span><button type="button" onClick={undoTaskDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button><i className="undo-toast-progress" key={pendingDelete.countdownKey} aria-hidden="true"/></div> : null
+
   return <div className="wrap">
     {qaAccount && session && <QaAccountBadge account={qaAccount} />}
     <section className={`phone${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}${query!==null?' searching':''}`} onPointerDownCapture={startSwipe} onPointerUpCapture={endSwipe} onPointerCancelCapture={() => { swipeRef.current = null }}>
@@ -535,11 +542,11 @@ const undoTaskDelete = () => {
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
       {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
-      {pendingDelete ? <div className="app-toast undo-toast" role="status"><span>{language === 'en' ? `${pendingDelete.count} deleted ·` : `${pendingDelete.count}개 삭제됨 ·`}</span><button type="button" onClick={undoTaskDelete}>{language === 'en' ? 'Undo' : '되돌리기'}</button></div> : toast && <div className="app-toast" role="status">{toast}</div>}
+      {pendingDelete ? !completedOpen && renderUndoNotice('app-toast undo-toast') : toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
-      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
+      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} footer={renderUndoNotice('undo-toast sheet-undo-toast')} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
       {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onRegenerate={refreshInviteCode} onJoinLock={changeJoinLock} onActivity={circleEditorOpen === 'edit' ? () => { setCircleEditorOpen(null); setActivityOpen(true) } : null} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
-      {activityOpen && circle && <ActivityLogSheet language={settingValues.language} circle={circle} loadPage={(offset, limit) => remoteUser ? loadCircleActivityLogs(circle.id, offset, limit) : Promise.resolve([])} onClose={() => { setActivityOpen(false); setCircleEditorOpen('edit') }} />}
+      {activityOpen && circle && <ActivityLogSheet language={settingValues.language} circle={circle} loadPage={(offset, limit) => testMode || !remoteUser ? Promise.resolve((circle.activityLogs || []).slice(offset, offset + limit)) : loadCircleActivityLogs(circle.id, offset, limit)} onClose={() => { setActivityOpen(false); setCircleEditorOpen('edit') }} />}
       {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
       </div>
     </section>
