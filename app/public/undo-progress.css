@@ -1,0 +1,5 @@
+.undo-toast{position:relative;overflow:hidden;padding-bottom:4px!important}
+.undo-toast::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--accent,#e0894a);transform-origin:left center;animation:undo-progress-shrink 5s linear forwards}
+.undo-toast.undo-progress-restart::after{animation:none}
+@keyframes undo-progress-shrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.undo-toast::after{animation-duration:5s!important}}
