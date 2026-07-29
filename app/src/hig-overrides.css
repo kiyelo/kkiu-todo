@@ -1,0 +1,151 @@
+/* Apple HIG alignment pass — shared overrides */
+:root{
+  --hig-blue:#007aff;
+  --hig-red:#ff3b30;
+  --hig-label:#1c1c1e;
+  --hig-secondary:#8e8e93;
+  --hig-tertiary:#c7c7cc;
+  --hig-separator:rgba(60,60,67,.18);
+  --hig-fill:rgba(120,120,128,.12);
+  --hig-material:rgba(250,250,250,.88);
+  --hig-radius:14px;
+  --hig-shadow:0 8px 24px rgba(0,0,0,.09);
+}
+
+/* Typography and hierarchy */
+body{color:var(--hig-label);letter-spacing:-.01em}
+.ttl,.app-header h1,.sheethead b{font-weight:700;letter-spacing:-.025em}
+.head-sub,.sub,.t-rest,.pcard p,.empty-c p{color:var(--hig-secondary)}
+
+/* Touch targets: Apple recommends at least 44×44 pt */
+button,.hbtn,.icon-button,.ico,.sheetclose,.ck,.selbox,.dx,.mini,.dbtn,.featins,.rbtn,.chip,.filter-chip,.donechip,.asgc{
+  min-width:44px;
+  min-height:44px;
+}
+.ico svg,.hbtn svg,.sheetclose svg{pointer-events:none}
+
+/* Reduce decorative card chrome; preserve hierarchy through spacing and separators */
+.card,.pcard,.empty-c,.field,.rbtn,.srow,.drow,.statcard,.suprow,.composer{
+  border:1px solid var(--hig-separator);
+  box-shadow:none;
+}
+.card,.pcard,.empty-c,.field,.rbtn,.srow,.drow,.statcard,.suprow{border-radius:var(--hig-radius)}
+.card.t1{background:var(--surface)}
+.card.t1 .rank{box-shadow:none}
+
+/* Clear pressed/focus feedback */
+button{transition:opacity .12s ease,transform .12s ease,background-color .12s ease}
+button:active{opacity:.55;transform:scale(.98)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[contenteditable=true]:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--hig-blue) 35%,transparent);
+  outline-offset:2px;
+}
+
+/* Primary and destructive action hierarchy */
+.mbtn,.save-button,.edit-save{background:var(--hig-blue)!important;color:#fff!important;border-radius:12px;box-shadow:none!important}
+.dbtn.del,.rbtn.danger,.danger{color:var(--hig-red)!important}
+.featins{border:0;background:var(--hig-fill);color:var(--hig-blue);font-weight:650}
+
+/* Header/tool buttons: system-like circular material */
+.hbtn,.icon-button,.ico,.sheetclose{
+  border-radius:50%;
+  background:var(--hig-fill);
+  color:var(--hig-label);
+}
+.ico{background:transparent}
+.ico:hover,.hbtn:hover,.sheetclose:hover{background:rgba(120,120,128,.18)}
+
+/* Chips and segmented controls */
+.chip,.filter-chip,.donechip,.asgc{border-radius:999px;background:var(--hig-fill);box-shadow:none}
+.chip.on,.filter-chip.selected,.donechip.on,.asgc.on,.asgc.selected{
+  background:rgba(0,122,255,.12)!important;
+  color:var(--hig-blue)!important;
+  box-shadow:inset 0 0 0 1px rgba(0,122,255,.2)!important;
+}
+.seg{background:var(--hig-fill);box-shadow:none;border:0;padding:2px;border-radius:10px}
+.seg button{min-height:38px;border-radius:8px}
+.seg button.on{background:#fff;color:var(--hig-label);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* Sheets: scoped modal task, restrained chrome, clear dismissal */
+.scrim{background:rgba(0,0,0,.28);backdrop-filter:saturate(120%) blur(2px)}
+.sheet{
+  max-height:88%;
+  border-radius:20px 20px 0 0;
+  background:var(--hig-material);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  backdrop-filter:saturate(180%) blur(24px);
+  box-shadow:0 -8px 30px rgba(0,0,0,.12);
+}
+.sheet .grab{width:36px;height:5px;background:rgba(60,60,67,.3)}
+.sheethead{min-height:56px;padding:8px 16px;border-bottom:1px solid var(--hig-separator)}
+.sheetbody{padding-left:16px;padding-right:16px}
+
+/* Alerts/confirmations: compact, neutral, actions visually separated */
+.confirm,.dialog,.alert-card{
+  border-radius:14px!important;
+  background:rgba(250,250,250,.96)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  backdrop-filter:blur(22px) saturate(160%);
+  box-shadow:0 18px 50px rgba(0,0,0,.22)!important;
+}
+.confirm-actions,.dialog-actions{border-top:1px solid var(--hig-separator)}
+.confirm-actions button,.dialog-actions button{min-height:50px;color:var(--hig-blue);font-weight:600}
+.confirm-actions button+button,.dialog-actions button+button{border-left:1px solid var(--hig-separator)}
+
+/* Undo feedback: compact floating system material */
+.app-toast.undo-toast{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:calc(var(--nav-h,62px) + var(--safe,0px) + 10px);
+  min-height:52px;
+  padding:0!important;
+  overflow:hidden;
+  display:flex!important;
+  align-items:center;
+  gap:10px;
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:14px;
+  background:rgba(44,44,46,.92)!important;
+  color:#fff;
+  box-shadow:0 10px 28px rgba(0,0,0,.2);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  backdrop-filter:blur(20px) saturate(160%);
+}
+.undo-toast>span{flex:1;padding:0 0 0 16px;font-size:14px;font-weight:550}
+.undo-toast>button{flex:none;min-height:52px;padding:0 16px;color:#64a8ff!important;font-weight:700;border-left:1px solid rgba(255,255,255,.16)}
+.undo-countdown-track{
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:3px;
+  overflow:hidden;
+  background:rgba(255,255,255,.18);
+}
+.undo-countdown-fill{
+  display:block;
+  width:100%;height:100%;
+  transform-origin:left center;
+  background:#64a8ff;
+  animation:hig-undo-countdown 5s linear forwards;
+}
+@keyframes hig-undo-countdown{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* Navigation and safe-area treatment */
+.bottom-nav,.nav,.tabbar{
+  border-top:1px solid var(--hig-separator);
+  background:rgba(251,248,242,.88)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+}
+
+/* Motion accessibility */
+@media (prefers-reduced-motion:reduce){
+  .undo-countdown-fill{animation:none;transform:scaleX(.5)}
+  button,.card,.sheet,.scrim{transition:none!important}
+}
+
+/* Desktop shell should not overpower the mobile product surface */
+@media (min-width:700px){
+  body{background:#f2f2f7}
+  .phone{box-shadow:0 18px 50px rgba(0,0,0,.13);border:1px solid rgba(60,60,67,.14)}
+}
