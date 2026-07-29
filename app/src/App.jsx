@@ -226,6 +226,7 @@ export default function App() {
     next.splice(at, 0, ...created)
     updateTasks(() => [...next, ...completed])
     setQueuePositions((current) => ({ ...current, [tab]: at + created.length }))
+    setFocusVisit((current) => current + 1)
     setToast(created.length > 1
       ? (language === 'en' ? `Inserted ${created.length} tasks from #${at + 1}` : `${at + 1}번째부터 할 일 ${created.length}개를 끼웠어요`)
       : (language === 'en' ? `Inserted at #${at + 1}` : `${at + 1}번째에 끼웠어요`))
