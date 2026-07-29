@@ -1,0 +1,40 @@
+name: Apply task insertion position patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-insert-above-composer.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Keep newly created tasks above composer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/App.jsx')
+          text = path.read_text()
+          old = "    setQueuePositions((current) => ({ ...current, [tab]: at + created.length }))\n    setToast(created.length > 1"
+          new = "    setQueuePositions((current) => ({ ...current, [tab]: at + created.length }))\n    setFocusVisit((current) => current + 1)\n    setToast(created.length > 1"
+          if old not in text:
+              raise SystemExit('target addTask block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          Path('.github/workflows/apply-insert-above-composer.yml').unlink()
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/App.jsx .github/workflows/apply-insert-above-composer.yml
+          git commit -m "fix: place created tasks above composer"
+          git push origin main
