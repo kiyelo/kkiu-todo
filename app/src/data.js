@@ -29,4 +29,4 @@ personal:titles.map((title,i)=>({id:`p${i}`,title,done:false,createdAt:now-i*100
 circles:[
 {id:'c1',name:'우리집',emoji:'🏠',code:'KKIU-VOMZ',joinLocked:false,unread:0,unreadDone:1,members,memberUnread:{me:2,su:1},tasks:homeTasks,activityLogs},
 {id:'c2',name:'강릉 여행',emoji:'✈️',code:'KKIU-TRIP',joinLocked:false,unread:3,unreadDone:0,members:members.slice(0,3),memberUnread:{},tasks:tripTitles.map((title,i)=>({id:`c2t${i}`,title,assignee:['me','da','su','da','me'][i],done:false})),activityLogs:activityLogs.slice(0,5).map((log,index)=>({...log,id:`trip-${index}`,payload:{...log.payload,actor_name:['영롱','다온','수호','다온','영롱'][index]}}))}
-],settings:{compact:false,motion:true,notifications:true,language:'ko'}}
+],settings:{compact:false,motion:true,notifications:true,serviceNotifications:true,interactionFeedback:true,theme:'system',language:'ko'}}

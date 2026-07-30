@@ -17,9 +17,11 @@
     "android:open": "cap open android"
   },
   "dependencies": {
+    "@cap-kit/settings": "8.1.5",
     "@capacitor/android": "8.4.2",
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.4.2",
+    "@capacitor/local-notifications": "8.2.1",
     "@supabase/supabase-js": "2.110.7",
     "lucide-react": "1.25.0",
     "react": "19.2.7",

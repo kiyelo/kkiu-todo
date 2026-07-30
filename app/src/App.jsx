@@ -16,6 +16,7 @@ import { createCircle, createCircleTask, createPersonalTask, deleteTasks, joinCi
 import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes, normalizeTaskTitle } from './utils/text.js'
 import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBackupData } from './services/backup.js'
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
+import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
@@ -444,7 +445,17 @@ const undoTaskDelete = () => {
     } catch (error) { if (error?.name !== 'AbortError') setToast(language === 'en' ? 'Could not share invitation' : '초대 메시지를 공유하지 못했어요') }
   }
 
-  const settingValues = { compact: false, motion: true, notifications: true, language: 'ko', slotLocked: false, slotSymbols: ['🌙', '🍊', '🌿'], ...(data.settings || {}) }
+  const settingValues = { compact: false, motion: true, notifications: true, serviceNotifications: true, interactionFeedback: true, theme: 'system', language: 'ko', slotLocked: false, slotSymbols: ['🌙', '🍊', '🌿'], ...(data.settings || {}) }
+  useEffect(() => {
+    const root = document.documentElement
+    root.lang = settingValues.language
+    if (settingValues.theme === 'system') delete root.dataset.theme
+    else root.dataset.theme = settingValues.theme
+    root.style.colorScheme = settingValues.theme === 'system' ? 'light dark' : settingValues.theme
+  }, [settingValues.language, settingValues.theme])
+  useEffect(() => {
+    setInteractionFeedbackEnabled(settingValues.interactionFeedback)
+  }, [settingValues.interactionFeedback])
   const markTaskIdsRead = useCallback((targetCircleId, taskIds) => {
     const ids = [...new Set(taskIds)]
     if (!ids.length) return
@@ -482,8 +493,7 @@ const undoTaskDelete = () => {
     }
   }, [completedOpen, tab, circle?.id, circle?.tasks, markTaskIdsRead])
   const persistSettings = (settings) => { if (remoteUser) savePreferences(remoteUser.id,settings).catch(reportSyncError) }
-  const toggleSetting = (id) => { const next={ ...settingValues, [id]: !settingValues[id] }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
-  const setLanguage = (language) => { const next={ ...settingValues, language }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
+  const setSetting = (id, value) => { const next={ ...settingValues, [id]: value }; setData((current) => ({ ...current, settings: next })); persistSettings(next) }
   const backupData = () => { const blob = new Blob([JSON.stringify({ version: '1.4.0', exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `kkiu-backup-${new Date().toISOString().slice(0, 10)}.json`; anchor.click(); URL.revokeObjectURL(url); setToast(language === 'en' ? 'Backup file created' : '백업 파일을 만들었어요') }
   const restoreData = async (file) => {
     try {
@@ -540,7 +550,7 @@ const undoTaskDelete = () => {
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}
-      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onToggle={toggleSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onLanguage={setLanguage} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
+      {remoteLoading && !testMode ? <main className="screen-scroll loading-screen">{language === 'en' ? 'Loading to-dos…' : '할 일을 불러오고 있어요…'}</main> : tab === 'more' ? <MoreScreen values={settingValues} onSetting={setSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen key={`${tab}-${circle?.id || 'none'}-${focusTaskId || ''}-${focusVisit}`} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {pendingDelete ? !completedOpen && renderUndoNotice('app-toast undo-toast') : toast && <div className="app-toast" role="status">{toast}</div>}
       {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}

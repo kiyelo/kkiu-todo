@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowIcon, CheckIcon, GripIcon } from './Icons.jsx'
 import OverflowText from './OverflowText.jsx'
 import { TASK_TITLE_LIMIT, limitGraphemes, normalizeTaskTitle } from '../utils/text.js'
+import { interactionFeedback } from '../services/interactionFeedback.js'
 
 function splitAtWidth(text, width) {
   if (!width || typeof document === 'undefined') return [text, '']
@@ -64,7 +65,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
       hold.current = null
       current.triggered = true
       suppressHoldClick.current = true
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20)
+      interactionFeedback(20)
       onLongPress?.(task.id)
     }, 460)
   }
@@ -87,7 +88,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
       if (element.dataset.queueMoved === 'true' || grip.current !== state) return
       state.armed = true; element.dataset.reorderArmed = 'true'
       try { element.setPointerCapture(event.pointerId) } catch {}
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(14)
+      interactionFeedback(14)
       onDragStart?.(task.id, event)
     }, 170)
     grip.current = state
@@ -112,7 +113,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     state.element.dataset.reorderArmed = 'false'; state.element.dataset.queueMoved = 'false'; grip.current = null
   }
 
-  const finish = () => { if (task.done || selecting) return; setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
+  const finish = () => { if (task.done || selecting) return; interactionFeedback(10); setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
   const assignedMembers = (task.assignees || [task.assignee]).map((id) => members.find((member) => member.id === id)).filter(Boolean)
   const hasFormerAssignee = assignedMembers.some((member) => member.leftAt)
   const assignableMembers = members.filter((member) => !member.leftAt)

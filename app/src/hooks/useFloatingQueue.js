@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { interactionFeedback } from '../services/interactionFeedback.js'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 const nearest = (positions, value) => {
@@ -52,7 +53,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current)
   }, [])
   const notify = useCallback(() => {
-    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(8)
+    interactionFeedback(8)
   }, [])
   const pulseEdge = useCallback((edge) => {
     window.clearTimeout(edgeBounceTimerRef.current)

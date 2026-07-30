@@ -1266,3 +1266,53 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:li
   .completed-sheet .sheetclose{background:rgba(118,118,128,.24)}
   .app-toast.undo-toast,.sheet-undo-toast{background:rgba(38,41,47,.94);border-color:rgba(255,255,255,.1);box-shadow:0 16px 42px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08)}
 }
+
+/* 더보기 출시 설정 */
+.more-account-summary{display:flex;align-items:center;gap:12px;min-height:88px;padding:15px 16px;border:1px solid rgba(255,255,255,.88);border-radius:20px;background:rgba(255,255,255,.66);box-shadow:var(--sh-card);backdrop-filter:blur(16px) saturate(145%)}
+.more-account-summary>.mrank{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:14px;background:var(--accent-soft);font-size:21px}
+.more-account-summary>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.more-account-summary small{color:var(--sub);font-size:11px;font-weight:700}
+.more-account-summary strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.more-setting-card{min-height:62px;padding:14px 16px}
+.more-setting-card>.mlead{min-width:0}
+.more-setting-card>.mlead h3{font-size:14px}
+.more-setting-card:has(.setting-switch){display:flex;align-items:center;justify-content:space-between;gap:12px}
+.more-setting-card .setting-switch{margin-left:auto}
+.more-langbar[role="radiogroup"]{width:100%;min-width:0}
+.more-langbar[role="radiogroup"] .more-lang{min-width:0;padding:0 7px;white-space:nowrap}
+.more-app-version{display:flex;align-items:center;justify-content:center;min-height:44px;color:var(--faint);font-size:11px;font-weight:700;letter-spacing:.02em}
+.notification-modal{width:min(342px,calc(100vw - 24px));padding:20px}
+.notification-modal>p{margin:0 0 13px}
+.notification-permission-warning{padding:9px 10px;border-radius:11px;background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)!important;font-weight:650}
+.notification-setting-list{display:flex;flex-direction:column;margin:4px 0 12px;border-top:1px solid var(--hair)}
+.notification-setting-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;border-bottom:1px solid var(--hair)}
+.notification-setting-list>div>span{min-width:0;display:flex;flex-direction:column;gap:2px}
+.notification-setting-list b{font-size:13.5px}
+.notification-setting-list small{color:var(--sub);font-size:10.5px;line-height:1.35}
+.system-settings-button{width:100%;min-height:44px;padding:9px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:750;text-align:left}
+.system-settings-button span{float:right}
+
+/* 명시적 화면 모드는 OS 설정보다 우선한다. */
+html[data-theme="dark"]{--paper:#17191d;--surface:rgba(39,42,48,.72);--ink:#f7f8fb;--ink2:#d5d8df;--sub:rgba(235,239,247,.62);--faint:rgba(235,239,247,.38);--hair:rgba(255,255,255,.09);--accent:#0a84ff;--accent-soft:rgba(10,132,255,.19);--accent-ink:#69b7ff;--sh-card:0 1px 0 rgba(255,255,255,.09) inset,0 8px 24px rgba(0,0,0,.18);background:#0d1015}
+html[data-theme="dark"] body{background:radial-gradient(circle at 15% 0,rgba(0,112,220,.34),transparent 34%),radial-gradient(circle at 90% 20%,rgba(105,55,180,.25),transparent 30%),linear-gradient(160deg,#121821,#080b10)}
+html[data-theme="dark"] .phone{background:linear-gradient(180deg,rgba(27,30,36,.9),rgba(18,21,26,.94));border-color:rgba(255,255,255,.12)}
+html[data-theme="dark"] .qfade.t{background:linear-gradient(to bottom,rgba(25,29,35,.94),transparent)}
+html[data-theme="dark"] .qfade.b{background:linear-gradient(to top,rgba(19,23,29,.97) 48%,transparent)}
+html[data-theme="dark"] .more-qitem .rbtn,html[data-theme="dark"] .more-qitem .pcard,html[data-theme="dark"] .more-account-summary{background:rgba(42,46,54,.94)!important;border-color:rgba(255,255,255,.1)!important}
+html[data-theme="dark"] .sheet,html[data-theme="dark"] .modal{background:rgba(29,33,40,.97)!important;border-color:rgba(255,255,255,.12)}
+
+html[data-theme="light"]{--paper:#f2f5fa;--surface:rgba(255,255,255,.72);--ink:#111216;--ink2:#3a3d45;--sub:#747985;--faint:#a6abb5;--hair:rgba(15,23,42,.08);--accent:#0a84ff;--accent-soft:rgba(10,132,255,.12);--accent-ink:#0066cc;--sh-card:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(26,36,55,.05),0 8px 24px rgba(26,36,55,.06);background:#dfe6f0}
+html[data-theme="light"] body{background:radial-gradient(circle at 15% 10%,rgba(112,190,255,.65),transparent 34%),radial-gradient(circle at 88% 20%,rgba(190,149,255,.48),transparent 31%),radial-gradient(circle at 55% 92%,rgba(119,223,210,.44),transparent 36%),linear-gradient(160deg,#e9f0f8 0%,#f8f9fc 48%,#e4eaf3 100%)}
+html[data-theme="light"] .phone{background:linear-gradient(180deg,rgba(249,251,255,.82),rgba(240,244,250,.88));border-color:rgba(255,255,255,.82)}
+html[data-theme="light"] .qfade.t{background:linear-gradient(to bottom,rgba(244,248,253,.92) 15%,transparent)}
+html[data-theme="light"] .qfade.b{background:linear-gradient(to top,rgba(240,245,251,.96) 48%,transparent)}
+html[data-theme="light"] .more-qitem .rbtn,html[data-theme="light"] .more-qitem .pcard,html[data-theme="light"] .more-account-summary{background:rgba(250,252,255,.9)!important;border-color:rgba(255,255,255,.88)!important}
+html[data-theme="light"] .sheet,html[data-theme="light"] .modal{background:rgba(250,252,255,.97)!important;border-color:rgba(255,255,255,.92)}
+
+@media(max-width:350px){
+  .more-qtrack>*{left:10px;right:10px}
+  .more-langbar[role="radiogroup"]{gap:4px}
+  .more-langbar[role="radiogroup"] .more-lang{padding:0 4px;font-size:11px}
+  .more-account-summary{padding:13px 12px}
+  .notification-modal{width:calc(100vw - 16px);padding:17px}
+}

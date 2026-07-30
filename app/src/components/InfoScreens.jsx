@@ -4,9 +4,6 @@ import { ConfirmDialog } from './Sheets.jsx'
 import { deleteMyAccount } from '../services/supabaseRepository.js'
 import DialogSurface from './DialogSurface.jsx'
 
-// TODO: 실제 운영 문의 주소로 교체하세요.
-const CONTACT_EMAIL = 'contact@kkiu.app'
-
 const DOCS = {
  terms: {
   ko: [
@@ -50,6 +47,14 @@ function Doc({ sections }) {
  return <div className="info-doc">{sections.map((section) => <section key={section.h}><h4>{section.h}</h4>{section.p && <p>{section.p}</p>}{section.list && <ul>{section.list.map((item) => <li key={item}>{item}</li>)}</ul>}</section>)}</div>
 }
 
+const accountProvider = (user, language) => {
+ const provider = user?.app_metadata?.provider || user?.app_metadata?.providers?.[0] || 'email'
+ const labels = language === 'en'
+  ? { google: 'Google', apple: 'Apple', kakao: 'Kakao', email: 'Email' }
+  : { google: 'Google 로그인', apple: 'Apple 로그인', kakao: '카카오 로그인', email: '이메일 로그인' }
+ return labels[provider] || provider
+}
+
 function AccountView({ user, language, onSignOut, onClose }) {
  const en = language === 'en'
  const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -74,10 +79,10 @@ function AccountView({ user, language, onSignOut, onClose }) {
  }
 
  return <div className="info-doc">
-  <section><h4>{en ? 'Signed-in account' : '로그인 계정'}</h4><p className="info-strong">{user?.email || (en ? 'Not signed in · stored on this device only' : '로그인하지 않음 · 이 기기에만 저장 중')}</p></section>
+  <section><h4>{en ? 'Sign-in method' : '로그인 방식'}</h4><p className="info-strong">{user ? accountProvider(user, language) : (en ? 'No account' : '로그인하지 않음')}</p></section>
+  <section><h4>{en ? 'Email' : '이메일'}</h4><p className="info-strong">{user?.email || (en ? 'Stored on this device only' : '이 기기에만 저장 중')}</p></section>
   <section><h4>{en ? 'Where your data lives' : '데이터 저장 위치'}</h4><p>{user ? (en ? 'Your to-dos sync to the kkiu cloud (Supabase) and are cached on this device.' : '할 일이 끼우 클라우드(Supabase)에 동기화되고, 이 기기에도 캐시돼요.') : (en ? 'All to-dos are stored only in this browser. Back up before switching devices.' : '모든 할 일이 이 브라우저에만 저장돼요. 기기를 바꾸기 전에 백업해 주세요.')}</p></section>
   <section><h4>{en ? 'Manage' : '관리'}</h4><ul><li>{en ? 'Back up or restore data anytime from the More tab.' : '더보기 탭에서 언제든 데이터를 백업·복원할 수 있어요.'}</li><li>{en ? 'Clearing the app or browser data removes local to-dos.' : '앱/브라우저 데이터를 지우면 이 기기의 할 일이 사라져요.'}</li></ul></section>
-  {user && onSignOut && <button className="mbtn info-signout" data-act="signout" onClick={() => { onClose?.(); onSignOut() }}>{en ? 'Sign out' : '로그아웃'}</button>}
   {user && (
    <div className="account-danger-zone">
     <h3>{en ? 'Delete account' : '회원 탈퇴'}</h3>
@@ -112,17 +117,22 @@ function AccountView({ user, language, onSignOut, onClose }) {
  </div>
 }
 
-function ContactView({ language }) {
+const LICENSES = [
+ { name: 'React / React DOM', license: 'MIT', url: 'https://github.com/facebook/react' },
+ { name: 'Vite', license: 'MIT', url: 'https://github.com/vitejs/vite' },
+ { name: 'Supabase JavaScript', license: 'MIT', url: 'https://github.com/supabase/supabase-js' },
+ { name: 'Lucide React', license: 'ISC', url: 'https://github.com/lucide-icons/lucide' },
+ { name: 'Capacitor', license: 'MIT', url: 'https://github.com/ionic-team/capacitor' },
+]
+
+function LicensesView({ language }) {
  const en = language === 'en'
- return <div className="info-doc">
-  <section><h4>{en ? 'Email' : '이메일 문의'}</h4><p><a className="info-mail" href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(en ? `kkiu feedback (v${REACT_VERSION})` : `끼우 문의 (v${REACT_VERSION})`)}`}>{CONTACT_EMAIL}</a></p><p>{en ? 'We usually reply within 2–3 business days.' : '보통 영업일 기준 2~3일 안에 답변드려요.'}</p></section>
-  <section><h4>{en ? 'Reporting a bug?' : '버그 제보 팁'}</h4><ul><li>{en ? 'Include what you did and what you expected.' : '어떤 동작을 했고, 어떻게 되길 기대했는지 적어 주세요.'}</li><li>{en ? 'Attaching a backup file (More > Back up data) helps a lot.' : '백업 파일(더보기 > 데이터 백업)을 함께 보내 주시면 큰 도움이 돼요.'}</li><li>{en ? `App version: v${REACT_VERSION}` : `앱 버전: v${REACT_VERSION}`}</li></ul></section>
- </div>
+ return <div className="info-doc"><section><h4>{en ? 'Open-source software' : '오픈소스 소프트웨어'}</h4><p>{en ? 'Kkiu is built with the following open-source projects.' : '끼우는 다음 오픈소스 프로젝트를 사용해 만들었습니다.'}</p><ul>{LICENSES.map((item) => <li key={item.name}><a className="info-mail" href={item.url} target="_blank" rel="noreferrer">{item.name}</a> · {item.license}</li>)}</ul></section></div>
 }
 
 export default function InfoModal({ kind, user, language = 'ko', onClose, onSignOut }) {
  const en = language === 'en'
- const titles = { account: en ? 'Account' : '계정 관리', terms: en ? 'Terms of service' : '이용약관', privacy: en ? 'Privacy policy' : '개인정보처리방침', contact: en ? 'Contact us' : '문의하기' }
- const kickers = { account: 'ACCOUNT', terms: 'TERMS', privacy: 'PRIVACY', contact: 'CONTACT' }
- return <DialogSurface className="history-modal info-modal" labelledBy="info-modal-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div><b>v{REACT_VERSION}</b></div><div className="release-list info-body">{kind === 'account' ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : kind === 'contact' ? <ContactView language={language} /> : <Doc sections={DOCS[kind][en ? 'en' : 'ko']} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
+ const titles = { account: en ? 'Account information' : '계정 정보', terms: en ? 'Terms of service' : '이용약관', privacy: en ? 'Privacy policy' : '개인정보처리방침', licenses: en ? 'Open-source licenses' : '오픈소스 라이선스' }
+ const kickers = { account: 'ACCOUNT', terms: 'TERMS', privacy: 'PRIVACY', licenses: 'LICENSES' }
+ return <DialogSurface className="history-modal info-modal" labelledBy="info-modal-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div><b>v{REACT_VERSION}</b></div><div className="release-list info-body">{kind === 'account' ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : kind === 'licenses' ? <LicensesView language={language} /> : <Doc sections={DOCS[kind][en ? 'en' : 'ko']} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
 }
