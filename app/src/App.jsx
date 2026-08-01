@@ -20,6 +20,13 @@ import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
+const THEME_PREFERENCE_KEY = 'kkiu-theme-preference'
+const loadCachedThemePreference = () => {
+  try {
+    const value = localStorage.getItem(THEME_PREFERENCE_KEY)
+    return ['system', 'light', 'dark'].includes(value) ? value : 'system'
+  } catch { return 'system' }
+}
 async function writeClipboard(text) {
   if (!text) throw new Error('EMPTY_CLIPBOARD_TEXT')
   try {
@@ -59,7 +66,12 @@ export default function App() {
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
   const initialUi = useRef((() => { try { return JSON.parse(localStorage.getItem('kkiu-ui-v1')) || {} } catch { return {} } })()).current
   const [tab, setTab] = useState(initialUi.tab || 'home')
-  const [data, setData] = useState(() => hasSupabaseConfig ? { ...freshStarterData(), personal: [], circles: [] } : localRepository.load(freshStarterData()))
+  const [data, setData] = useState(() => {
+    const initialData = freshStarterData()
+    return hasSupabaseConfig
+      ? { ...initialData, personal: [], circles: [], settings: { ...initialData.settings, theme: loadCachedThemePreference() } }
+      : localRepository.load(initialData)
+  })
   const [circleId, setCircleId] = useState(initialUi.circleId || data.circles[0]?.id)
   const [query, setQuery] = useState(null)
   const [filter, setFilter] = useState(initialUi.filter || null)
@@ -456,7 +468,8 @@ const undoTaskDelete = () => {
         : settingValues.theme
       root.dataset.theme = resolvedTheme
       root.dataset.themePreference = settingValues.theme
-      root.style.colorScheme = resolvedTheme
+      root.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
+      try { localStorage.setItem(THEME_PREFERENCE_KEY, settingValues.theme) } catch {}
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0d1015' : '#dfe6f0')
     }
     applyTheme()

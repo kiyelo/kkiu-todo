@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#fbf8f2" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        const root = document.documentElement
+        const systemDark = matchMedia('(prefers-color-scheme: dark)').matches
+        let preference = 'system'
+        try {
+          const savedData = JSON.parse(localStorage.getItem('kkiu-react-0.7') || 'null')
+          preference = localStorage.getItem('kkiu-theme-preference') || savedData?.settings?.theme || 'system'
+        } catch {}
+        const theme = preference === 'system' ? (systemDark ? 'dark' : 'light') : preference
+        root.dataset.theme = theme
+        root.dataset.themePreference = preference
+        root.style.colorScheme = theme === 'light' ? 'only light' : 'dark'
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0d1015' : '#dfe6f0'
+      })()
+    </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>끼우</title>
   </head>
