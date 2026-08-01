@@ -449,9 +449,19 @@ const undoTaskDelete = () => {
   useEffect(() => {
     const root = document.documentElement
     root.lang = settingValues.language
-    if (settingValues.theme === 'system') delete root.dataset.theme
-    else root.dataset.theme = settingValues.theme
-    root.style.colorScheme = settingValues.theme === 'system' ? 'light dark' : settingValues.theme
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+    const applyTheme = () => {
+      const resolvedTheme = settingValues.theme === 'system'
+        ? (systemTheme.matches ? 'dark' : 'light')
+        : settingValues.theme
+      root.dataset.theme = resolvedTheme
+      root.dataset.themePreference = settingValues.theme
+      root.style.colorScheme = resolvedTheme
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0d1015' : '#dfe6f0')
+    }
+    applyTheme()
+    if (settingValues.theme === 'system') systemTheme.addEventListener('change', applyTheme)
+    return () => systemTheme.removeEventListener('change', applyTheme)
   }, [settingValues.language, settingValues.theme])
   useEffect(() => {
     setInteractionFeedbackEnabled(settingValues.interactionFeedback)
