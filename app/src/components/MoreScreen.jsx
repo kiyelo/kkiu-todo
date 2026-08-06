@@ -11,7 +11,7 @@ const icons = {
   backup: '↓', restore: '↑', reset: '⟲', starter: '↺', remove: '⌫', unread: '!',
 }
 const SLOT_KEY = 'kkiu-more-slot-v1'
-const CONTACT_FORM_URL = import.meta.env.VITE_CONTACT_FORM_URL || 'https://forms.gle/'
+const CONTACT_FORM_URL = import.meta.env.VITE_CONTACT_FORM_URL || 'https://forms.gle/9Ljt3w7MaNJfumLb8'
 const showDevelopmentTools = import.meta.env.DEV || new URLSearchParams(window.location.search).has('qa')
 
 const loadSlot = () => {
