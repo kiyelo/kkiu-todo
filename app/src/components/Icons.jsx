@@ -29,8 +29,7 @@ export function ArrowIcon() {
 export function QueueIcon() {
   return <svg className="queue-logo-icon" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="2.75" y="3.5" width="18.5" height="6.75" rx="2.15" />
-    <circle cx="7" cy="6.875" r="1.9" />
-    <path className="queue-logo-check" d="m6.15 6.9.58.6 1.18-1.28" />
+    <path className="queue-logo-check" d="m5.35 6.9 1.2 1.15 2.25-2.5" />
     <rect x="2.75" y="13.75" width="18.5" height="6.75" rx="3.375" />
   </svg>
 }
