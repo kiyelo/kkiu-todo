@@ -17,6 +17,7 @@ import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes, 
 import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBackupData } from './services/backup.js'
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
+import { loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
@@ -58,6 +59,7 @@ const withUnreadCounts = (circle) => {
 export default function App() {
   const qaAccount = getSelectedQaAccount()
   const [session, setSession] = useState(undefined)
+  const [remoteReloadKey, setRemoteReloadKey] = useState(0)
   const [qaLoginError, setQaLoginError] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(undefined)
   const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
@@ -99,6 +101,19 @@ export default function App() {
   const remoteUser = testMode ? null : session?.user
   const actorId = remoteUser?.id || 'me'
 
+  const applyRemoteCache = useCallback((userId) => {
+    const cached = loadRemoteSnapshot(userId)
+    if (!cached) return false
+    setData((current) => ({
+      ...current,
+      personal: cached.personal,
+      circles: cached.circles,
+      settings: { ...current.settings, ...cached.settings },
+    }))
+    setCircleId((current) => cached.circles.some((item) => item.id === current) ? current : cached.circles[0]?.id)
+    return true
+  }, [])
+
   useEffect(() => {
     let second = 0
     const first = requestAnimationFrame(() => { second = requestAnimationFrame(() => document.body.classList.add('motion-ready')) })
@@ -113,6 +128,8 @@ export default function App() {
       if (cancelled) return
       if (error) reportSyncError(error)
       if (authData.session || !qaAccount) {
+        if (authData.session?.user) setRemoteLoading(!applyRemoteCache(authData.session.user.id))
+        else setRemoteLoading(false)
         setSession(authData.session)
         return
       }
@@ -136,9 +153,14 @@ export default function App() {
       setSession(signedIn.session)
     }
     startSession()
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (nextSession?.user) setRemoteLoading(!applyRemoteCache(nextSession.user.id))
+      else setRemoteLoading(false)
+      setSession(nextSession)
+      if (event === 'TOKEN_REFRESHED') setRemoteReloadKey((current) => current + 1)
+    })
     return () => { cancelled = true; listener.subscription.unsubscribe() }
-  }, [])
+  }, [applyRemoteCache])
 
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) { setTermsAccepted(undefined); return undefined }
@@ -155,14 +177,70 @@ export default function App() {
 
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) return
-    setRemoteLoading(true)
-    Promise.all([loadPersonalTasks(session.user.id), loadCircles(session.user.id), loadPreferences(session.user.id)])
-      .then(([personal, circles, preferences]) => {
-        setData((current) => ({ ...current, personal, circles, settings: { ...current.settings, ...preferences } }))
-        setCircleId((current) => circles.some((item) => item.id === current) ? current : circles[0]?.id)
-      })
-      .catch(reportSyncError)
-      .finally(() => setRemoteLoading(false))
+    let cancelled = false
+    const cached = loadRemoteSnapshot(session.user.id)
+    if (!cached) setRemoteLoading(true)
+
+    const loadRemoteData = async (attempt = 0) => {
+      const results = await Promise.allSettled([
+        loadPersonalTasks(session.user.id),
+        loadCircles(session.user.id),
+        loadPreferences(session.user.id),
+      ])
+      if (cancelled) return
+
+      const [personalResult, circlesResult, preferencesResult] = results
+      const personal = personalResult.status === 'fulfilled' ? personalResult.value : cached?.personal
+      const circles = circlesResult.status === 'fulfilled' ? circlesResult.value : cached?.circles
+      const preferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : (cached?.settings || {})
+
+      if (personal || circles || preferences) {
+        setData((current) => ({
+          ...current,
+          ...(personal ? { personal } : {}),
+          ...(circles ? { circles } : {}),
+          ...(preferences ? { settings: { ...current.settings, ...preferences } } : {}),
+        }))
+      }
+      if (circles) setCircleId((current) => circles.some((item) => item.id === current) ? current : circles[0]?.id)
+
+      // Tasks are the important fast-start payload. Keep their latest successful
+      // response even when a non-critical preference request needs a retry.
+      if (personal && circles && preferences) {
+        saveRemoteSnapshot(session.user.id, { personal, circles, settings: preferences })
+      }
+
+      const failures = results.filter((result) => result.status === 'rejected')
+      if (!failures.length) {
+        setRemoteLoading(false)
+        return
+      }
+
+      if (attempt === 0) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+        if (cancelled) return
+        if (!refreshError && refreshed.session) {
+          setSession(refreshed.session)
+          await loadRemoteData(1)
+          return
+        }
+      }
+
+      failures.forEach((result) => reportSyncError(result.reason))
+      setRemoteLoading(false)
+    }
+
+    loadRemoteData()
+    return () => { cancelled = true }
+  }, [remoteReloadKey, session?.user?.id])
+
+  useEffect(() => {
+    if (!session?.user) return undefined
+    const reloadWhenVisible = () => {
+      if (document.visibilityState === 'visible') setRemoteReloadKey((current) => current + 1)
+    }
+    document.addEventListener('visibilitychange', reloadWhenVisible)
+    return () => document.removeEventListener('visibilitychange', reloadWhenVisible)
   }, [session?.user?.id])
 
   useEffect(() => { if (!pendingInvite || remoteLoading || (hasSupabaseConfig && !session?.user)) return; setCirclePickerOpen(true) }, [pendingInvite, remoteLoading, session?.user?.id])
