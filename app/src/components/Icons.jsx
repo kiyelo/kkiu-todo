@@ -26,8 +26,13 @@ export function ArrowIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
 }
 
-export function HomeIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9H6v-9"/></svg>
+export function QueueIcon() {
+  return <svg className="queue-logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2.75" y="3.5" width="18.5" height="6.75" rx="2.15" />
+    <circle cx="7" cy="6.875" r="1.9" />
+    <path className="queue-logo-check" d="m6.15 6.9.58.6 1.18-1.28" />
+    <rect x="2.75" y="13.75" width="18.5" height="6.75" rx="3.375" />
+  </svg>
 }
 
 export function CircleIcon() {
