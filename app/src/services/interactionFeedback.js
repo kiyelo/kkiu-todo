@@ -4,10 +4,9 @@ let enabled = true
 const NativeHaptics = registerPlugin('KkiuHaptics')
 
 const nativeKind = (pattern) => {
+  if (typeof pattern === 'string') return pattern
   const strength = Array.isArray(pattern) ? Math.max(0, ...pattern) : Number(pattern) || 0
   if (strength >= 18) return 'longPress'
-  if (strength >= 12) return 'dragStart'
-  if (strength >= 9) return 'confirm'
   return 'tick'
 }
 
