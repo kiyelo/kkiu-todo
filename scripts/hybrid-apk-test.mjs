@@ -10,7 +10,6 @@ const sha256 = (path) => createHash('sha256')
 
 const behaviorHashes = {
   'app/src/components/QueueScreen.jsx': '72536dac827fcab7f136fb46df3c8b5b409a6f4e5904f338da54ac4b3f3dc749',
-  'app/src/hooks/useFloatingQueue.js': 'b4d3d0893266c91f8084288143c1541944adad1a95f1baa80e21d94e801029d3',
   'app/src/queuePerformance.css': '6c16454aac1e7347143186a5d44d733973c953f31abc7781035dc02f05eb4c0a',
   'app/src/styles.css': 'f6e0fa10af0a3bb4fc03b2f6d4563e7d7ac94751590897c22a86d263e529b0e1',
 }
@@ -19,6 +18,7 @@ const app = read('app/src/App.jsx')
 const auth = read('app/src/components/AuthScreen.jsx')
 const authStorage = read('app/src/services/authStorage.js')
 const haptics = read('app/src/services/interactionFeedback.js')
+const queue = read('app/src/hooks/useFloatingQueue.js')
 const nativeAuth = read('app/src/services/nativeAuth.js')
 const supabase = read('app/src/services/supabaseClient.js')
 const terms = read('app/src/services/termsRepository.js')
@@ -27,6 +27,12 @@ const gradle = read('android/app/build.gradle')
 
 const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
+  ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
+  ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
+  ['Floating UI can proxy vertical scroll gestures', queue.includes(".queue-composer-wrap, .slotwrap") && queue.includes("stage.addEventListener('touchmove'")],
+  ['Queue grips allow vertical scrolling', queue.includes("element.style.touchAction = 'pan-y'")],
+  ['Queue visual track follows actual native scroll', queue.includes('setVisualPosition(scrollerRef.current.scrollTop)')],
+  ['Queue emits feedback for crossed slots', queue.includes('notifyCrossedSlots') && queue.includes('interactionFeedback(8)')],
   ['Native PKCE auth enabled', supabase.includes("flowType: isNative ? 'pkce' : 'implicit'") && nativeAuth.includes('exchangeCodeForSession')],
   ['Native session storage enabled', authStorage.includes('Preferences.get') && supabase.includes('storage: authStorage')],
   ['Native OAuth wired without replacing the legacy login screen', auth.includes('startNativeOAuth(provider)')],
