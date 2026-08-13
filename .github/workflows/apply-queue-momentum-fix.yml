@@ -1,0 +1,77 @@
+name: Apply queue momentum fix
+
+on:
+  push:
+    branches:
+      - agent/fix-queue-momentum
+    paths:
+      - .github/workflows/apply-queue-momentum-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/fix-queue-momentum
+
+      - name: Patch queue momentum
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          path = Path('app/src/hooks/useFloatingQueue.js')
+          text = path.read_text()
+
+          marker = "const MOMENTUM_DECAY_PER_MS = 0.9975"
+          if marker not in text:
+              text = text.replace(
+                  "}\n\nexport default function useFloatingQueue",
+                  "}\n\nconst MOMENTUM_DECAY_PER_MS = 0.9975\nconst MOMENTUM_STOP_VELOCITY = 0.012\nconst RELEASE_VELOCITY_DECAY_MS = 180\nconst MAX_POINTER_VELOCITY = 3.5\n\nexport default function useFloatingQueue",
+                  1,
+              )
+
+          text = text.replace(
+              "velocityRef.current = (pending.clientY - lastYRef.current) / elapsed",
+              "const sampleVelocity = clamp((pending.clientY - lastYRef.current) / elapsed, -MAX_POINTER_VELOCITY, MAX_POINTER_VELOCITY)\n    velocityRef.current = velocityRef.current === 0\n      ? sampleVelocity\n      : velocityRef.current * 0.35 + sampleVelocity * 0.65",
+              1,
+          )
+          text = text.replace("Math.pow(0.994, elapsed)", "Math.pow(MOMENTUM_DECAY_PER_MS, elapsed)", 1)
+          text = text.replace("Math.abs(velocity) < 0.02", "Math.abs(velocity) < MOMENTUM_STOP_VELOCITY", 1)
+          old_release = "const stale = performance.now() - lastTimeRef.current > 90\n      const releaseVelocity = stale ? 0 : velocityRef.current\n      if (Math.abs(releaseVelocity) > 0.05)"
+          new_release = "const releaseAge = Math.max(0, performance.now() - lastTimeRef.current)\n      const releaseVelocity = velocityRef.current * Math.exp(-releaseAge / RELEASE_VELOCITY_DECAY_MS)\n      if (Math.abs(releaseVelocity) > MOMENTUM_STOP_VELOCITY)"
+          if old_release not in text:
+              raise SystemExit('release velocity block not found')
+          text = text.replace(old_release, new_release, 1)
+          path.write_text(text)
+
+          digest = hashlib.sha256(text.replace('\r\n', '\n').encode()).hexdigest()
+          hybrid = Path('scripts/hybrid-apk-test.mjs')
+          hybrid_text = hybrid.read_text()
+          hybrid_text, count = re.subn(
+              r"('app/src/hooks/useFloatingQueue\.js':\s*')[0-9a-f]{64}(')",
+              rf"\g<1>{digest}\g<2>",
+              hybrid_text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('hybrid hash entry not found')
+          hybrid.write_text(hybrid_text)
+
+          workflow = Path('.github/workflows/apply-queue-momentum-fix.yml')
+          workflow.unlink()
+          print('useFloatingQueue sha256:', digest)
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/hooks/useFloatingQueue.js scripts/hybrid-apk-test.mjs .github/workflows/apply-queue-momentum-fix.yml
+          git commit -m "Fix queue momentum behavior"
+          git push origin agent/fix-queue-momentum
