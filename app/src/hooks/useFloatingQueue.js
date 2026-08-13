@@ -25,12 +25,14 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const stageRef = useRef(null)
   const scrollerRef = useRef(null)
   const trackRef = useRef(null)
+  const scrollExtentRef = useRef(null)
   const scrollEndTimerRef = useRef(null)
   const settleTimerRef = useRef(null)
   const initializedRef = useRef(false)
   const programmaticRef = useRef(false)
   const fallbackScrollListenerRef = useRef(null)
   const proxyGestureRef = useRef(null)
+  const proxyMomentumRef = useRef(false)
   const ariaLabel = options.ariaLabel || 'Queue position'
   const ariaValueText = options.ariaValueText?.(index + 1, count + 1) || `${index + 1} of ${count + 1}`
 
@@ -58,6 +60,21 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     setDragging(false)
   }, [])
 
+  const cancelAnimatedScroll = useCallback(() => {
+    window.clearTimeout(scrollEndTimerRef.current)
+    window.clearTimeout(settleTimerRef.current)
+    proxyMomentumRef.current = false
+    programmaticRef.current = false
+    const scroller = scrollerRef.current
+    if (scroller) {
+      const current = scroller.scrollTop
+      scroller.scrollTo({ top: current, behavior: 'auto' })
+      setVisualPosition(current)
+      updateIndexFromScroll(current)
+    }
+    setDragging(false)
+  }, [setVisualPosition, updateIndexFromScroll])
+
   const settleToNearest = useCallback(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
@@ -66,6 +83,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     const target = positionsRef.current[next] || 0
     indexRef.current = next
     setIndexState(next)
+    proxyMomentumRef.current = false
     if (Math.abs(target - current) < 0.5) {
       setVisualPosition(target)
       stopSettling()
@@ -87,7 +105,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const handleScrollPosition = useCallback((position) => {
     setVisualPosition(position)
     updateIndexFromScroll(position)
-    if (programmaticRef.current) return
+    if (programmaticRef.current || proxyMomentumRef.current) return
     setDragging(true)
     window.clearTimeout(scrollEndTimerRef.current)
     scrollEndTimerRef.current = window.setTimeout(settleToNearest, 110)
@@ -104,6 +122,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     indexRef.current = value
     if (value !== previous) setIndexState(value)
     const position = positionsRef.current[value] || 0
+    proxyMomentumRef.current = false
     programmaticRef.current = true
     if (scrollerRef.current) scrollerRef.current.scrollTop = position
     setVisualPosition(position)
@@ -136,6 +155,25 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     })
 
     const scroller = scrollerRef.current
+    if (scroller) {
+      let extent = scrollExtentRef.current
+      if (!extent || extent.parentElement !== scroller) {
+        extent = document.createElement('div')
+        extent.setAttribute('aria-hidden', 'true')
+        extent.className = 'queue-scroll-extent'
+        Object.assign(extent.style, {
+          width: '1px',
+          opacity: '0',
+          pointerEvents: 'none',
+          flex: 'none',
+        })
+        scroller.prepend(extent)
+        scrollExtentRef.current = extent
+      }
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      extent.style.height = `${Math.ceil(scroller.clientHeight + maxPosition)}px`
+    }
+
     if (fallbackScroller && scroller) {
       const listener = () => {
         if (!initializedRef.current) return
@@ -145,7 +183,12 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       scroller.addEventListener('scroll', listener, { passive: true })
     }
 
+    const interrupt = () => {
+      if (programmaticRef.current || proxyMomentumRef.current || settleTimerRef.current) cancelAnimatedScroll()
+    }
+
     const onTouchStart = (event) => {
+      interrupt()
       const touch = event.touches?.[0]
       const target = event.target
       if (!touch || !scroller || scroller.contains(target)) return
@@ -182,16 +225,31 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       proxyGestureRef.current = null
       if (!gesture?.moved || !scroller) return
       const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-      const projected = clamp(scroller.scrollTop - gesture.velocity * 180, 0, max)
-      scroller.scrollTo({ top: projected, behavior: 'smooth' })
+      const projected = clamp(scroller.scrollTop - gesture.velocity * 150, 0, max)
+      const distance = Math.abs(projected - scroller.scrollTop)
       window.clearTimeout(scrollEndTimerRef.current)
-      scrollEndTimerRef.current = window.setTimeout(settleToNearest, 170)
+      if (distance < 8) {
+        settleToNearest()
+        return
+      }
+      proxyMomentumRef.current = true
+      setDragging(true)
+      scroller.scrollTo({ top: projected, behavior: 'smooth' })
+      scrollEndTimerRef.current = window.setTimeout(() => {
+        proxyMomentumRef.current = false
+        settleToNearest()
+      }, 190)
     }
+
+    const onWheel = () => interrupt()
+    const onPointerDown = () => interrupt()
 
     stage.addEventListener('touchstart', onTouchStart, { passive: true })
     stage.addEventListener('touchmove', onTouchMove, { passive: false })
     stage.addEventListener('touchend', onTouchEnd, { passive: true })
     stage.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    stage.addEventListener('wheel', onWheel, { passive: true })
+    stage.addEventListener('pointerdown', onPointerDown, { passive: true })
 
     return () => {
       if (fallbackScroller && scroller && fallbackScrollListenerRef.current) {
@@ -201,15 +259,22 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       stage.removeEventListener('touchmove', onTouchMove)
       stage.removeEventListener('touchend', onTouchEnd)
       stage.removeEventListener('touchcancel', onTouchEnd)
+      stage.removeEventListener('wheel', onWheel)
+      stage.removeEventListener('pointerdown', onPointerDown)
+      if (scrollExtentRef.current?.parentElement === scroller) scrollExtentRef.current.remove()
+      scrollExtentRef.current = null
     }
-  }, [handleScrollPosition, settleToNearest])
+  }, [cancelAnimatedScroll, handleScrollPosition, settleToNearest])
 
   useLayoutEffect(() => {
     const value = clamp(indexRef.current, 0, count)
     const position = positionsRef.current[value] || 0
-    if (scrollerRef.current) {
+    const scroller = scrollerRef.current
+    if (scroller) {
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      if (scrollExtentRef.current) scrollExtentRef.current.style.height = `${Math.ceil(scroller.clientHeight + maxPosition)}px`
       programmaticRef.current = true
-      scrollerRef.current.scrollTop = position
+      scroller.scrollTop = position
     }
     setVisualPosition(position)
     initializedRef.current = true
