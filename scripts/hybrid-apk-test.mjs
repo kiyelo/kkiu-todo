@@ -4,13 +4,15 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const read = (path) => readFileSync(resolve(root, path), 'utf8')
-const sha256 = (path) => createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex')
+const sha256 = (path) => createHash('sha256')
+  .update(read(path).replace(/\r\n/g, '\n'))
+  .digest('hex')
 
 const behaviorHashes = {
-  'app/src/components/QueueScreen.jsx': '88de828b8e57933db39b1ddee5a6f33cc86ec43400896cc9983819a1c972c144',
-  'app/src/hooks/useFloatingQueue.js': '2b258ef263bb82fd86e59caf33ccd12b56cdc53bc66898bca46cf8e1dd66974d',
-  'app/src/queuePerformance.css': '6d4d0eb7b64e7df749884a947ad248701588b2384bd01e971a3bd5b7ddc8813d',
-  'app/src/styles.css': 'dfe528ae353692c8e17d520b85a1d0b6622762b778a4c2eb7e61cc8046aaddc2',
+  'app/src/components/QueueScreen.jsx': '01eccdd971336c721bfb08284391cddeadc708aee8b266c3baee78fb80dc1d6a',
+  'app/src/hooks/useFloatingQueue.js': 'd8801ad3e38da88544ff618e5403353377ecb058f1f979cee973af65d0dab5d3',
+  'app/src/queuePerformance.css': '6c16454aac1e7347143186a5d44d733973c953f31abc7781035dc02f05eb4c0a',
+  'app/src/styles.css': 'cde2c69bc9dba04bad07d01fa49b2dd09992c430a4221fce7401331aac25cd51',
 }
 
 const app = read('app/src/App.jsx')
