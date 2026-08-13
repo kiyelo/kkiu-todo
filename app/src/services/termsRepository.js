@@ -9,6 +9,21 @@ export const TERMS_VERSIONS = {
   marketing: '2026-07-23',
 }
 
+const requiredTermsSignature = REQUIRED_TERMS
+  .map((type) => `${type}:${TERMS_VERSIONS[type]}`)
+  .join('|')
+const consentCacheKey = (userId) => `kkiu-required-terms-v1:${userId}`
+
+export function hasCachedRequiredTerms(userId) {
+  if (!userId) return false
+  try { return localStorage.getItem(consentCacheKey(userId)) === requiredTermsSignature } catch { return false }
+}
+
+export function rememberRequiredTermsAccepted(userId) {
+  if (!userId) return
+  try { localStorage.setItem(consentCacheKey(userId), requiredTermsSignature) } catch {}
+}
+
 export async function loadAcceptedTermsVersions(userId) {
   const { data, error } = await requireSupabase()
     .from('terms_acceptances')
@@ -34,4 +49,5 @@ export async function recordTermsAcceptance(userId, termTypes, source = 'onboard
     .from('terms_acceptances')
     .upsert(rows, { onConflict: 'user_id,terms_type,terms_version', ignoreDuplicates: true })
   if (error) throw error
+  if (REQUIRED_TERMS.every((type) => termTypes.includes(type))) rememberRequiredTermsAccepted(userId)
 }

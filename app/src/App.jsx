@@ -9,7 +9,7 @@ import { ActivityLogSheet, CircleEditor, CirclePicker, CompletedSheet, ConfirmDi
 import { starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
 import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
-import { hasAcceptedRequiredTerms, loadAcceptedTermsVersions } from './services/termsRepository.js'
+import { hasAcceptedRequiredTerms, hasCachedRequiredTerms, loadAcceptedTermsVersions, rememberRequiredTermsAccepted } from './services/termsRepository.js'
 import { classifySyncError, userFacingSyncError } from './services/syncError.js'
 import { buildInviteMessage, clearPendingInvite, generateInviteCode, normalizeInviteCode, readPendingInvite } from './services/invite.js'
 import { createCircle, createCircleTask, createPersonalTask, deleteTasks, joinCircleByCode, leaveCircle as leaveRemoteCircle, loadCircleActivityLogs, loadCircles, loadPersonalTasks, regenerateInviteCode, setCircleJoinLock, updateCircle as updateRemoteCircle, updateTask, updateTaskPositions, loadPreferences, savePreferences, logCompletionEvent, markTasksRead } from './services/supabaseRepository.js'
@@ -18,6 +18,7 @@ import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBa
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
 import { loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
+import { watchThemePreference } from './services/themePlatform.js'
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
@@ -165,12 +166,18 @@ export default function App() {
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) { setTermsAccepted(undefined); return undefined }
     if (qaAccount) { setTermsAccepted(true); return undefined }
+    const cached = hasCachedRequiredTerms(session.user.id)
+    setTermsAccepted(cached ? true : undefined)
     let cancelled = false
     loadAcceptedTermsVersions(session.user.id)
-      .then((accepted) => { if (!cancelled) setTermsAccepted(hasAcceptedRequiredTerms(accepted)) })
+      .then((accepted) => {
+        const acceptedRequired = hasAcceptedRequiredTerms(accepted)
+        if (acceptedRequired) rememberRequiredTermsAccepted(session.user.id)
+        if (!cancelled) setTermsAccepted(acceptedRequired || cached)
+      })
       .catch((error) => {
         reportSyncError(error)
-        if (!cancelled) setTermsAccepted(true)
+        if (!cancelled) setTermsAccepted(cached ? true : false)
       })
     return () => { cancelled = true }
   }, [session?.user?.id])
@@ -539,20 +546,7 @@ const undoTaskDelete = () => {
   useEffect(() => {
     const root = document.documentElement
     root.lang = settingValues.language
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-    const applyTheme = () => {
-      const resolvedTheme = settingValues.theme === 'system'
-        ? (systemTheme.matches ? 'dark' : 'light')
-        : settingValues.theme
-      root.dataset.theme = resolvedTheme
-      root.dataset.themePreference = settingValues.theme
-      root.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
-      try { localStorage.setItem(THEME_PREFERENCE_KEY, settingValues.theme) } catch {}
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0d1015' : '#dfe6f0')
-    }
-    applyTheme()
-    if (settingValues.theme === 'system') systemTheme.addEventListener('change', applyTheme)
-    return () => systemTheme.removeEventListener('change', applyTheme)
+    return watchThemePreference(settingValues.theme)
   }, [settingValues.language, settingValues.theme])
   useEffect(() => {
     setInteractionFeedbackEnabled(settingValues.interactionFeedback)

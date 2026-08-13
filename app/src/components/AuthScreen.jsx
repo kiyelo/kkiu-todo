@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { getAuthRedirectUrl, requireSupabase } from '../services/supabaseClient.js'
+import { startNativeOAuth } from '../services/nativeAuth.js'
 
 const PROVIDERS = [
   { id: 'google', label: 'Google로 계속하기' },
@@ -19,6 +21,17 @@ export default function AuthScreen({ pendingInvite = '' }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordPending, setPasswordPending] = useState(false)
+
+  useEffect(() => {
+    const onNativeAuth = (event) => {
+      if (!event.detail?.ok) {
+        setMessage(event.detail?.message || '로그인에 실패했어요.')
+        setPendingProvider('')
+      }
+    }
+    window.addEventListener('kkiu:native-auth', onNativeAuth)
+    return () => window.removeEventListener('kkiu:native-auth', onNativeAuth)
+  }, [])
 
   const signInWithPassword = async (event) => {
     event.preventDefault()
@@ -45,6 +58,11 @@ export default function AuthScreen({ pendingInvite = '' }) {
     setMessage('')
     setPendingProvider(provider)
     try {
+      if (Capacitor.isNativePlatform()) {
+        await startNativeOAuth(provider)
+        setPendingProvider('')
+        return
+      }
       const { error } = await requireSupabase().auth.signInWithOAuth({
         provider,
         options: { redirectTo: getAuthRedirectUrl() },
