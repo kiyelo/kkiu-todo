@@ -1,0 +1,22 @@
+name: Update queue hash
+on:
+  push:
+    branches: [agent/native-scroll-login-home-v2]
+    paths: [.github/workflows/update-queue-hash.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/native-scroll-login-home-v2
+      - run: |
+          sed -i "s/06e80b3d9456dbeb8fdb66edde3d9c22c220d9190287cdb3142f812537139905/b4d3d0893266c91f8084288143c1541944adad1a95f1baa80e21d94e801029d3/" scripts/hybrid-apk-test.mjs
+          rm .github/workflows/update-queue-hash.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Update queue behavior hash"
+          git push origin agent/native-scroll-login-home-v2
