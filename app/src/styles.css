@@ -1108,6 +1108,9 @@ html[data-theme="dark"] .card.search-hit{--sh-card:0 1px 0 rgba(255,255,255,.08)
 .auth-hero p { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
 .auth-invite-hint { color: var(--accent); font-weight: 600; }
 .auth-social { display: flex; flex-direction: column; gap: 10px; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: 13px; }
+.auth-divider span { height: 1px; flex: 1; background: var(--line); }
+.auth-divider b { font-weight: 600; }
 .auth-social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 15px; font-weight: 750; font-size: 14.5px; border: 1px solid transparent; }
 .auth-social-btn:disabled { opacity: .55; }
 .auth-social-google { background: #fff; color: #1f1f1f; border-color: #dadce0; }

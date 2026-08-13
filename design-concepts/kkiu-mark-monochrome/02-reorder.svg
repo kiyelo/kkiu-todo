@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Kkiu mark concept 2 — Reorder</title>
+  <desc id="desc">An ordered list whose middle task is being repositioned.</desc>
+  <rect width="512" height="512" rx="112" fill="#111216"/>
+  <circle cx="112" cy="144" r="34" fill="#fff"/>
+  <rect x="170" y="110" width="230" height="68" rx="26" fill="#fff"/>
+  <circle cx="112" cy="368" r="34" fill="#fff"/>
+  <rect x="170" y="334" width="230" height="68" rx="26" fill="#fff"/>
+  <path d="M88 222h250l54 34-54 34H88c-18.8 0-34-15.2-34-34s15.2-34 34-34Z" fill="#fff"/>
+</svg>

@@ -39,3 +39,15 @@ GitHub Pages 배포 경로는 `vite.config.js`의 `/kkiu-todo/`로 설정되어 
 ## 안드로이드 앱
 
 Capacitor 기반 안드로이드 빌드 방법은 [ANDROID.md](./ANDROID.md)를 참고하세요.
+
+## 단일 소스 Android 빌드
+
+웹과 Android는 `app/`의 동일한 React 소스를 사용합니다. Android UI를 별도로 복사하거나 수정하지 않습니다.
+
+```bash
+pnpm run build:apk
+```
+
+이 명령은 릴리스 검사, Capacitor용 웹 빌드, Android 동기화, 웹·APK 자산 해시 비교, 디버그 APK 컴파일을 순서대로 실행합니다. APK, `dist/`, Gradle 캐시는 Git에 커밋하지 않습니다.
+
+`main` 푸시와 모든 PR에서는 `.github/workflows/android.yml`이 같은 명령을 실행하고 APK를 GitHub Actions 아티팩트로 보관합니다. 따라서 배포 가능한 작업물은 로컬 파일 대신 해당 커밋과 연결된 GitHub 아티팩트를 기준으로 관리합니다.

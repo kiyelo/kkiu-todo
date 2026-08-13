@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Kkiu mark concept 3 — Slot</title>
+  <desc id="desc">Two ordered blocks open a slot while a task locks into the center.</desc>
+  <rect width="512" height="512" rx="112" fill="#111216"/>
+  <path d="M104 92h304v104H230l-52 44h-74V92Z" fill="#fff"/>
+  <path d="M104 420h304V316H230l-52-44h-74v148Z" fill="#fff"/>
+  <rect x="218" y="220" width="226" height="72" rx="30" fill="#fff"/>
+</svg>
