@@ -10,7 +10,7 @@ const sha256 = (path) => createHash('sha256')
 
 const behaviorHashes = {
   'app/src/components/QueueScreen.jsx': '72536dac827fcab7f136fb46df3c8b5b409a6f4e5904f338da54ac4b3f3dc749',
-  'app/src/hooks/useFloatingQueue.js': '06e80b3d9456dbeb8fdb66edde3d9c22c220d9190287cdb3142f812537139905',
+  'app/src/hooks/useFloatingQueue.js': 'b4d3d0893266c91f8084288143c1541944adad1a95f1baa80e21d94e801029d3',
   'app/src/queuePerformance.css': '6c16454aac1e7347143186a5d44d733973c953f31abc7781035dc02f05eb4c0a',
   'app/src/styles.css': 'f6e0fa10af0a3bb4fc03b2f6d4563e7d7ac94751590897c22a86d263e529b0e1',
 }
