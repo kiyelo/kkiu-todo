@@ -10,6 +10,11 @@ const nearest = (positions, value) => {
   return best
 }
 
+const MOMENTUM_DECAY_PER_MS = 0.9975
+const MOMENTUM_STOP_VELOCITY = 0.012
+const RELEASE_VELOCITY_DECAY_MS = 180
+const MAX_POINTER_VELOCITY = 3.5
+
 export default function useFloatingQueue(count, initialIndex = count, options = {}) {
   const rowHeight = options.rowHeight || 80
   const positions = options.positions?.length === count + 1 ? options.positions : Array.from({ length: count + 1 }, (_, i) => i * rowHeight)
@@ -89,7 +94,10 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
 
     const now = pending.time
     const elapsed = Math.max(1, now - lastTimeRef.current)
-    velocityRef.current = (pending.clientY - lastYRef.current) / elapsed
+    const sampleVelocity = clamp((pending.clientY - lastYRef.current) / elapsed, -MAX_POINTER_VELOCITY, MAX_POINTER_VELOCITY)
+    velocityRef.current = velocityRef.current === 0
+      ? sampleVelocity
+      : velocityRef.current * 0.35 + sampleVelocity * 0.65
     lastYRef.current = pending.clientY
     lastTimeRef.current = now
 
@@ -178,10 +186,10 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
         return
       }
       position = raw
-      velocity *= Math.pow(0.994, elapsed)
+      velocity *= Math.pow(MOMENTUM_DECAY_PER_MS, elapsed)
       const next = nearest(list, position)
       setIndex(next)
-      if (Math.abs(velocity) < 0.02) {
+      if (Math.abs(velocity) < MOMENTUM_STOP_VELOCITY) {
         momentumRef.current = null
         setDragY(0)
         setDragging(false)
@@ -203,9 +211,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     const list = positionsRef.current
     let flung = false
     if (wasMoved) {
-      const stale = performance.now() - lastTimeRef.current > 90
-      const releaseVelocity = stale ? 0 : velocityRef.current
-      if (Math.abs(releaseVelocity) > 0.05) {
+      const releaseAge = Math.max(0, performance.now() - lastTimeRef.current)
+      const releaseVelocity = velocityRef.current * Math.exp(-releaseAge / RELEASE_VELOCITY_DECAY_MS)
+      if (Math.abs(releaseVelocity) > MOMENTUM_STOP_VELOCITY) {
         startMomentum(releaseVelocity)
         flung = true
       } else {
