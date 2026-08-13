@@ -15,6 +15,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const positions = options.positions?.length === count + 1
     ? options.positions
     : Array.from({ length: count + 1 }, (_, i) => i * rowHeight)
+  const positionsKey = positions.join('|')
   const positionsRef = useRef(positions)
   positionsRef.current = positions
 
@@ -72,7 +73,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     setVisualPosition(position)
     initializedRef.current = true
     requestAnimationFrame(() => { programmaticRef.current = false })
-  }, [count, positions, setVisualPosition])
+  }, [count, positionsKey, setVisualPosition])
 
   const onScroll = useCallback((event) => {
     if (!initializedRef.current) return
