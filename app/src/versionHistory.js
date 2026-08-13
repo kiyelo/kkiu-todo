@@ -1,7 +1,8 @@
-export const REACT_VERSION = '1.4.0'
+export const REACT_VERSION = '1.4.1'
 export const HTML_ORACLE_VERSION = '18.4.8'
 
 export const VERSION_HISTORY = [
+  { version:'1.4.1', time:'2026-08-13 17:48 KST', title:'초기 진입·탭 전환·세로 스와이프 개선', changes:['데이터 동기화 중 전체 로딩 화면과 로딩 문구 제거','캐시·현재 상태 즉시 표시 후 Supabase 백그라운드 동기화','홈·끼리 전환 시 QueueScreen 강제 재마운트 제거 및 위치 복원 최적화','더보기 첫 진입을 예상 높이 우선 렌더링 후 실측 보정 방식으로 개선','세 탭 공통 pointermove 처리를 requestAnimationFrame 단위로 합쳐 렌더 부담 감소','드래그 중 190ms 행 transition 제거 후 손을 놓았을 때만 스냅 애니메이션 적용','슬롯 경계 및 가장자리 햅틱 피드백 유지'] },
   { version:'1.4.0', time:'2026-07-22 08:30 KST', title:'다중 담당자·이모지 확장·안드로이드 준비', changes:['여러 담당자 선택 시 인원수만큼 할 일 복제(함께/각자 모드)','이모지 선택 13개 카테고리 약 180종과 최근 사용 목록','더보기 슬롯 트리플매치 애니메이션 v3 이식','할 일·끼리·더보기 세로 스와이프 관성 스크롤','계정 관리·이용약관·개인정보처리방침·문의 화면','Capacitor 안드로이드 빌드 설정과 가이드 추가'] },
   { version:'1.3.8', time:'2026-07-21 13:18 KST', title:'총체적 QA·모바일 접근성', changes:['기능·플로우·UX 25개 통합 회귀 검증','320px·390px 14개 화면 오버플로 검증','끼리 멤버 재정렬 터치 영역 40px로 확대','모달 의미 구조와 영문 수정 노트 보강'] },
   { version:'1.3.7', time:'2026-07-21 13:10 KST', title:'초대·프로필·버전 기록', changes:['16자리 고유 초대 코드와 중복 재시도','초대 메시지 공유·코드 복사·딥링크 복원','끼리 생성·가입 시 프로필 이름과 이모지 필수','더보기에 React 버전과 전체 수정 노트 표시'] },
@@ -18,6 +19,7 @@ export const VERSION_HISTORY = [
 ]
 
 const EN_HISTORY = {
+ '1.4.1':['Startup, tab switching, and vertical swipe improvements',['Removed blocking loading screens and loading copy during data sync','Show cached/current state immediately while Supabase syncs in the background','Removed forced QueueScreen remounts when switching Home and Circle while preserving queue position restoration','Render More immediately from estimated heights and correct with measured heights afterward','Coalesced shared pointer-move handling to requestAnimationFrame to reduce render pressure','Disabled the 190ms row transition during direct dragging and restore snap animation on release','Preserved haptics when crossing slots and reaching queue edges']],
  '1.4.0':['Multi-assignee, emoji expansion, and Android prep',['Duplicated to-dos per selected assignee with together/each modes','Expanded the emoji picker to ~180 emoji in 13 categories with recents','Ported the v3 triple-match slot animations to More','Added momentum to vertical swipes on Queue, Circle, and More','Added account, terms, privacy, and contact screens','Added Capacitor Android build config and guide']],
  '1.3.8':['Comprehensive QA and mobile accessibility',['Verified 25 functional, flow, and UX paths','Checked 14 screens at 320px and 390px for overflow','Expanded Circle member reorder targets to 40px','Improved dialog semantics and English release notes']],
  '1.3.7':['Invites, profiles, and version history',['Added 16-character invite codes with collision retries','Added invite sharing, code copy, and deep-link recovery','Required a profile name and emoji when creating or joining a Circle','Added React version and full release notes to More']],
