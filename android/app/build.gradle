@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+def kkiuSigningStoreFile = System.getenv('KKIU_SIGNING_STORE_FILE')
+def kkiuSigningStorePassword = System.getenv('KKIU_SIGNING_STORE_PASSWORD')
+def kkiuSigningKeyAlias = System.getenv('KKIU_SIGNING_KEY_ALIAS')
+def kkiuSigningKeyPassword = System.getenv('KKIU_SIGNING_KEY_PASSWORD')
+def hasKkiuSigning = [
+    kkiuSigningStoreFile,
+    kkiuSigningStorePassword,
+    kkiuSigningKeyAlias,
+    kkiuSigningKeyPassword,
+].every { value -> value != null && !value.isBlank() }
+
 android {
     namespace = "app.kkiu.todo"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +27,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        kkiuStable {
+            if (hasKkiuSigning) {
+                storeFile file(kkiuSigningStoreFile)
+                storePassword kkiuSigningStorePassword
+                keyAlias kkiuSigningKeyAlias
+                keyPassword kkiuSigningKeyPassword
+            }
+        }
+    }
     buildTypes {
+        debug {
+            if (hasKkiuSigning) signingConfig signingConfigs.kkiuStable
+        }
         release {
+            if (hasKkiuSigning) signingConfig signingConfigs.kkiuStable
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
