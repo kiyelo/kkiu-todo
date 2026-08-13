@@ -158,6 +158,7 @@ export default function App() {
       if (nextSession?.user) setRemoteLoading(!applyRemoteCache(nextSession.user.id))
       else setRemoteLoading(false)
       setSession(nextSession)
+      if (event === 'SIGNED_IN') setTab('home')
       if (event === 'TOKEN_REFRESHED') setRemoteReloadKey((current) => current + 1)
     })
     return () => { cancelled = true; listener.subscription.unsubscribe() }

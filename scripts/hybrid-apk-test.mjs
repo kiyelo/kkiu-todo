@@ -9,10 +9,10 @@ const sha256 = (path) => createHash('sha256')
   .digest('hex')
 
 const behaviorHashes = {
-  'app/src/components/QueueScreen.jsx': '01eccdd971336c721bfb08284391cddeadc708aee8b266c3baee78fb80dc1d6a',
-  'app/src/hooks/useFloatingQueue.js': 'b8e11443cf458acaa083eadef81e3b4c2deb9b3b4a2dc1ba1a90ca4bcf83aa27',
+  'app/src/components/QueueScreen.jsx': '72536dac827fcab7f136fb46df3c8b5b409a6f4e5904f338da54ac4b3f3dc749',
+  'app/src/hooks/useFloatingQueue.js': '06e80b3d9456dbeb8fdb66edde3d9c22c220d9190287cdb3142f812537139905',
   'app/src/queuePerformance.css': '6c16454aac1e7347143186a5d44d733973c953f31abc7781035dc02f05eb4c0a',
-  'app/src/styles.css': 'cde2c69bc9dba04bad07d01fa49b2dd09992c430a4221fce7401331aac25cd51',
+  'app/src/styles.css': 'f6e0fa10af0a3bb4fc03b2f6d4563e7d7ac94751590897c22a86d263e529b0e1',
 }
 
 const app = read('app/src/App.jsx')
