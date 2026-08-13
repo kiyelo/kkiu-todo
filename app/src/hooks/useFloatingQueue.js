@@ -36,6 +36,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const wheelPositionRef = useRef(null)
   const wheelTimerRef = useRef(null)
   const momentumRef = useRef(null)
+  const moveFrameRef = useRef(null)
+  const pendingMoveRef = useRef(null)
   const edgeNotifiedRef = useRef(false)
   const edgeBounceTimerRef = useRef(null)
 
@@ -46,11 +48,20 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
   }, [])
 
+  const stopMoveFrame = useCallback(() => {
+    if (moveFrameRef.current !== null) {
+      cancelAnimationFrame(moveFrameRef.current)
+      moveFrameRef.current = null
+    }
+    pendingMoveRef.current = null
+  }, [])
+
   useEffect(() => { indexRef.current = index }, [index])
   useEffect(() => () => {
     window.clearTimeout(wheelTimerRef.current)
     window.clearTimeout(edgeBounceTimerRef.current)
     if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current)
+    if (moveFrameRef.current !== null) cancelAnimationFrame(moveFrameRef.current)
   }, [])
   const notify = useCallback(() => {
     interactionFeedback(8)
@@ -70,10 +81,41 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   }, [count, notify])
   useEffect(() => { if (indexRef.current > count) setIndex(count) }, [count, setIndex])
 
+  const applyPointerMove = useCallback(() => {
+    moveFrameRef.current = null
+    const pending = pendingMoveRef.current
+    pendingMoveRef.current = null
+    if (!pending || !activeRef.current || pointerRef.current !== pending.pointerId) return
+
+    const now = pending.time
+    const elapsed = Math.max(1, now - lastTimeRef.current)
+    velocityRef.current = (pending.clientY - lastYRef.current) / elapsed
+    lastYRef.current = pending.clientY
+    lastTimeRef.current = now
+
+    const list = positionsRef.current
+    const min = list[0] || 0
+    const max = list[list.length - 1] || 0
+    const rawPosition = startPositionRef.current - (pending.clientY - startYRef.current)
+    const effective = clamp(rawPosition, min, max)
+    const edge = rawPosition < min ? 'start' : rawPosition > max ? 'end' : null
+    const amount = edge ? Math.min(1, Math.abs(rawPosition - effective) / 64) : 0
+    if (amount >= 0.98 && !edgeNotifiedRef.current) {
+      edgeNotifiedRef.current = true
+      notify()
+    }
+    setEdgePull((current) => current.edge === edge && Math.abs(current.amount - amount) < 0.06 ? current : { edge, amount })
+    effectivePositionRef.current = effective
+    const next = nearest(list, effective)
+    setIndex(next)
+    setDragY((list[next] || 0) - effective)
+  }, [notify, setIndex])
+
   const onPointerDownCapture = useCallback((event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     if (event.target.closest('input, textarea, select, [contenteditable="true"], [data-queue-gesture="ignore"]')) return
     stopMomentum()
+    stopMoveFrame()
     window.clearTimeout(edgeBounceTimerRef.current)
     setDragging(false)
     const current = positionsRef.current[indexRef.current] || 0
@@ -92,7 +134,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     edgeNotifiedRef.current = false
     setDragY(0)
     setEdgePull({ edge: null, amount: 0 })
-  }, [stopMomentum])
+  }, [stopMomentum, stopMoveFrame])
 
   const onPointerMoveCapture = useCallback((event) => {
     if (!activeRef.current || pointerRef.current !== event.pointerId) return
@@ -107,32 +149,13 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
     }
     if (event.cancelable) event.preventDefault()
-    const now = performance.now()
-    const elapsed = Math.max(1, now - lastTimeRef.current)
-    velocityRef.current = (event.clientY - lastYRef.current) / elapsed
-    lastYRef.current = event.clientY
-    lastTimeRef.current = now
-    const list = positionsRef.current
-    const min = list[0] || 0
-    const max = list[list.length - 1] || 0
-    const rawPosition = startPositionRef.current - totalDelta
-    const effective = clamp(rawPosition, min, max)
-    const edge = rawPosition < min ? 'start' : rawPosition > max ? 'end' : null
-    const amount = edge ? Math.min(1, Math.abs(rawPosition - effective) / 64) : 0
-    if (amount >= 0.98 && !edgeNotifiedRef.current) {
-      edgeNotifiedRef.current = true
-      notify()
-    }
-    setEdgePull((current) => current.edge === edge && Math.abs(current.amount - amount) < 0.02 ? current : { edge, amount })
-    effectivePositionRef.current = effective
-    const next = nearest(list, effective)
-    setIndex(next)
-    setDragY((list[next] || 0) - effective)
-  }, [notify, setIndex])
+    pendingMoveRef.current = { pointerId: event.pointerId, clientY: event.clientY, time: performance.now() }
+    if (moveFrameRef.current === null) moveFrameRef.current = requestAnimationFrame(applyPointerMove)
+  }, [applyPointerMove])
 
   // Momentum flick: decay velocity with friction so vertical swipes keep gliding
-  // after release (할일/끼리/더보기 공통). Friction 0.994^ms integrates to ~166ms of
-  // travel, matching the previous single 165ms projection for gentle releases.
+  // after release. Slot changes still go through setIndex(), preserving one haptic
+  // tick per crossed slot while visual tracking stays frame-coalesced.
   const startMomentum = useCallback((initialVelocity) => {
     let velocity = initialVelocity
     let position = effectivePositionRef.current
@@ -174,6 +197,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
 
   const finishPointer = useCallback((event) => {
     if (!activeRef.current || (event && pointerRef.current !== event.pointerId)) return
+    if (pendingMoveRef.current) applyPointerMove()
+    stopMoveFrame()
     const wasMoved = movedRef.current
     const list = positionsRef.current
     let flung = false
@@ -201,7 +226,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     setEdgePull({ edge: null, amount: 0 })
     try { event?.currentTarget?.releasePointerCapture(event.pointerId) } catch {}
     if (wasMoved) window.setTimeout(() => { suppressClickRef.current = false }, 0)
-  }, [setIndex, startMomentum])
+  }, [applyPointerMove, setIndex, startMomentum, stopMoveFrame])
 
   const onClickCapture = useCallback((event) => {
     if (!suppressClickRef.current) return
