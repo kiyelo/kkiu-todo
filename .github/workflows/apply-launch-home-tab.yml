@@ -1,0 +1,40 @@
+name: Apply launch home tab
+
+on:
+  push:
+    branches:
+      - agent/launch-home-tab
+    paths:
+      - .github/workflows/apply-launch-home-tab.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/launch-home-tab
+      - name: Make app always launch on home tab
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/App.jsx')
+          text = path.read_text()
+          old = "  const [tab, setTab] = useState(initialUi.tab || 'home')"
+          new = "  const [tab, setTab] = useState('home')"
+          if old not in text:
+              raise SystemExit('tab initialization block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          Path('.github/workflows/apply-launch-home-tab.yml').unlink()
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/App.jsx .github/workflows/apply-launch-home-tab.yml
+          git commit -m "fix: always launch on home tab"
+          git push origin agent/launch-home-tab
