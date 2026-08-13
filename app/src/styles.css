@@ -1071,7 +1071,7 @@ html[data-theme="dark"] .card.search-hit{--sh-card:0 1px 0 rgba(255,255,255,.08)
 
 /* v1.3.5 — distraction-free, stable card reordering */
 .stage.q.reordering .adcard{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-.stage.q.reordering .queue-composer-wrap{display:block!important;opacity:.5!important;visibility:visible!important;pointer-events:none!important}
+.stage.q.reordering .queue-composer-wrap{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:none!important}
 .stage.q.reordering .queue-composer-wrap>.slotwrap{pointer-events:none!important}
 .stage.q.reordering .qfade{pointer-events:none}
 .stage.q.reordering{touch-action:none;user-select:none;-webkit-user-select:none}
