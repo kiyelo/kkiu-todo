@@ -18,6 +18,7 @@ const queueScreen = read('app/src/components/QueueScreen.jsx')
 const queueHook = read('app/src/hooks/useFloatingQueue.js')
 const styles = read('app/src/styles.css')
 const interactionFeedback = read('app/src/services/interactionFeedback.js')
+const androidWorkflow = read('.github/workflows/android.yml')
 
 const checks = []
 const check = (name, condition) => checks.push({ name, pass: Boolean(condition) })
@@ -43,6 +44,8 @@ check('Queue composer has a stable Android compositor layer', styles.includes('.
 check('Android native touch haptics plugin is registered', androidActivity.includes('registerPlugin(HapticsPlugin.class)'))
 check('Android haptics use View feedback instead of notification vibration', androidHaptics.includes('performHapticFeedback') && androidHaptics.includes('HapticFeedbackConstants.LONG_PRESS'))
 check('Android interaction feedback selects the native haptics bridge', interactionFeedback.includes("Capacitor.getPlatform() === 'android'") && interactionFeedback.includes('NativeHaptics.perform'))
+check('Android CI restores a stable signing key from secrets', androidWorkflow.includes('ANDROID_SIGNING_KEY_BASE64') && androidWorkflow.includes('Restore stable Android signing key'))
+check('Android CI rejects an unexpected signing certificate', androidWorkflow.includes('Verify stable APK signature') && androidWorkflow.includes('0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47'))
 check('Android backup disabled', manifest.includes('android:allowBackup="false"'))
 check('Android data extraction disabled', manifest.includes('android:dataExtractionRules="@xml/data_extraction_rules"'))
 check('Android cleartext disabled', manifest.includes('android:usesCleartextTraffic="false"'))
