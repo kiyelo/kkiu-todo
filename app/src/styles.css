@@ -250,10 +250,12 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   .home-head .hbtn svg,.circle-head .hbtn svg{width:18px;height:18px}
 
   .stage{flex:1;min-height:0;position:relative;overflow:hidden}
-  .stage.q{touch-action:none}
+  .stage.q{touch-action:pan-y}
   .stage.q.adding .ico.grip{opacity:.28;pointer-events:none;transition:opacity .18s}
-  .qvp{position:absolute;inset:0;overflow:hidden}
-  .qtrack{position:absolute;left:0;right:0;top:0;padding:0 18px;will-change:transform}
+  .qvp{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-y}
+  .qvp::-webkit-scrollbar{display:none}
+  .qtrack{position:sticky;left:0;right:0;height:0;padding:0 18px;will-change:transform;z-index:2}
+  .queue-scroll-space{width:1px;pointer-events:none}
   .qtrack>*{position:absolute!important;left:18px;right:18px;margin:0!important;transition:transform .19s cubic-bezier(.2,.7,.3,1)}
   .qfade{position:absolute;left:0;right:0;z-index:6;pointer-events:none}
   .qfade.t{top:0;height:40px;background:linear-gradient(to bottom,var(--paper) 16%,transparent)}

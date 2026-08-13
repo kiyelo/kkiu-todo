@@ -68,7 +68,7 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
   const initialUi = useRef((() => { try { return JSON.parse(localStorage.getItem('kkiu-ui-v1')) || {} } catch { return {} } })()).current
-  const [tab, setTab] = useState(initialUi.tab || 'home')
+  const [tab, setTab] = useState('home')
   const [data, setData] = useState(() => {
     const initialData = freshStarterData()
     return hasSupabaseConfig
@@ -158,6 +158,7 @@ export default function App() {
       if (nextSession?.user) setRemoteLoading(!applyRemoteCache(nextSession.user.id))
       else setRemoteLoading(false)
       setSession(nextSession)
+      if (event === 'SIGNED_IN') setTab('home')
       if (event === 'TOKEN_REFRESHED') setRemoteReloadKey((current) => current + 1)
     })
     return () => { cancelled = true; listener.subscription.unsubscribe() }
