@@ -12,6 +12,7 @@ const readSavedTab = () => {
   }
 }
 
+// Existing sessions restore the saved tab; a fresh sign-in remains on home.
 export function restoreStartupTabForExistingSession() {
   const savedTab = readSavedTab()
   if (savedTab === 'home' || !hasSupabaseConfig || !supabase) return
