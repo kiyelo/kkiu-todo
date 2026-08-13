@@ -68,7 +68,7 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
   const initialUi = useRef((() => { try { return JSON.parse(localStorage.getItem('kkiu-ui-v1')) || {} } catch { return {} } })()).current
-  const [tab, setTab] = useState(initialUi.tab || 'home')
+  const [tab, setTab] = useState('home')
   const [data, setData] = useState(() => {
     const initialData = freshStarterData()
     return hasSupabaseConfig
