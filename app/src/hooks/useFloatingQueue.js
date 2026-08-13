@@ -21,6 +21,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const [dragging, setDragging] = useState(false)
   const [edgePull, setEdgePull] = useState({ edge: null, amount: 0 })
   const indexRef = useRef(index)
+  const previewIndexRef = useRef(index)
   const activeRef = useRef(false)
   const pointerRef = useRef(null)
   const startYRef = useRef(0)
@@ -38,6 +39,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const trackRef = useRef(null)
   const edgeNotifiedRef = useRef(false)
   const edgeBounceTimerRef = useRef(null)
+  const lastFeedbackRef = useRef(-Infinity)
 
   const stopMomentum = useCallback(() => {
     if (momentumRef.current !== null) {
@@ -51,33 +53,48 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (trackRef.current) trackRef.current.style.transform = `translate3d(0,${-position}px,0)`
   }, [])
 
-  useEffect(() => { indexRef.current = index }, [index])
+  useEffect(() => {
+    indexRef.current = index
+    if (!activeRef.current && momentumRef.current === null) previewIndexRef.current = index
+  }, [index])
   useEffect(() => () => {
     window.clearTimeout(wheelTimerRef.current)
     window.clearTimeout(edgeBounceTimerRef.current)
     if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current)
   }, [])
   const notify = useCallback(() => {
-    interactionFeedback(8)
+    const now = performance.now()
+    if (now - lastFeedbackRef.current < 48) return
+    lastFeedbackRef.current = now
+    interactionFeedback(5)
   }, [])
   const pulseEdge = useCallback((edge) => {
     window.clearTimeout(edgeBounceTimerRef.current)
     setEdgePull({ edge, amount: 1 })
     edgeBounceTimerRef.current = window.setTimeout(() => setEdgePull({ edge: null, amount: 0 }), 72)
   }, [])
-  const updateIndex = useCallback((next) => {
-    const value = clamp(typeof next === 'function' ? next(indexRef.current) : next, 0, count)
-    if (value !== indexRef.current) {
-      indexRef.current = value
-      setIndexState(value)
+  const previewIndex = useCallback((next) => {
+    const value = clamp(typeof next === 'function' ? next(previewIndexRef.current) : next, 0, count)
+    if (value !== previewIndexRef.current) {
+      previewIndexRef.current = value
       notify()
     }
     return value
   }, [count, notify])
+  const commitIndex = useCallback((next) => {
+    const value = clamp(typeof next === 'function' ? next(indexRef.current) : next, 0, count)
+    if (value !== indexRef.current) {
+      indexRef.current = value
+      setIndexState(value)
+      if (value !== previewIndexRef.current) notify()
+    }
+    previewIndexRef.current = value
+    return value
+  }, [count, notify])
   const setIndex = useCallback((next) => {
-    const value = updateIndex(next)
+    const value = commitIndex(next)
     setVisualPosition(positionsRef.current[value] || 0)
-  }, [setVisualPosition, updateIndex])
+  }, [commitIndex, setVisualPosition])
   useEffect(() => { if (indexRef.current > count) setIndex(count) }, [count, setIndex])
   useLayoutEffect(() => {
     const position = activeRef.current || momentumRef.current !== null
@@ -108,9 +125,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
     setEdgePull((current) => current.edge === edge && Math.abs(current.amount - amount) < 0.06 ? current : { edge, amount })
     const next = nearest(list, effective)
-    updateIndex(next)
+    previewIndex(next)
     setVisualPosition(effective)
-  }, [notify, setVisualPosition, updateIndex])
+  }, [notify, previewIndex, setVisualPosition])
 
   const onPointerDownCapture = useCallback((event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -129,6 +146,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     velocityRef.current = 0
     startPositionRef.current = current
     effectivePositionRef.current = current
+    previewIndexRef.current = indexRef.current
     movedRef.current = false
     gestureTargetRef.current = event.target.closest('.grip')
     if (gestureTargetRef.current) gestureTargetRef.current.dataset.queueMoved = 'false'
@@ -173,8 +191,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       if (raw < min || raw > max) {
         position = clamp(raw, min, max)
         const next = nearest(list, position)
-        updateIndex(next)
+        previewIndex(next)
         setVisualPosition(position)
+        commitIndex(next)
         setDragging(false)
         momentumRef.current = null
         pulseEdge(raw < min ? 'start' : 'end')
@@ -183,7 +202,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       position = raw
       velocity *= Math.pow(0.994, elapsed)
       const next = nearest(list, position)
-      updateIndex(next)
+      previewIndex(next)
       setVisualPosition(position)
       if (Math.abs(velocity) < 0.02) {
         momentumRef.current = null
@@ -196,7 +215,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
     stopMomentum()
     momentumRef.current = requestAnimationFrame(step)
-  }, [pulseEdge, setIndex, setVisualPosition, stopMomentum, updateIndex])
+  }, [commitIndex, previewIndex, pulseEdge, setIndex, setVisualPosition, stopMomentum])
 
   const finishPointer = useCallback((event) => {
     if (!activeRef.current || (event && pointerRef.current !== event.pointerId)) return
@@ -244,7 +263,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (wheelPositionRef.current === null) wheelPositionRef.current = list[indexRef.current] || 0
     wheelPositionRef.current = clamp(wheelPositionRef.current + event.deltaY, min, max)
     const next = nearest(list, wheelPositionRef.current)
-    updateIndex(next)
+    previewIndex(next)
     setVisualPosition(wheelPositionRef.current)
     setDragging(true)
     window.clearTimeout(wheelTimerRef.current)
@@ -254,7 +273,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       setDragging(false)
       setEdgePull({ edge: null, amount: 0 })
     }, 95)
-  }, [setIndex, setVisualPosition, stopMomentum, updateIndex])
+  }, [previewIndex, setIndex, setVisualPosition, stopMomentum])
 
   const onKeyDown = useCallback((event) => {
     if (event.key === 'ArrowUp') { event.preventDefault(); setIndex(indexRef.current - 1) }

@@ -30,6 +30,8 @@ check('Required terms fail closed', /catch\(\(error\)[\s\S]*setTermsAccepted\(fa
 check('No blocking terms loading screen', !appSource.includes('약관 동의 상태를 확인하고 있어요'))
 check('Settings screen is immediately available', appSource.includes("import MoreScreen from './components/MoreScreen.jsx'"))
 check('Queue movement uses an imperative track transform', queueHook.includes('trackRef.current.style.transform'))
+check('Queue drag previews do not render each crossed slot', queueHook.includes('previewIndexRef') && !queueHook.match(/const previewIndex[\s\S]*?const commitIndex/)?.[0].includes('setIndexState'))
+check('Queue haptics are throttled off the touch hot path', queueHook.includes('now - lastFeedbackRef.current < 48'))
 check('Android backup disabled', manifest.includes('android:allowBackup="false"'))
 check('Android data extraction disabled', manifest.includes('android:dataExtractionRules="@xml/data_extraction_rules"'))
 check('Android cleartext disabled', manifest.includes('android:usesCleartextTraffic="false"'))
