@@ -126,7 +126,6 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const fileRef = useRef(null)
   const trackRef = useRef(null)
   const stageRef = useRef(null)
-  const entryAligned = useRef(false)
   const lastQueueIndex = useRef(null)
   const rollTimer = useRef(null)
   const hitTimer = useRef(null)
@@ -140,7 +139,6 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const [doc, setDoc] = useState(null)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
-  const [entrySettled, setEntrySettled] = useState(false)
   const en = language === 'en'
   const provider = user ? providerLabel(user, language) : (en ? 'No account' : '로그인하지 않음')
 
@@ -180,7 +178,7 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
     return result
   }, [en, language, onBackup, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onSignOut, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const next = [...(trackRef.current?.querySelectorAll('.more-qitem') || [])].map((element) => Math.ceil(element.getBoundingClientRect().height))
     if (next.length && next.some((height, index) => height !== heights[index])) setHeights(next)
   }, [items, language, user])
@@ -188,7 +186,14 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   let cursor = 0
   items.forEach((item, index) => { positions.push(cursor); cursor += (heights[index] || item.h) + 10 })
   const slotPositions = [...positions, cursor]
-  const queue = useFloatingQueue(items.length, 0, {
+  const desiredEntryOffset = Math.max(0, (typeof window === 'undefined' ? 0 : window.innerHeight) / 2 - 10)
+  let initialQueueIndex = 0
+  let initialQueueDistance = Infinity
+  slotPositions.forEach((position, index) => {
+    const distance = Math.abs(position - desiredEntryOffset)
+    if (distance < initialQueueDistance) { initialQueueDistance = distance; initialQueueIndex = index }
+  })
+  const queue = useFloatingQueue(items.length, initialQueueIndex, {
     positions: slotPositions,
     rowHeight: 72,
     ariaLabel: en ? 'Settings position' : '설정 목록 위치',
@@ -196,17 +201,6 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   })
   const offset = slotPositions[Math.min(queue.index, slotPositions.length - 1)] || 0
 
-  useLayoutEffect(() => {
-    if (entryAligned.current || heights.length !== items.length || !stageRef.current) return undefined
-    entryAligned.current = true
-    const desired = Math.max(0, stageRef.current.clientHeight / 2 - 10)
-    let nearest = 0
-    let best = Infinity
-    slotPositions.forEach((position, index) => { const distance = Math.abs(position - desired); if (distance < best) { best = distance; nearest = index } })
-    queue.setIndex(nearest)
-    const frame = requestAnimationFrame(() => setEntrySettled(true))
-    return () => cancelAnimationFrame(frame)
-  }, [heights.length, items.length])
 
   const spin = () => {
     const pool = ['🌙', '🍊', '🌿', '🔥', '🐈', '🧦', '🐸']
@@ -217,10 +211,9 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
     rollTimer.current = window.setTimeout(() => { setRolling(false); if (isTriple) { setHit(true); hitTimer.current = window.setTimeout(() => setHit(false), 500) } }, 220)
   }
   useEffect(() => {
-    if (!entrySettled) { lastQueueIndex.current = queue.index; return }
     if (lastQueueIndex.current === null) { lastQueueIndex.current = queue.index; return }
     if (lastQueueIndex.current !== queue.index) { lastQueueIndex.current = queue.index; if (!locked) spin() }
-  }, [queue.index, locked, entrySettled])
+  }, [queue.index, locked])
   useEffect(() => () => { window.clearTimeout(rollTimer.current); window.clearTimeout(hitTimer.current) }, [])
   const roll = () => { if (locked) { setLocked(false); spin() } else setLocked(true) }
   const counts = symbols.reduce((map, symbol) => ({ ...map, [symbol]: (map[symbol] || 0) + 1 }), {})
@@ -228,5 +221,5 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const combo = max === 3 ? 'triple' : max === 2 ? 'pair' : 'mixed'
   const symbolClass = combo === 'triple' ? ({ '🔥': ' symbol-fire', '🌙': ' symbol-moon', '🍊': ' symbol-orange', '🌿': ' symbol-leaf', '🐈': ' symbol-cat', '🧦': ' symbol-sock', '🐸': ' symbol-frog' }[symbols[0]] || '') : ''
 
-  return <div ref={stageRef} className={`stage q more-qstage${entrySettled ? ' entry-settled' : ' entry-aligning'}${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp"><div ref={trackRef} className="qtrack more-qtrack" style={{ top: '50%', transition: entrySettled ? undefined : 'none', transform: `translate3d(0,calc(-${offset}px + ${queue.dragY}px),0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" /><div className="slotwrap" style={{ top: 'calc(50% + 30px)' }}><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore} />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{history && <ReleaseNotesModal language={language} onClose={() => setHistory(false)} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}</div>
+  return <div ref={stageRef} className={`stage q more-qstage entry-settled${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp"><div ref={trackRef} className="qtrack more-qtrack" style={{ top: '50%', transform: `translate3d(0,calc(-${offset}px + ${queue.dragY}px),0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" /><div className="slotwrap" style={{ top: 'calc(50% + 30px)' }}><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore} />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{history && <ReleaseNotesModal language={language} onClose={() => setHistory(false)} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}</div>
 }
