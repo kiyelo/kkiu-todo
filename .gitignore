@@ -3,6 +3,8 @@ node_modules/
 .vite/
 dist/
 *.log
+*.apk
+.tools/
 .env
 .env.local
 .env.*.local

@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BottomNav from './components/BottomNav.jsx'
 import AuthScreen from './components/AuthScreen.jsx'
 import TermsGate from './components/TermsGate.jsx'
 import Header from './components/Header.jsx'
 import MoreScreen from './components/MoreScreen.jsx'
 import QueueScreen from './components/QueueScreen.jsx'
-import { ActivityLogSheet, CircleEditor, CirclePicker, CompletedSheet, ConfirmDialog } from './components/Sheets.jsx'
 import { starterData } from './data.js'
 import { localRepository } from './services/localRepository.js'
 import { hasSupabaseConfig, supabase } from './services/supabaseClient.js'
@@ -18,6 +17,14 @@ import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBa
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
 import { loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
+import { watchThemePreference } from './services/themePlatform.js'
+
+const lazySheet = (name) => lazy(() => import('./components/Sheets.jsx').then((module) => ({ default: module[name] })))
+const ActivityLogSheet = lazySheet('ActivityLogSheet')
+const CircleEditor = lazySheet('CircleEditor')
+const CirclePicker = lazySheet('CirclePicker')
+const CompletedSheet = lazySheet('CompletedSheet')
+const ConfirmDialog = lazySheet('ConfirmDialog')
 
 const tabs = ['home', 'circle', 'more']
 const freshStarterData = () => JSON.parse(JSON.stringify(starterData))
@@ -170,7 +177,9 @@ export default function App() {
       .then((accepted) => { if (!cancelled) setTermsAccepted(hasAcceptedRequiredTerms(accepted)) })
       .catch((error) => {
         reportSyncError(error)
-        if (!cancelled) setTermsAccepted(true)
+        // Required legal consent must fail closed. The gate can retry the
+        // upsert when connectivity returns; the app itself must not open first.
+        if (!cancelled) setTermsAccepted(false)
       })
     return () => { cancelled = true }
   }, [session?.user?.id])
@@ -539,20 +548,7 @@ const undoTaskDelete = () => {
   useEffect(() => {
     const root = document.documentElement
     root.lang = settingValues.language
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-    const applyTheme = () => {
-      const resolvedTheme = settingValues.theme === 'system'
-        ? (systemTheme.matches ? 'dark' : 'light')
-        : settingValues.theme
-      root.dataset.theme = resolvedTheme
-      root.dataset.themePreference = settingValues.theme
-      root.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
-      try { localStorage.setItem(THEME_PREFERENCE_KEY, settingValues.theme) } catch {}
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0d1015' : '#dfe6f0')
-    }
-    applyTheme()
-    if (settingValues.theme === 'system') systemTheme.addEventListener('change', applyTheme)
-    return () => systemTheme.removeEventListener('change', applyTheme)
+    return watchThemePreference(settingValues.theme)
   }, [settingValues.language, settingValues.theme])
   useEffect(() => {
     setInteractionFeedbackEnabled(settingValues.interactionFeedback)
@@ -633,7 +629,7 @@ const undoTaskDelete = () => {
   if (hasSupabaseConfig && qaAccount && !session && qaLoginError) return <QaLoginError account={qaAccount} message={qaLoginError} />
   if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />
 
-  if (hasSupabaseConfig && session?.user && termsAccepted === false) {
+  if (hasSupabaseConfig && session?.user && termsAccepted !== true) {
     return (
       <TermsGate
         userId={session.user.id}
@@ -654,11 +650,13 @@ const undoTaskDelete = () => {
       {tab === 'more' ? <MoreScreen values={settingValues} onSetting={setSetting} user={qaAccount ? null : session?.user} onSignOut={qaAccount ? undefined : () => supabase?.auth.signOut()} language={settingValues.language} onBackup={backupData} onRestore={restoreData} onReset={resetData} onSeed={resetData} onEmpty={emptyData} onUnread={createUnread} testMode={testMode} onExitTestMode={exitTestMode} /> : <QueueScreen viewKey={`${tab}:${circle?.id || 'none'}`} focusVisit={focusVisit} dataReady={!remoteLoading} tasks={tasks} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} circleMode={tab === 'circle'} onCreateCircle={() => setCircleEditorOpen('create')} onJoinCircle={() => setCirclePickerOpen(true)} query={query} onQuery={setQuery} onSearchResult={goToSearchResult} focusTaskId={focusTaskId} newTaskId={newTaskId} filter={filter} onFilter={setFilter} onAdd={addTask} onComplete={completeTask} onEdit={editTask} onAssignee={setAssignee} onMove={moveTask} onMoveTo={moveTaskTo} selecting={selected.size > 0} selected={selected} onSelect={toggleSelect} onLongPress={(id) => setSelected(new Set([id]))} onSelectAll={selectAll} onDeleteSelected={deleteSelected} onAssignSelected={assignSelected} onCancelSelect={cancelSelect} onCompleted={() => setCompletedOpen(true)} initialPosition={queuePositions[tab]} onPositionChange={(position) => setQueuePositions((current) => current[tab] === position ? current : { ...current, [tab]: position })} language={settingValues.language} />}
       <BottomNav lang={settingValues.language} tab={tab} unread={unread} onChange={switchTab} />
       {pendingDelete ? !completedOpen && renderUndoNotice('app-toast undo-toast') : toast && <div className="app-toast" role="status">{toast}</div>}
-      {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
-      {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} footer={renderUndoNotice('undo-toast sheet-undo-toast')} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
-      {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onRegenerate={refreshInviteCode} onJoinLock={changeJoinLock} onActivity={circleEditorOpen === 'edit' ? () => { setCircleEditorOpen(null); setActivityOpen(true) } : null} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
-      {activityOpen && circle && <ActivityLogSheet language={settingValues.language} circle={circle} loadPage={(offset, limit) => testMode || !remoteUser ? Promise.resolve((circle.activityLogs || []).slice(offset, offset + limit)) : loadCircleActivityLogs(circle.id, offset, limit)} onClose={() => { setActivityOpen(false); setCircleEditorOpen('edit') }} />}
-      {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
+      <Suspense fallback={null}>
+        {circlePickerOpen && <CirclePicker language={language} initialCode={pendingInvite} circles={data.circles} selected={circle?.id} onSelect={selectCircle} onJoin={joinCircle} onCreate={() => setCircleEditorOpen('create')} onClose={() => setCirclePickerOpen(false)} />}
+        {completedOpen && <CompletedSheet language={settingValues.language} tasks={completed} members={activeMembers} circle={tab === 'circle' ? displayCircle : null} onRestore={completeTask} onDelete={deleteCompletedTask} focusTaskId={completedFocusId} footer={renderUndoNotice('undo-toast sheet-undo-toast')} onClose={() => { setCompletedOpen(false); setCompletedFocusId(null) }} />}
+        {circleEditorOpen && <CircleEditor language={settingValues.language} circle={circleEditorOpen === 'edit' ? displayCircle : null} profile={circleEditorOpen === 'edit' ? activeMembers.find((member) => member.id === actorId) : null} onSave={saveCircle} onInvite={shareInvite} onCopyCode={copyInviteCode} onRegenerate={refreshInviteCode} onJoinLock={changeJoinLock} onActivity={circleEditorOpen === 'edit' ? () => { setCircleEditorOpen(null); setActivityOpen(true) } : null} onReorder={reorderMembers} onLeave={circleEditorOpen === 'edit' ? requestLeaveCircle : null} onClose={() => setCircleEditorOpen(null)} />}
+        {activityOpen && circle && <ActivityLogSheet language={settingValues.language} circle={circle} loadPage={(offset, limit) => testMode || !remoteUser ? Promise.resolve((circle.activityLogs || []).slice(offset, offset + limit)) : loadCircleActivityLogs(circle.id, offset, limit)} onClose={() => { setActivityOpen(false); setCircleEditorOpen('edit') }} />}
+        {confirm && <ConfirmDialog language={language} {...confirm} onCancel={() => setConfirm(null)} onConfirm={() => { const action = confirm.action; setConfirm(null); action?.() }} />}
+      </Suspense>
       </div>
     </section>
   </div>

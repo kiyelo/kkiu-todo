@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">끼우 투두</string>
+    <string name="title_activity_main">끼우 투두</string>
+    <string name="custom_url_scheme" translatable="false">app.kkiu.todo</string>
+</resources>

@@ -1,6 +1,6 @@
 {
   "appId": "app.kkiu.todo",
-  "appName": "끼우",
+  "appName": "끼우 투두",
   "webDir": "dist",
   "backgroundColor": "#ffffff",
   "server": {

@@ -64,9 +64,22 @@ export default function QueueScreen(props) {
   useEffect(() => { onPositionChange?.(currentSlot.globalIndex) }, [currentSlot.globalIndex, onPositionChange])
   useEffect(() => { const next = model.slots.findIndex((item) => item.globalIndex >= wantedGlobal); if (next >= 0) queue.setIndex(next) }, [viewKey, dataReady, filter, expanded, focusTaskId, focusVisit])
   const draggingId = reorder?.id || null
-  const startReorder = (id, event) => { const from = active.findIndex((task) => task.id === id); if (from < 0) return; const centers = [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), center: rect.top + rect.height / 2 } }).sort((a, b) => a.index - b.index); const originCenter = centers.find((item) => item.id === id)?.center ?? event.clientY; const next = { id, from, to: from, startY: event.clientY, originCenter, centers, offset: 0 }; reorderRef.current = next; setReorder(next) }
+  const startReorder = (id, event) => { const from = active.findIndex((task) => task.id === id); if (from < 0) return; const centers = [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), center: rect.top + rect.height / 2 } }).sort((a, b) => a.index - b.index); const originCenter = centers.find((item) => item.id === id)?.center ?? event.clientY; const next = { id, pointerId: event.pointerId, from, to: from, startY: event.clientY, originCenter, centers, offset: 0 }; reorderRef.current = next; setReorder(next) }
   const dragMove = (event) => { const current = reorderRef.current; if (!current) return; const candidates = [{ index: current.from, center: current.originCenter }, ...current.centers.filter((item) => item.id !== current.id)].sort((a, b) => a.index - b.index); let candidate = current.to, candidateDistance = Infinity; candidates.forEach((item) => { const distance = Math.abs(event.clientY - item.center); if (distance < candidateDistance) { candidateDistance = distance; candidate = item.index } }); let to = current.to; if (candidate !== current.to) { const heldCenter = candidates.find((item) => item.index === current.to)?.center ?? current.originCenter; const heldDistance = Math.abs(event.clientY - heldCenter); if (candidateDistance + 10 < heldDistance) to = candidate } const next = { ...current, to, offset: event.clientY - current.startY }; if (to !== current.to) interactionFeedback(6); reorderRef.current = next; setReorder(next) }
-  const finishReorder = (_event, cancelled) => { const current = reorderRef.current; if (current && !cancelled && current.to !== current.from) onMoveTo(current.id, active[current.to]?.id); reorderRef.current = null; setReorder(null) }
+  const finishReorder = (event, cancelled) => { const current = reorderRef.current; if (current && event?.pointerId != null && current.pointerId !== event.pointerId) return; if (current && !cancelled && current.to !== current.from) onMoveTo(current.id, active[current.to]?.id); reorderRef.current = null; setReorder(null) }
+  useEffect(() => {
+    if (!reorder) return undefined
+    const end = (event) => finishReorder(event, event.type !== 'pointerup')
+    const cancel = () => finishReorder(null, true)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+    window.addEventListener('blur', cancel)
+    return () => {
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      window.removeEventListener('blur', cancel)
+    }
+  }, [reorder])
   const liveIndex = (index, id) => { if (!reorder) return index; if (id === reorder.id) return reorder.to; if (reorder.from < reorder.to && index > reorder.from && index <= reorder.to) return index - 1; if (reorder.from > reorder.to && index >= reorder.to && index < reorder.from) return index + 1; return index }
   const card = (task, index, extra = {}) => <TaskCard key={extra.key || task.id} task={task} index={index} members={members} circle={circle} onComplete={onComplete} onEdit={onEdit} onAssignee={onAssignee} onMove={onMove} onMoveTo={onMoveTo} onDragStart={startReorder} onDragMove={dragMove} onDragEnd={finishReorder} dragging={draggingId === task.id} selecting={selecting} selected={selected.has(task.id)} onSelect={onSelect} onLongPress={onLongPress} searchHit={flashId === task.id} newHit={newTaskId?.has?.(task.id) || false} language={language} {...extra} />
 

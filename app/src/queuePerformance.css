@@ -4,3 +4,8 @@
 .more-qstage.dragging .qtrack > * {
   transition: none !important;
 }
+
+/* The legacy row selector has an extra :not() specificity component. */
+.stage.q.dragging .qtrack > .queue-task-row:not(.reorder-dragging) {
+  transition: none !important;
+}

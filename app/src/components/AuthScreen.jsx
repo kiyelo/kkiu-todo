@@ -1,11 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { getAuthRedirectUrl, requireSupabase } from '../services/supabaseClient.js'
+import { startNativeOAuth } from '../services/nativeAuth.js'
 
-const PROVIDERS = [
+const PROVIDER_CATALOG = [
   { id: 'google', label: 'Google로 계속하기' },
   { id: 'apple', label: 'Apple로 계속하기' },
   { id: 'kakao', label: 'Kakao로 계속하기' },
 ]
+const enabledProviderIds = new Set(
+  (import.meta.env.VITE_AUTH_PROVIDERS || 'google')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean),
+)
+const PROVIDERS = PROVIDER_CATALOG.filter(({ id }) => enabledProviderIds.has(id))
+const SHOW_PASSWORD_LOGIN = import.meta.env.DEV
 
 export default function AuthScreen({ pendingInvite = '' }) {
   const initialMessage = useMemo(() => {
@@ -19,6 +29,17 @@ export default function AuthScreen({ pendingInvite = '' }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordPending, setPasswordPending] = useState(false)
+
+  useEffect(() => {
+    const onNativeAuth = (event) => {
+      if (!event.detail?.ok) {
+        setMessage(event.detail?.message || '로그인에 실패했어요.')
+        setPendingProvider('')
+      }
+    }
+    window.addEventListener('kkiu:native-auth', onNativeAuth)
+    return () => window.removeEventListener('kkiu:native-auth', onNativeAuth)
+  }, [])
 
   const signInWithPassword = async (event) => {
     event.preventDefault()
@@ -45,6 +66,11 @@ export default function AuthScreen({ pendingInvite = '' }) {
     setMessage('')
     setPendingProvider(provider)
     try {
+      if (Capacitor.isNativePlatform()) {
+        await startNativeOAuth(provider)
+        setPendingProvider('')
+        return
+      }
       const { error } = await requireSupabase().auth.signInWithOAuth({
         provider,
         options: { redirectTo: getAuthRedirectUrl() },
@@ -72,35 +98,41 @@ export default function AuthScreen({ pendingInvite = '' }) {
         )}
       </div>
 
-      <form className="auth-social" onSubmit={signInWithPassword}>
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="이메일"
-          autoComplete="username"
-          disabled={disabled}
-          style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="비밀번호"
-          autoComplete="current-password"
-          disabled={disabled}
-          style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
-        />
-        <button type="submit" className="auth-social-btn" disabled={disabled}>
-          <span>{passwordPending ? '로그인 중…' : '이메일로 로그인'}</span>
-        </button>
-      </form>
+      {SHOW_PASSWORD_LOGIN && (
+        <>
+          <form className="auth-social" onSubmit={signInWithPassword}>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="이메일"
+              aria-label="이메일"
+              autoComplete="username"
+              disabled={disabled}
+              style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="비밀번호"
+              aria-label="비밀번호"
+              autoComplete="current-password"
+              disabled={disabled}
+              style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, padding: '0 16px', border: '1px solid #d8d2c8', borderRadius: 14, font: 'inherit', background: '#fff' }}
+            />
+            <button type="submit" className="auth-social-btn" disabled={disabled}>
+              <span>{passwordPending ? '로그인 중…' : '이메일로 로그인'}</span>
+            </button>
+          </form>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: '#8b857c', fontSize: 13 }}>
-        <span style={{ height: 1, flex: 1, background: '#ded8ce' }} />
-        <span>또는</span>
-        <span style={{ height: 1, flex: 1, background: '#ded8ce' }} />
-      </div>
+          <div className="auth-divider" aria-hidden="true">
+            <span />
+            <b>또는</b>
+            <span />
+          </div>
+        </>
+      )}
 
       <div className="auth-social">
         {PROVIDERS.map(({ id, label }) => (

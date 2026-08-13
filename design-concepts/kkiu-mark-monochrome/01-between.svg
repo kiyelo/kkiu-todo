@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Kkiu mark concept 1 — Between</title>
+  <desc id="desc">A task card entering the exact gap between two ordered cards.</desc>
+  <rect width="512" height="512" rx="112" fill="#111216"/>
+  <rect x="112" y="104" width="288" height="80" rx="28" fill="#fff"/>
+  <rect x="112" y="328" width="288" height="80" rx="28" fill="#fff"/>
+  <path d="M64 216h260c22.1 0 40 17.9 40 40s-17.9 40-40 40H64l40-40-40-40Z" fill="#fff"/>
+  <rect x="382" y="224" width="18" height="64" rx="9" fill="#fff"/>
+</svg>
