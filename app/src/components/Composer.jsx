@@ -6,6 +6,30 @@ import { TASK_TITLE_LIMIT, limitGraphemes, normalizeTaskTitle } from '../utils/t
 
 const composerDrafts = new Map()
 const draftKeyFor = (circle) => circle?.id ? `circle:${circle.id}` : 'personal'
+const DISMISS_CLICK_WINDOW_MS = 620
+let suppressDismissClickUntil = 0
+let dismissGuardInstalled = false
+
+const armDismissClickGuard = () => {
+  suppressDismissClickUntil = performance.now() + DISMISS_CLICK_WINDOW_MS
+}
+
+const ensureDismissClickGuard = () => {
+  if (dismissGuardInstalled || typeof document === 'undefined') return
+  dismissGuardInstalled = true
+  document.addEventListener('pointerdown', () => {
+    if (performance.now() < suppressDismissClickUntil) suppressDismissClickUntil = 0
+  }, true)
+  document.addEventListener('click', (event) => {
+    if (performance.now() >= suppressDismissClickUntil) return
+    suppressDismissClickUntil = 0
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation?.()
+  }, true)
+}
+
+ensureDismissClickGuard()
 
 export default function Composer({ count, circle, members, onAdd, position = count, onOpenChange, language = 'ko' }) {
   const assignableMembers = members.filter((member) => !member.leftAt)
@@ -35,7 +59,12 @@ export default function Composer({ count, circle, members, onAdd, position = cou
       const gesture = outsideGestureRef.current
       if (!gesture || gesture.pointerId !== event.pointerId) return
       outsideGestureRef.current = null
-      if (!gesture.moved) setOpen(false)
+      if (gesture.moved) return
+      armDismissClickGuard()
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation?.()
+      setOpen(false)
     }
     const onPointerCancel = (event) => {
       if (outsideGestureRef.current?.pointerId === event.pointerId) outsideGestureRef.current = null
