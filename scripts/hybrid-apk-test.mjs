@@ -33,6 +33,8 @@ const terms = read('app/src/services/termsRepository.js')
 const theme = read('app/src/services/themePlatform.js')
 const gradle = read('android/app/build.gradle')
 
+const reorderOwnsLayoutOrScroll = /\bscrollTop\b|\.scrollTo\s*\(|getBoundingClientRect\s*\(|\.animate\s*\(|style\.translate\b|translate3d\s*\(|style\.transform\b/.test(reorderHighlight)
+
 const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
   ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
@@ -47,7 +49,7 @@ const checks = [
   ['Dragged card stays anchored to the pointer', queueScreen.includes('grabOffsetY') && queueScreen.includes('desiredTop = pointerY - current.grabOffsetY') && queueScreen.includes('baseTop = dragged.top - current.offset')],
   ['Reorder target updates while auto-scrolling', queueScreen.includes('updateReorderAt(pointerY)') && queueScreen.includes('readReorderRows()')],
   ['Reorder release stays immediate', queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important')],
-  ['Reorder completion owns only the shared visual highlight', reorderHighlight.includes("HIGHLIGHT_CLASS = 'reorder-hit'") && !reorderHighlight.includes('scrollTop') && !reorderHighlight.includes('scrollTo') && !reorderHighlight.includes('getBoundingClientRect') && !reorderHighlight.includes('.animate(')],
+  ['Reorder completion owns only the shared visual highlight', reorderHighlight.includes("HIGHLIGHT_CLASS = 'reorder-hit'") && !reorderOwnsLayoutOrScroll],
   ['Task target cues share one green highlight language', highlightStyles.includes('.card.new-hit') && highlightStyles.includes('.card.search-hit') && highlightStyles.includes('.card.reorder-hit') && highlightStyles.includes('.drow.target-hit') && !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:')],
   ['Queue visual track follows actual native scroll', queue.includes('setVisualPosition(scrollerRef.current.scrollTop)')],
   ['Queue emits feedback for crossed slots', queue.includes('notifyCrossedSlots') && queue.includes('interactionFeedback(8)')],
