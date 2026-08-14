@@ -2,6 +2,7 @@ let pending = null
 let observer = null
 let releaseTimer = 0
 let highlightTimer = 0
+let settleFrame = 0
 
 const taskRows = (stage) => [...stage.querySelectorAll('.queue-task-row[data-task-id]')]
 
@@ -21,39 +22,108 @@ const highlightReleasedTask = (stage, taskId) => {
   highlightTimer = window.setTimeout(() => card.classList.remove('reorder-hit'), 1750)
 }
 
+const clearRowHold = (stage) => {
+  taskRows(stage).forEach((row) => {
+    row.style.translate = ''
+    row.style.willChange = ''
+  })
+}
+
+const measureSettledRows = (stage, originalPositions) => {
+  const rows = taskRows(stage)
+  rows.forEach((row) => { row.style.translate = 'none' })
+  const layout = new Map(rows.map((row) => [row.dataset.taskId, row.getBoundingClientRect().top]))
+  rows.forEach((row) => {
+    const originalTop = originalPositions.get(row.dataset.taskId)
+    const layoutTop = layout.get(row.dataset.taskId)
+    if (originalTop == null || layoutTop == null) return
+    row.style.translate = `0 ${originalTop - layoutTop}px`
+    row.style.willChange = 'translate'
+  })
+  return layout
+}
+
+const layoutsMatch = (previous, next) => {
+  if (!previous || previous.size !== next.size) return false
+  for (const [id, top] of next) {
+    const before = previous.get(id)
+    if (before == null || Math.abs(before - top) > 0.5) return false
+  }
+  return true
+}
+
 const finishRelease = () => {
   if (!pending) return
+  clearRowHold(pending.stage)
   pending.stage?.classList.remove('reorder-releasing')
   pending = null
 }
 
-const applyFlip = () => {
+const applyFinalFlip = (layout) => {
   if (!pending || pending.applied) return
   const { stage, positions, taskId, shouldHighlight } = pending
   if (!stage?.isConnected) { pending = null; return }
-  if (stage.classList.contains('reordering')) return
 
   pending.applied = true
   taskRows(stage).forEach((row) => {
     const previousTop = positions.get(row.dataset.taskId)
-    if (previousTop == null) return
-    const nextTop = row.getBoundingClientRect().top
+    const nextTop = layout.get(row.dataset.taskId)
+    if (previousTop == null || nextTop == null) return
     const delta = previousTop - nextTop
-    if (Math.abs(delta) < 0.5) return
+    row.style.translate = 'none'
+    row.style.willChange = 'translate'
     row.getAnimations?.().forEach((animation) => animation.cancel())
-    row.animate(
+    if (Math.abs(delta) < 0.5) {
+      row.style.translate = ''
+      row.style.willChange = ''
+      return
+    }
+    const animation = row.animate(
       [
-        { transform: `translate3d(0,${delta}px,0)` },
-        { transform: 'translate3d(0,0,0)' },
+        { translate: `0 ${delta}px` },
+        { translate: '0 0' },
       ],
-      { duration: 190, easing: 'cubic-bezier(.2,.7,.3,1)' },
+      { duration: 190, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' },
     )
+    animation.onfinish = () => {
+      animation.cancel()
+      row.style.translate = ''
+      row.style.willChange = ''
+    }
   })
 
   if (shouldHighlight) highlightReleasedTask(stage, taskId)
-
   window.clearTimeout(releaseTimer)
-  releaseTimer = window.setTimeout(finishRelease, 210)
+  releaseTimer = window.setTimeout(finishRelease, 220)
+}
+
+const sampleFinalLayout = () => {
+  settleFrame = 0
+  if (!pending || pending.applied) return
+  const { stage, positions } = pending
+  if (!stage?.isConnected) { pending = null; return }
+  if (stage.classList.contains('reordering')) {
+    settleFrame = requestAnimationFrame(sampleFinalLayout)
+    return
+  }
+
+  const layout = measureSettledRows(stage, positions)
+  if (layoutsMatch(pending.lastLayout, layout)) pending.stableFrames += 1
+  else pending.stableFrames = 0
+  pending.lastLayout = layout
+  pending.attempts += 1
+
+  if (pending.stableFrames >= 1 || pending.attempts >= 5) {
+    applyFinalFlip(layout)
+    return
+  }
+  settleFrame = requestAnimationFrame(sampleFinalLayout)
+}
+
+const scheduleFinalLayout = () => {
+  if (!pending || pending.applied) return
+  cancelAnimationFrame(settleFrame)
+  settleFrame = requestAnimationFrame(sampleFinalLayout)
 }
 
 const onPointerEnd = (event) => {
@@ -61,20 +131,32 @@ const onPointerEnd = (event) => {
   if (!stage) return
   const dragged = stage.querySelector('.queue-task-row.reorder-dragging[data-task-id]')
   window.clearTimeout(releaseTimer)
+  cancelAnimationFrame(settleFrame)
   pending = {
     stage,
     positions: snapshotRows(stage),
     taskId: dragged?.dataset.taskId || null,
     shouldHighlight: event.type === 'pointerup',
     applied: false,
+    lastLayout: null,
+    stableFrames: 0,
+    attempts: 0,
   }
   stage.classList.add('reorder-releasing')
-  queueMicrotask(applyFlip)
+  queueMicrotask(() => {
+    if (!pending) return
+    measureSettledRows(stage, pending.positions)
+    scheduleFinalLayout()
+  })
 }
 
 const ensureObserver = () => {
   if (observer || typeof MutationObserver === 'undefined') return
-  observer = new MutationObserver(() => applyFlip())
+  observer = new MutationObserver(() => {
+    if (!pending || pending.applied) return
+    pending.stableFrames = 0
+    scheduleFinalLayout()
+  })
   observer.observe(document.documentElement, {
     subtree: true,
     childList: true,
