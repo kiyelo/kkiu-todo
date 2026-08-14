@@ -145,10 +145,6 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
     if (!trackRef.current) trackRef.current = stage.querySelector('.qtrack')
 
-    stage.querySelectorAll('.grip, .ico.grip').forEach((element) => {
-      element.style.touchAction = 'pan-y'
-    })
-
     const scroller = scrollerRef.current
     if (stage.classList.contains('more-qstage') && scroller) {
       let extent = scroller.querySelector(':scope > .queue-scroll-extent')
