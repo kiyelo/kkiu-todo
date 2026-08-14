@@ -7,6 +7,7 @@ import './styles.css'
 import './queuePerformance.css'
 import './queueNativeScroll.css'
 import './reorderFix.css'
+import './successHighlight.css'
 import './reorderDropFlip.js'
 
 restoreStartupTabForExistingSession()
