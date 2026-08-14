@@ -9,6 +9,8 @@ import { interactionFeedback } from '../services/interactionFeedback.js'
 const H = { task: 72, ghost: 52, bundle: 56, collapse: 42, ad: 100, done: 56 }
 const VIRTUAL_WINDOW_PX = 1200
 const SEARCH_RESULT_LIMIT = 200
+const REORDER_EDGE_PX = 76
+const REORDER_MAX_SCROLL_PX = 15
 const assignees = (task) => task.assignees || (task.assignee ? [task.assignee] : [])
 const adBefore = (index) => index === 10 || (index > 10 && (index - 10) % 20 === 0)
 
@@ -43,10 +45,11 @@ const markText = (title, query) => { const normalized = query.trim(); if (!norma
 
 export default function QueueScreen(props) {
   const { viewKey, focusVisit = 0, dataReady = true, tasks, members, circle, circleMode, onCreateCircle, onJoinCircle, query, onQuery, onSearchResult, focusTaskId, newTaskId, filter, onFilter, onAdd, onComplete, onEdit, onAssignee, onMove, onMoveTo, selecting, selected, onSelect, onLongPress, onSelectAll, onDeleteSelected, onAssignSelected, onCancelSelect, onCompleted, initialPosition = null, onPositionChange, language = 'ko' } = props
-  const [reorder, setReorder] = useState(null); const reorderRef = useRef(null); const [assignOpen, setAssignOpen] = useState(false); const [composerOpen, setComposerOpen] = useState(false); const [expanded, setExpanded] = useState(null); const [flashId, setFlashId] = useState(focusTaskId)
+  const [reorder, setReorder] = useState(null); const reorderRef = useRef(null); const reorderFrameRef = useRef(null); const reorderPointerYRef = useRef(null); const [assignOpen, setAssignOpen] = useState(false); const [composerOpen, setComposerOpen] = useState(false); const [expanded, setExpanded] = useState(null); const [flashId, setFlashId] = useState(focusTaskId)
   useEffect(() => { if (!selecting) setAssignOpen(false) }, [selecting])
   useEffect(() => { if (!focusTaskId) return undefined; setFlashId(focusTaskId); const timer = window.setTimeout(() => setFlashId(null), 2700); return () => window.clearTimeout(timer) }, [focusTaskId])
   useEffect(() => { if (!filter) { setComposerOpen(false); setExpanded(null) } }, [filter])
+  useEffect(() => () => { if (reorderFrameRef.current) cancelAnimationFrame(reorderFrameRef.current) }, [])
   const active = useMemo(() => tasks.filter((task) => !task.done), [tasks])
   const completedCount = tasks.length - active.length
   const fullModel = useMemo(() => buildModel(active, circle && filter, composerOpen, expanded, completedCount), [active, circle, filter, composerOpen, expanded, completedCount])
@@ -64,9 +67,55 @@ export default function QueueScreen(props) {
   useEffect(() => { onPositionChange?.(currentSlot.globalIndex) }, [currentSlot.globalIndex, onPositionChange])
   useEffect(() => { const next = model.slots.findIndex((item) => item.globalIndex >= wantedGlobal); if (next >= 0) queue.setIndex(next) }, [viewKey, dataReady, filter, expanded, focusTaskId, focusVisit])
   const draggingId = reorder?.id || null
-  const startReorder = (id, event) => { const from = active.findIndex((task) => task.id === id); if (from < 0) return; const centers = [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), center: rect.top + rect.height / 2 } }).sort((a, b) => a.index - b.index); const originCenter = centers.find((item) => item.id === id)?.center ?? event.clientY; const next = { id, from, to: from, startY: event.clientY, originCenter, centers, offset: 0 }; reorderRef.current = next; setReorder(next) }
-  const dragMove = (event) => { const current = reorderRef.current; if (!current) return; const candidates = [{ index: current.from, center: current.originCenter }, ...current.centers.filter((item) => item.id !== current.id)].sort((a, b) => a.index - b.index); let candidate = current.to, candidateDistance = Infinity; candidates.forEach((item) => { const distance = Math.abs(event.clientY - item.center); if (distance < candidateDistance) { candidateDistance = distance; candidate = item.index } }); let to = current.to; if (candidate !== current.to) { const heldCenter = candidates.find((item) => item.index === current.to)?.center ?? current.originCenter; const heldDistance = Math.abs(event.clientY - heldCenter); if (candidateDistance + 10 < heldDistance) to = candidate } const next = { ...current, to, offset: event.clientY - current.startY }; if (to !== current.to) interactionFeedback(6); reorderRef.current = next; setReorder(next) }
-  const finishReorder = (_event, cancelled) => { const current = reorderRef.current; if (current && !cancelled && current.to !== current.from) onMoveTo(current.id, active[current.to]?.id); reorderRef.current = null; setReorder(null) }
+  const readReorderCenters = () => [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), center: rect.top + rect.height / 2 } }).sort((a, b) => a.index - b.index)
+  const updateReorderAt = (pointerY) => {
+    const current = reorderRef.current
+    if (!current) return
+    const scroller = queue.scrollerRef.current
+    const scrollDelta = (scroller?.scrollTop || 0) - current.startScrollTop
+    const centers = readReorderCenters()
+    const candidates = [{ index: current.from, center: current.originCenter - scrollDelta }, ...centers.filter((item) => item.id !== current.id)].sort((a, b) => a.index - b.index)
+    let candidate = current.to; let candidateDistance = Infinity
+    candidates.forEach((item) => { const distance = Math.abs(pointerY - item.center); if (distance < candidateDistance) { candidateDistance = distance; candidate = item.index } })
+    let to = current.to
+    if (candidate !== current.to) {
+      const heldCenter = candidates.find((item) => item.index === current.to)?.center ?? current.originCenter - scrollDelta
+      const heldDistance = Math.abs(pointerY - heldCenter)
+      if (candidateDistance + 10 < heldDistance) to = candidate
+    }
+    const next = { ...current, to, pointerY, offset: pointerY - current.startY + scrollDelta }
+    if (to !== current.to) interactionFeedback(6)
+    reorderRef.current = next
+    setReorder(next)
+  }
+  const runReorderAutoScroll = () => {
+    reorderFrameRef.current = null
+    const current = reorderRef.current
+    const scroller = queue.scrollerRef.current
+    const pointerY = reorderPointerYRef.current
+    if (!current || !scroller || pointerY == null) return
+    const rect = scroller.getBoundingClientRect()
+    let speed = 0
+    if (pointerY < rect.top + REORDER_EDGE_PX) speed = -REORDER_MAX_SCROLL_PX * Math.min(1, (rect.top + REORDER_EDGE_PX - pointerY) / REORDER_EDGE_PX)
+    else if (pointerY > rect.bottom - REORDER_EDGE_PX) speed = REORDER_MAX_SCROLL_PX * Math.min(1, (pointerY - (rect.bottom - REORDER_EDGE_PX)) / REORDER_EDGE_PX)
+    if (speed) {
+      const before = scroller.scrollTop
+      scroller.scrollTop += speed
+      if (scroller.scrollTop !== before) updateReorderAt(pointerY)
+    }
+    if (reorderRef.current) reorderFrameRef.current = requestAnimationFrame(runReorderAutoScroll)
+  }
+  const startReorder = (id, event) => {
+    const from = active.findIndex((task) => task.id === id)
+    if (from < 0) return
+    const centers = readReorderCenters()
+    const originCenter = centers.find((item) => item.id === id)?.center ?? event.clientY
+    const next = { id, from, to: from, startY: event.clientY, pointerY: event.clientY, originCenter, startScrollTop: queue.scrollerRef.current?.scrollTop || 0, offset: 0 }
+    reorderRef.current = next; reorderPointerYRef.current = event.clientY; setReorder(next)
+    if (!reorderFrameRef.current) reorderFrameRef.current = requestAnimationFrame(runReorderAutoScroll)
+  }
+  const dragMove = (event) => { if (!reorderRef.current) return; reorderPointerYRef.current = event.clientY; updateReorderAt(event.clientY); if (!reorderFrameRef.current) reorderFrameRef.current = requestAnimationFrame(runReorderAutoScroll) }
+  const finishReorder = (_event, cancelled) => { const current = reorderRef.current; if (reorderFrameRef.current) cancelAnimationFrame(reorderFrameRef.current); reorderFrameRef.current = null; reorderPointerYRef.current = null; if (current && !cancelled && current.to !== current.from) onMoveTo(current.id, active[current.to]?.id); reorderRef.current = null; setReorder(null) }
   const liveIndex = (index, id) => { if (!reorder) return index; if (id === reorder.id) return reorder.to; if (reorder.from < reorder.to && index > reorder.from && index <= reorder.to) return index - 1; if (reorder.from > reorder.to && index >= reorder.to && index < reorder.from) return index + 1; return index }
   const card = (task, index, extra = {}) => <TaskCard key={extra.key || task.id} task={task} index={index} members={members} circle={circle} onComplete={onComplete} onEdit={onEdit} onAssignee={onAssignee} onMove={onMove} onMoveTo={onMoveTo} onDragStart={startReorder} onDragMove={dragMove} onDragEnd={finishReorder} dragging={draggingId === task.id} selecting={selecting} selected={selected.has(task.id)} onSelect={onSelect} onLongPress={onLongPress} searchHit={flashId === task.id} newHit={newTaskId?.has?.(task.id) || false} language={language} {...extra} />
 
