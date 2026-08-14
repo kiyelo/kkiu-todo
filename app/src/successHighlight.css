@@ -1,5 +1,5 @@
-.card.success-highlight{animation:kkiu-success-highlight 1.7s ease-out both!important}
-.card.success-highlight::after{content:"";position:absolute;left:5px;top:13px;bottom:13px;width:3px;border-radius:3px;background:#30d158;animation:kkiu-success-highlight-marker 1.7s ease-out both;pointer-events:none}
+.card.new-hit,.card.reorder-hit,.card.success-highlight{animation:kkiu-success-highlight 1.7s ease-out both!important}
+.card.new-hit::after,.card.reorder-hit::after,.card.success-highlight::after{content:"";position:absolute;left:5px;top:13px;bottom:13px;width:3px;border-radius:3px;background:#30d158;animation:kkiu-success-highlight-marker 1.7s ease-out both;pointer-events:none}
 @keyframes kkiu-success-highlight{0%,32%{box-shadow:0 0 0 2px rgba(48,209,88,.58),var(--sh-card)}100%{box-shadow:var(--sh-card)}}
 @keyframes kkiu-success-highlight-marker{0%,45%{opacity:1}100%{opacity:0}}
-@media(prefers-reduced-motion:reduce){.card.success-highlight{animation:none!important;box-shadow:0 0 0 2px rgba(48,209,88,.45),var(--sh-card)}.card.success-highlight::after{animation:none!important;opacity:1}}
+@media(prefers-reduced-motion:reduce){.card.new-hit,.card.reorder-hit,.card.success-highlight{animation:none!important;box-shadow:0 0 0 2px rgba(48,209,88,.45),var(--sh-card)}.card.new-hit::after,.card.reorder-hit::after,.card.success-highlight::after{animation:none!important;opacity:1}}
