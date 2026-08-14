@@ -1,35 +1,67 @@
-/* The floating composer stays visually above the queue. Its non-control surface lets
-   touch hit the neutral qvp child below instead of running a second JS scroll engine. */
-.stage.q .queue-composer-wrap,
-.stage.q .queue-composer-wrap .slotwrap,
-.stage.q .queue-composer-wrap .ibar,
-.stage.q .queue-composer-wrap .asgrow {
-  pointer-events: none;
-}
-
-.stage.q .queue-composer-wrap .ins,
-.stage.q .queue-composer-wrap .si,
-.stage.q .queue-composer-wrap .save,
-.stage.q .queue-composer-wrap .asgc {
-  pointer-events: auto;
-}
-
-/* Real DOM child of .qvp, not a pseudo-element. Android WebView can therefore assign
-   the gesture to the actual scroll container from touchstart. The layer sits above
-   task rows but below the floating composer, so blank composer surface scrolls while
-   completion/edit/reorder controls underneath never receive the initiating pointer. */
-.composer-native-scroll-hit {
-  position: absolute;
-  z-index: 20;
-  left: 18px;
-  right: 18px;
-  top: calc(var(--queue-scroll-top, 0px) + 50% + var(--queue-center-shift) + 30px - 64px);
-  height: 128px;
-  background: transparent;
-  pointer-events: none;
+/* Main queue scroll architecture.
+   The stage itself owns native scrolling so a gesture that starts on a task, the
+   floating composer, or blank queue space enters the same Android/WebView scroll
+   chain from touchstart. qvp and floating overlays are visual layers only. */
+.stage.q {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   touch-action: pan-y;
 }
 
-.stage.q:has(.queue-composer-wrap .slotwrap.open) .composer-native-scroll-hit {
-  pointer-events: auto;
+.stage.q::-webkit-scrollbar {
+  display: none;
+}
+
+/* QueueScreen still renders qvp as the visual viewport. Counter-scroll it by the
+   stage scrollTop so it stays pinned to the screen while qtrack performs the normal
+   position transform. Native physics belong to stage.q, not qvp. */
+.stage.q > .qvp {
+  overflow: visible !important;
+  overscroll-behavior: visible;
+  translate: 0 var(--queue-scroll-top, 0px);
+  will-change: translate;
+}
+
+.stage.q > .qvp .qtrack {
+  position: absolute;
+}
+
+/* This invisible in-flow element gives stage.q the same scroll range the old qvp
+   had. Its height is measured from the existing queue-scroll-space by the queue hook. */
+.stage.q > .queue-stage-scroll-extent {
+  display: block;
+  width: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* These elements are viewport overlays. Because stage.q now scrolls, counter-scroll
+   them visually without taking ownership of the gesture. */
+.stage.q > .queue-composer-wrap,
+.stage.q > .qfade,
+.stage.q > .queue-edge-feedback,
+.stage.q > .queueempty {
+  translate: 0 var(--queue-scroll-top, 0px);
+}
+
+.stage.q > .queue-composer-wrap {
+  z-index: 30;
+  will-change: translate;
+}
+
+/* During text entry, vertical dragging directly on the textarea is reserved for text
+   interaction. Everywhere else in the composer can participate in the queue's native
+   vertical scroll. The assignee strip keeps horizontal scrolling while allowing the
+   vertical gesture to bubble to stage.q. */
+.stage.q .queue-composer-wrap .si {
+  touch-action: pan-x;
+}
+
+.stage.q .queue-composer-wrap .asgrow {
+  touch-action: pan-x pan-y;
 }
