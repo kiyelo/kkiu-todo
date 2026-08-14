@@ -31,6 +31,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const programmaticRef = useRef(false)
   const fallbackScrollListenerRef = useRef(null)
   const proxyGestureRef = useRef(null)
+  const scrollExtentRef = useRef(null)
   const ariaLabel = options.ariaLabel || 'Queue position'
   const ariaValueText = options.ariaValueText?.(index + 1, count + 1) || `${index + 1} of ${count + 1}`
 
@@ -57,6 +58,19 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     programmaticRef.current = false
     setDragging(false)
   }, [])
+
+  const cancelMotion = useCallback(() => {
+    window.clearTimeout(scrollEndTimerRef.current)
+    window.clearTimeout(settleTimerRef.current)
+    const scroller = scrollerRef.current
+    if (scroller && programmaticRef.current) {
+      const current = scroller.scrollTop
+      scroller.scrollTo({ top: current, behavior: 'auto' })
+      setVisualPosition(current)
+    }
+    programmaticRef.current = false
+    setDragging(false)
+  }, [setVisualPosition])
 
   const settleToNearest = useCallback(() => {
     const scroller = scrollerRef.current
@@ -136,6 +150,25 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     })
 
     const scroller = scrollerRef.current
+    if (stage.classList.contains('more-qstage') && scroller) {
+      let extent = scroller.querySelector(':scope > .queue-scroll-extent')
+      if (!extent) {
+        extent = document.createElement('div')
+        extent.className = 'queue-scroll-extent'
+        extent.setAttribute('aria-hidden', 'true')
+        Object.assign(extent.style, {
+          width: '1px',
+          opacity: '0',
+          pointerEvents: 'none',
+          flex: 'none',
+        })
+        scroller.prepend(extent)
+      }
+      scrollExtentRef.current = extent
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      extent.style.height = `${Math.ceil(scroller.clientHeight + maxPosition)}px`
+    }
+
     if (fallbackScroller && scroller) {
       const listener = () => {
         if (!initializedRef.current) return
@@ -145,7 +178,14 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       scroller.addEventListener('scroll', listener, { passive: true })
     }
 
+    const onUserIntent = () => {
+      if (programmaticRef.current) cancelMotion()
+      window.clearTimeout(scrollEndTimerRef.current)
+      window.clearTimeout(settleTimerRef.current)
+    }
+
     const onTouchStart = (event) => {
+      onUserIntent()
       const touch = event.touches?.[0]
       const target = event.target
       if (!touch || !scroller || scroller.contains(target)) return
@@ -188,6 +228,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       scrollEndTimerRef.current = window.setTimeout(settleToNearest, 170)
     }
 
+    stage.addEventListener('pointerdown', onUserIntent, { passive: true })
+    stage.addEventListener('wheel', onUserIntent, { passive: true })
     stage.addEventListener('touchstart', onTouchStart, { passive: true })
     stage.addEventListener('touchmove', onTouchMove, { passive: false })
     stage.addEventListener('touchend', onTouchEnd, { passive: true })
@@ -197,12 +239,16 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       if (fallbackScroller && scroller && fallbackScrollListenerRef.current) {
         scroller.removeEventListener('scroll', fallbackScrollListenerRef.current)
       }
+      if (scrollExtentRef.current?.parentNode) scrollExtentRef.current.remove()
+      scrollExtentRef.current = null
+      stage.removeEventListener('pointerdown', onUserIntent)
+      stage.removeEventListener('wheel', onUserIntent)
       stage.removeEventListener('touchstart', onTouchStart)
       stage.removeEventListener('touchmove', onTouchMove)
       stage.removeEventListener('touchend', onTouchEnd)
       stage.removeEventListener('touchcancel', onTouchEnd)
     }
-  }, [handleScrollPosition, settleToNearest])
+  }, [cancelMotion, handleScrollPosition, settleToNearest])
 
   useLayoutEffect(() => {
     const value = clamp(indexRef.current, 0, count)
@@ -210,6 +256,10 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     if (scrollerRef.current) {
       programmaticRef.current = true
       scrollerRef.current.scrollTop = position
+    }
+    if (stageRef.current?.classList.contains('more-qstage') && scrollExtentRef.current && scrollerRef.current) {
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      scrollExtentRef.current.style.height = `${Math.ceil(scrollerRef.current.clientHeight + maxPosition)}px`
     }
     setVisualPosition(position)
     initializedRef.current = true
