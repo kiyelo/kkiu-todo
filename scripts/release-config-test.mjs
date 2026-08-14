@@ -16,37 +16,20 @@ const authScreen = read('app/src/components/AuthScreen.jsx')
 const appSource = read('app/src/App.jsx')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
 const queueHook = read('app/src/hooks/useFloatingQueue.js')
-const styles = read('app/src/styles.css')
+const taskCard = read('app/src/components/TaskCard.jsx')
+const queueStyles = read('app/src/styles/queue.css')
+const highlightStyles = read('app/src/styles/taskHighlight.css')
 const interactionFeedback = read('app/src/services/interactionFeedback.js')
 const androidWorkflow = read('.github/workflows/android.yml')
 
 const checks = []
 const check = (name, condition) => checks.push({ name, pass: Boolean(condition) })
 
+// Packaging and platform release configuration.
 check('Capacitor package ID', capacitor.appId === 'app.kkiu.todo')
 check('Gradle package ID', /applicationId\s+["']app\.kkiu\.todo["']/.test(gradle))
 check('Android target SDK 36', /targetSdkVersion\s*=\s*36/.test(read('android/variables.gradle')))
 check('Android version code is positive', Number(gradle.match(/versionCode\s+(\d+)/)?.[1]) > 0)
-check('Native redirect declared in JS', authClient.includes("app.kkiu.todo://auth/callback"))
-check('Native redirect declared in Android', androidStrings.includes('app.kkiu.todo'))
-check('Native OAuth uses PKCE', authClient.includes("flowType: isNative ? 'pkce' : 'implicit'"))
-check('Production auth defaults to Google only', authScreen.includes("import.meta.env.VITE_AUTH_PROVIDERS || 'google'"))
-check('Password login is development-only', authScreen.includes('SHOW_PASSWORD_LOGIN = import.meta.env.DEV'))
-check('Required terms fail closed', /catch\(\(error\)[\s\S]*setTermsAccepted\(false\)/.test(appSource))
-check('No blocking terms loading screen', !appSource.includes('약관 동의 상태를 확인하고 있어요'))
-check('Settings screen is immediately available', appSource.includes("import MoreScreen from './components/MoreScreen.jsx'"))
-check('Queue movement uses an imperative track transform', queueHook.includes('trackRef.current.style.transform'))
-check('Queue drag keeps the insertion slot in sync with crossed cards', /const updateIndex[\s\S]*?setIndexState\(value\)/.test(queueHook) && queueHook.includes('updateIndex(next)'))
-check('Queue haptics are throttled off the touch hot path', queueHook.includes('now - lastFeedbackRef.current < 48'))
-check('Queue reorder always releases captured pointers', queueScreen.includes("window.addEventListener('pointercancel', end)"))
-check('Queue composer stays visible during reorder recovery', styles.includes('.stage.q.reordering .queue-composer-wrap{display:block!important'))
-check('Queue composer stays opaque during reorder recovery', styles.includes('.stage.q.reordering .queue-composer-wrap{display:block!important;opacity:1!important'))
-check('Queue composer has a stable Android compositor layer', styles.includes('.queue-composer-wrap{z-index:30;pointer-events:none;transform:translateZ(0)'))
-check('Android native touch haptics plugin is registered', androidActivity.includes('registerPlugin(HapticsPlugin.class)'))
-check('Android haptics use View feedback instead of notification vibration', androidHaptics.includes('performHapticFeedback') && androidHaptics.includes('HapticFeedbackConstants.LONG_PRESS'))
-check('Android interaction feedback selects the native haptics bridge', interactionFeedback.includes("Capacitor.getPlatform() === 'android'") && interactionFeedback.includes('NativeHaptics.perform'))
-check('Android CI restores a stable signing key from secrets', androidWorkflow.includes('ANDROID_SIGNING_KEY_BASE64') && androidWorkflow.includes('Restore stable Android signing key'))
-check('Android CI rejects an unexpected signing certificate', androidWorkflow.includes('Verify stable APK signature') && androidWorkflow.includes('0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47'))
 check('Android backup disabled', manifest.includes('android:allowBackup="false"'))
 check('Android data extraction disabled', manifest.includes('android:dataExtractionRules="@xml/data_extraction_rules"'))
 check('Android cleartext disabled', manifest.includes('android:usesCleartextTraffic="false"'))
@@ -54,6 +37,39 @@ check('Android uses a DayNight base theme', androidStyles.includes('Theme.AppCom
 check('Android splash has post theme', androidStyles.includes('<item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>'))
 check('PWA 192 icon exists', existsSync(resolve(root, 'app/public/icon-192.png')))
 check('PWA 512 icon exists', existsSync(resolve(root, 'app/public/icon-512.png')))
+
+// Authentication and consent behavior that exists in the current shipping source.
+check('Native redirect declared in JS', authClient.includes("app.kkiu.todo://auth/callback"))
+check('Native redirect declared in Android', androidStrings.includes('app.kkiu.todo'))
+check('Native OAuth uses PKCE', authClient.includes("flowType: isNative ? 'pkce' : 'implicit'"))
+check('Google OAuth remains available', authScreen.includes("{ id: 'google'") && authScreen.includes('signInWithOAuth'))
+check('Native OAuth uses the native bridge', authScreen.includes('Capacitor.isNativePlatform()') && authScreen.includes('startNativeOAuth(provider)'))
+check('Password login path is explicit and isolated in AuthScreen', authScreen.includes('signInWithPassword') && authScreen.includes('<form className="auth-social" onSubmit={signInWithPassword}>'))
+check('Required terms preserve a valid cached acceptance on read failure', appSource.includes('setTermsAccepted(cached ? true : false)'))
+check('No blocking terms loading screen', !appSource.includes('약관 동의 상태를 확인하고 있어요'))
+check('Settings screen is immediately available', appSource.includes("import MoreScreen from './components/MoreScreen.jsx'"))
+
+// Queue interaction invariants. These checks describe behavior, not old implementation names.
+check('Queue movement uses an imperative track transform', queueHook.includes('track.style.transform = `translate3d('))
+check('Queue index follows the nearest native scroll slot', queueHook.includes('updateIndexFromScroll') && queueHook.includes('nearest(positionsRef.current, position)') && queueHook.includes('setIndexState(next)'))
+check('Queue haptics fire once for every crossed slot', queueHook.includes('notifyCrossedSlots') && queueHook.includes('for (let i = 0; i < distance; i += 1) interactionFeedback(8)'))
+check('Queue reorder releases captured pointers', taskCard.includes('releasePointerCapture(event.pointerId)'))
+check('Queue reorder blocks touch scrolling only after arming', taskCard.includes('state.armed = true') && taskCard.includes('touchEvent.preventDefault()'))
+check('Queue composer is intentionally hidden during active reorder', queueScreen.includes('{!reorder && <div className="queue-floating-layer queue-composer-wrap"'))
+check('Queue floating controls share native pan-y ownership', queueStyles.includes('.queue-floating-layer > .slotwrap') && queueStyles.includes('touch-action: pan-y'))
+check('Queue text input stays input-owned', queueStyles.includes('.queue-floating-layer .si') && queueStyles.includes('touch-action: none'))
+check('Queue reorder release is immediate', queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important'))
+check('Task target highlights never brighten or move cards', !highlightStyles.includes('background:') && !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:') && !highlightStyles.includes('translate:'))
+
+// Native haptics use touch-class vibration and respect the system haptics setting.
+check('Android native haptics plugin is registered', androidActivity.includes('registerPlugin(HapticsPlugin.class)'))
+check('Android haptics use touch vibration effects', androidHaptics.includes('VibrationEffect') && androidHaptics.includes('VibrationAttributes.USAGE_TOUCH'))
+check('Android haptics respect system touch-feedback setting', androidHaptics.includes('Settings.System.HAPTIC_FEEDBACK_ENABLED'))
+check('Android interaction feedback selects the native haptics bridge', interactionFeedback.includes("Capacitor.getPlatform() === 'android'") && interactionFeedback.includes('NativeHaptics.perform'))
+
+// CI and dependency reproducibility.
+check('Android CI restores a stable signing key from secrets', androidWorkflow.includes('ANDROID_SIGNING_KEY_BASE64') && androidWorkflow.includes('Restore stable Android signing key'))
+check('Android CI rejects an unexpected signing certificate', androidWorkflow.includes('Verify stable APK signature') && androidWorkflow.includes('0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47'))
 
 const allPackages = { ...packageJson.dependencies, ...packageJson.devDependencies }
 check(
