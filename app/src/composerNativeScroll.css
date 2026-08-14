@@ -1,5 +1,5 @@
 /* The floating composer stays visually above the queue. Its non-control surface lets
-   touch hit the neutral layer below instead of running a second JS scroll engine. */
+   touch hit the neutral qvp child below instead of running a second JS scroll engine. */
 .stage.q .queue-composer-wrap,
 .stage.q .queue-composer-wrap .slotwrap,
 .stage.q .queue-composer-wrap .ibar,
@@ -14,14 +14,11 @@
   pointer-events: auto;
 }
 
-/* While the composer is open, place a neutral hit surface inside the real .qvp at
-   the composer's viewport position. Because this surface belongs to .qvp, a vertical
-   drag is native Android/WebView scrolling from touchstart. It sits above task rows,
-   so the same gesture cannot arm completion, editing, or grip/reorder underneath.
-   --queue-scroll-top is updated from the existing scroll callback only to keep this
-   transparent hit target visually aligned; it does not drive scroll physics. */
-.stage.q:has(.queue-composer-wrap .slotwrap.open) .qvp::after {
-  content: '';
+/* Real DOM child of .qvp, not a pseudo-element. Android WebView can therefore assign
+   the gesture to the actual scroll container from touchstart. The layer sits above
+   task rows but below the floating composer, so blank composer surface scrolls while
+   completion/edit/reorder controls underneath never receive the initiating pointer. */
+.composer-native-scroll-hit {
   position: absolute;
   z-index: 20;
   left: 18px;
@@ -29,6 +26,10 @@
   top: calc(var(--queue-scroll-top, 0px) + 50% + var(--queue-center-shift) + 30px - 64px);
   height: 128px;
   background: transparent;
-  pointer-events: auto;
+  pointer-events: none;
   touch-action: pan-y;
+}
+
+.stage.q:has(.queue-composer-wrap .slotwrap.open) .composer-native-scroll-hit {
+  pointer-events: auto;
 }
