@@ -1,8 +1,11 @@
-/* Main queue scroll architecture.
-   The stage itself owns native scrolling so a gesture that starts on a task, the
-   floating composer, or blank queue space enters the same Android/WebView scroll
-   chain from touchstart. qvp and floating overlays are visual layers only. */
-.stage.q {
+/* Main queue only: the stage owns Android/WebView vertical scrolling so a gesture
+   started on a task, the floating composer, or blank queue space shares one native
+   scroll owner. More keeps its existing qvp-owned scroll architecture. */
+.stage.q:not(.more-queue-stage) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 100% auto;
+  align-content: start;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior-y: auto;
@@ -11,57 +14,98 @@
   touch-action: pan-y;
 }
 
-.stage.q::-webkit-scrollbar {
+.stage.q:not(.more-queue-stage)::-webkit-scrollbar {
   display: none;
 }
 
-/* QueueScreen still renders qvp as the visual viewport. Counter-scroll it by the
-   stage scrollTop so it stays pinned to the screen while qtrack performs the normal
-   position transform. Native physics belong to stage.q, not qvp. */
-.stage.q > .qvp {
-  overflow: visible !important;
-  overscroll-behavior: visible;
-  translate: 0 var(--queue-scroll-top, 0px);
-  will-change: translate;
+/* qvp is now a sticky visual viewport, not a scroll container. Keeping it pinned
+   avoids the old scrollTop-sized translate that expanded scrollable overflow forever. */
+.stage.q:not(.more-queue-stage) > .qvp {
+  position: sticky !important;
+  inset: auto !important;
+  top: 0 !important;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  z-index: 1;
 }
 
-.stage.q > .qvp .qtrack {
+.stage.q:not(.more-queue-stage) > .qvp .qtrack {
   position: absolute;
 }
 
-/* This invisible in-flow element gives stage.q the same scroll range the old qvp
-   had. Its height is measured from the existing queue-scroll-space by the queue hook. */
-.stage.q > .queue-stage-scroll-extent {
+/* The stage extent is the only element that creates main-queue scroll range.
+   useFloatingQueue sets it to the last valid slot position, so the queue has a hard end. */
+.stage.q:not(.more-queue-stage) > .queue-stage-scroll-extent {
+  grid-column: 1;
+  grid-row: 2;
   display: block;
   width: 1px;
+  min-height: 0;
   margin: 0;
   padding: 0;
   opacity: 0;
   pointer-events: none;
 }
 
-/* These elements are viewport overlays. Because stage.q now scrolls, counter-scroll
-   them visually without taking ownership of the gesture. */
-.stage.q > .queue-composer-wrap,
-.stage.q > .qfade,
-.stage.q > .queue-edge-feedback,
-.stage.q > .queueempty {
-  translate: 0 var(--queue-scroll-top, 0px);
+/* The old qvp scroll spacer must not also contribute overflow in stage-owned mode. */
+.stage.q:not(.more-queue-stage) > .qvp .queue-scroll-space {
+  display: none;
 }
 
-.stage.q > .queue-composer-wrap {
+/* The Composer remains a sibling of qvp, but its outer wrapper becomes a sticky
+   full-viewport overlay in the same grid cell. Only the actual Composer card receives
+   pointer events, and those events bubble to the stage native scroll owner. */
+.stage.q:not(.more-queue-stage) > .queue-composer-wrap {
+  position: sticky !important;
+  inset: auto !important;
+  top: 0 !important;
+  left: auto !important;
+  right: auto !important;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
   z-index: 30;
-  will-change: translate;
+  pointer-events: none;
 }
 
-/* During text entry, vertical dragging directly on the textarea is reserved for text
-   interaction. Everywhere else in the composer can participate in the queue's native
-   vertical scroll. The assignee strip keeps horizontal scrolling while allowing the
-   vertical gesture to bubble to stage.q. */
-.stage.q .queue-composer-wrap .si {
+.stage.q:not(.more-queue-stage) > .queue-composer-wrap > .slotwrap {
+  top: calc(50% + 30px + var(--queue-center-shift));
+  pointer-events: auto;
+}
+
+/* Keep the visual fades and feedback attached to the viewport without any
+   scrollTop-dependent transform. */
+.stage.q:not(.more-queue-stage) > .qfade,
+.stage.q:not(.more-queue-stage) > .queue-edge-feedback,
+.stage.q:not(.more-queue-stage) > .queueempty {
+  position: sticky;
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.stage.q:not(.more-queue-stage) > .qfade.t {
+  top: 0;
+  align-self: start;
+}
+
+.stage.q:not(.more-queue-stage) > .qfade.b {
+  bottom: 0;
+  align-self: end;
+}
+
+/* Direct vertical dragging on the textarea is reserved for text interaction. The
+   remaining Composer surface participates in stage native scrolling. */
+.stage.q:not(.more-queue-stage) .queue-composer-wrap .si {
   touch-action: pan-x;
 }
 
-.stage.q .queue-composer-wrap .asgrow {
+.stage.q:not(.more-queue-stage) .queue-composer-wrap .asgrow {
   touch-action: pan-x pan-y;
 }
