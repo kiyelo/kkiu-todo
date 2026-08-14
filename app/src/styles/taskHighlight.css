@@ -1,8 +1,13 @@
-/* Shared task-target highlight.
-   Used by new-task arrival, search-result focus, completed-list focus,
-   reorder completion, and any future task success/target cue.
-   This deliberately changes only the green outline/marker: no background,
-   brightness, opacity, scale, translate, or scroll/layout animation. */
+/* Shared target/success cue for task surfaces.
+   Trigger classes describe why the item is highlighted; this file owns how it
+   looks. The cue intentionally never changes background, brightness, opacity,
+   scale, translate, layout, or scroll position, so light/dark/system-dark all
+   keep the card's native surface. */
+
+:root {
+  --task-highlight-green: #30d158;
+  --task-highlight-duration: 1.7s;
+}
 
 .card.new-hit,
 .card.search-hit,
@@ -10,7 +15,7 @@
 .card.reorder-hit,
 .card.success-highlight,
 .drow.target-hit {
-  animation: kkiu-success-highlight 1.7s ease-out both !important;
+  animation: kkiu-task-highlight var(--task-highlight-duration) ease-out both !important;
 }
 
 .card.new-hit::after,
@@ -27,8 +32,8 @@
   bottom: 13px;
   width: 3px;
   border-radius: 3px;
-  background: #30d158;
-  animation: kkiu-success-highlight-marker 1.7s ease-out both !important;
+  background: var(--task-highlight-green);
+  animation: kkiu-task-highlight-marker var(--task-highlight-duration) ease-out both !important;
   pointer-events: none;
 }
 
@@ -36,12 +41,16 @@
   position: relative;
 }
 
-@keyframes kkiu-success-highlight {
-  0%, 32% { box-shadow: 0 0 0 2px rgba(48, 209, 88, .58), var(--sh-card); }
-  100% { box-shadow: var(--sh-card); }
+@keyframes kkiu-task-highlight {
+  0%, 32% {
+    box-shadow: 0 0 0 2px rgba(48, 209, 88, .58), var(--sh-card);
+  }
+  100% {
+    box-shadow: var(--sh-card);
+  }
 }
 
-@keyframes kkiu-success-highlight-marker {
+@keyframes kkiu-task-highlight-marker {
   0%, 45% { opacity: 1; }
   100% { opacity: 0; }
 }

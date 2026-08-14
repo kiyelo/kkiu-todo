@@ -1,0 +1,42 @@
+/* Queue interaction invariants.
+   .qvp stays the single native vertical scroll owner on Queue and More.
+   Floating controls participate in the same native scroller without adding
+   scroll extent, and reorder release settles immediately without a second
+   transform animation. */
+
+.stage.q .qvp > .queue-floating-layer {
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.stage.q .queue-floating-layer > .slotwrap {
+  top: 0;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+
+/* Text editing owns its gesture instead of starting a queue pan. */
+.stage.q .queue-floating-layer .si {
+  touch-action: none;
+}
+
+/* Direct manipulation must stay attached to the finger. */
+.stage.q.dragging .qtrack > *,
+.more-qstage.dragging .qtrack > * {
+  transition: none !important;
+}
+
+/* Reorder itself may move neighboring rows while the pointer is down, but
+   release/committed layout is immediate. Do not add post-drop FLIP/snap here. */
+.stage.q.reordering .qtrack {
+  transition: none !important;
+}
+
+.stage.q:not(.reordering):has(.queue-task-row) .qtrack,
+.stage.q:not(.reordering) .queue-task-row {
+  transition: none !important;
+}

@@ -7,9 +7,13 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8')
 const sha256 = (path) => createHash('sha256')
   .update(read(path).replace(/\r\n/g, '\n'))
   .digest('hex')
+const stripComments = (source) => source
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '')
 
+// Keep the large parity stylesheet locked while queue/reorder overrides live in
+// small, purpose-named modules that can evolve independently.
 const behaviorHashes = {
-  'app/src/queuePerformance.css': '6c16454aac1e7347143186a5d44d733973c953f31abc7781035dc02f05eb4c0a',
   'app/src/styles.css': 'f6e0fa10af0a3bb4fc03b2f6d4563e7d7ac94751590897c22a86d263e529b0e1',
 }
 
@@ -21,7 +25,11 @@ const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
 const moreScreen = read('app/src/components/MoreScreen.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
-const nativeQueueScroll = read('app/src/queueNativeScroll.css')
+const styleEntry = read('app/src/styles/index.css')
+const queueStyles = read('app/src/styles/queue.css')
+const highlightStyles = read('app/src/styles/taskHighlight.css')
+const reorderHighlight = read('app/src/interactions/reorderHighlight.js')
+const reorderHighlightCode = stripComments(reorderHighlight)
 const main = read('app/src/main.jsx')
 const nativeAuth = read('app/src/services/nativeAuth.js')
 const supabase = read('app/src/services/supabaseClient.js')
@@ -29,19 +37,24 @@ const terms = read('app/src/services/termsRepository.js')
 const theme = read('app/src/services/themePlatform.js')
 const gradle = read('android/app/build.gradle')
 
+const reorderOwnsLayoutOrScroll = /\bscrollTop\b|\.scrollTo\s*\(|getBoundingClientRect\s*\(|\.animate\s*\(|style\.translate\b|translate3d\s*\(|style\.transform\b/.test(reorderHighlightCode)
+
 const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
   ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
-  ['All floating surfaces share the native qvp owner', queueScreen.includes('queue-floating-layer queue-composer-wrap') && moreScreen.includes('queue-floating-layer more-slot-layer') && nativeQueueScroll.includes('position: sticky') && nativeQueueScroll.includes('height: 0')],
-  ['Shared floating layer does not add a second scroll engine', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && main.includes("import './queueNativeScroll.css'") && !main.includes('composerNativeScroll')],
-  ['Floating surfaces pan vertically while textarea stays input-owned', nativeQueueScroll.includes('touch-action: pan-y') && nativeQueueScroll.includes('.si') && nativeQueueScroll.includes('touch-action: none')],
+  ['All floating surfaces share the native qvp owner', queueScreen.includes('queue-floating-layer queue-composer-wrap') && moreScreen.includes('queue-floating-layer more-slot-layer') && queueStyles.includes('position: sticky') && queueStyles.includes('height: 0')],
+  ['Shared floating layer does not add a second scroll engine', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && main.includes("import './styles/index.css'") && styleEntry.includes("@import './queue.css'") && !main.includes('composerNativeScroll')],
+  ['Floating surfaces pan vertically while textarea stays input-owned', queueStyles.includes('touch-action: pan-y') && queueStyles.includes('.si') && queueStyles.includes('touch-action: none')],
   ['Grip swipe can stay native before reorder arms', taskCard.includes("style={{ touchAction: 'pan-y' }}")],
   ['Armed reorder blocks native touch scrolling', taskCard.includes("document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })") && taskCard.includes('touchEvent.preventDefault()')],
   ['Reorder auto-scrolls near queue edges', queueScreen.includes('REORDER_EDGE_PX') && queueScreen.includes('REORDER_MAX_SCROLL_PX') && queueScreen.includes('requestAnimationFrame(runReorderAutoScroll)')],
   ['Reorder targets actual card boundaries', queueScreen.includes('readReorderRows()') && queueScreen.includes('slots.push({ to, y: item.top })') && queueScreen.includes('last.bottom')],
   ['Dragged card stays anchored to the pointer', queueScreen.includes('grabOffsetY') && queueScreen.includes('desiredTop = pointerY - current.grabOffsetY') && queueScreen.includes('baseTop = dragged.top - current.offset')],
   ['Reorder target updates while auto-scrolling', queueScreen.includes('updateReorderAt(pointerY)') && queueScreen.includes('readReorderRows()')],
+  ['Reorder release stays immediate', queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important')],
+  ['Reorder completion owns only the shared visual highlight', reorderHighlightCode.includes("HIGHLIGHT_CLASS = 'reorder-hit'") && !reorderOwnsLayoutOrScroll],
+  ['Task target cues share one green highlight language', highlightStyles.includes('.card.new-hit') && highlightStyles.includes('.card.search-hit') && highlightStyles.includes('.card.reorder-hit') && highlightStyles.includes('.drow.target-hit') && !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:')],
   ['Queue visual track follows actual native scroll', queue.includes('setVisualPosition(scrollerRef.current.scrollTop)')],
   ['Queue emits feedback for crossed slots', queue.includes('notifyCrossedSlots') && queue.includes('interactionFeedback(8)')],
   ['Native PKCE auth enabled', supabase.includes("flowType: isNative ? 'pkce' : 'implicit'") && nativeAuth.includes('exchangeCodeForSession')],
