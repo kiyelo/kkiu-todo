@@ -4,3 +4,21 @@
 .more-qstage.dragging .qtrack > * {
   transition: none !important;
 }
+
+/* The floating composer stays visually above the queue, but its non-control surface
+   must not become a second scroll engine. Let those drags fall through to .qvp so
+   Android/WebView owns the gesture from touchstart, with the same native inertia as
+   a drag that starts on a task card. Explicit controls keep their normal hit areas. */
+.stage.q .queue-composer-wrap,
+.stage.q .queue-composer-wrap .slotwrap,
+.stage.q .queue-composer-wrap .ibar,
+.stage.q .queue-composer-wrap .asgrow {
+  pointer-events: none;
+}
+
+.stage.q .queue-composer-wrap .ins,
+.stage.q .queue-composer-wrap .si,
+.stage.q .queue-composer-wrap .save,
+.stage.q .queue-composer-wrap .asgc {
+  pointer-events: auto;
+}
