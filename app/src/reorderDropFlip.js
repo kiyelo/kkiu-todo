@@ -1,12 +1,25 @@
 let pending = null
 let observer = null
 let releaseTimer = 0
+let highlightTimer = 0
 
 const taskRows = (stage) => [...stage.querySelectorAll('.queue-task-row[data-task-id]')]
 
 const snapshotRows = (stage) => new Map(
   taskRows(stage).map((row) => [row.dataset.taskId, row.getBoundingClientRect().top]),
 )
+
+const highlightReleasedTask = (stage, taskId) => {
+  if (!stage || !taskId) return
+  const row = taskRows(stage).find((item) => item.dataset.taskId === taskId)
+  const card = row?.querySelector('.card')
+  if (!card) return
+  window.clearTimeout(highlightTimer)
+  card.classList.remove('reorder-hit')
+  void card.offsetWidth
+  card.classList.add('reorder-hit')
+  highlightTimer = window.setTimeout(() => card.classList.remove('reorder-hit'), 1750)
+}
 
 const finishRelease = () => {
   if (!pending) return
@@ -16,7 +29,7 @@ const finishRelease = () => {
 
 const applyFlip = () => {
   if (!pending || pending.applied) return
-  const { stage, positions } = pending
+  const { stage, positions, taskId, shouldHighlight } = pending
   if (!stage?.isConnected) { pending = null; return }
   if (stage.classList.contains('reordering')) return
 
@@ -37,15 +50,24 @@ const applyFlip = () => {
     )
   })
 
+  if (shouldHighlight) highlightReleasedTask(stage, taskId)
+
   window.clearTimeout(releaseTimer)
   releaseTimer = window.setTimeout(finishRelease, 210)
 }
 
-const onPointerEnd = () => {
+const onPointerEnd = (event) => {
   const stage = document.querySelector('.stage.q.reordering')
   if (!stage) return
+  const dragged = stage.querySelector('.queue-task-row.reorder-dragging[data-task-id]')
   window.clearTimeout(releaseTimer)
-  pending = { stage, positions: snapshotRows(stage), applied: false }
+  pending = {
+    stage,
+    positions: snapshotRows(stage),
+    taskId: dragged?.dataset.taskId || null,
+    shouldHighlight: event.type === 'pointerup',
+    applied: false,
+  }
   stage.classList.add('reorder-releasing')
   queueMicrotask(applyFlip)
 }
