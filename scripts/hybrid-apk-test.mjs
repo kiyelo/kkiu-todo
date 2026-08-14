@@ -19,6 +19,7 @@ const authStorage = read('app/src/services/authStorage.js')
 const haptics = read('app/src/services/interactionFeedback.js')
 const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
+const moreScreen = read('app/src/components/MoreScreen.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
 const nativeComposerScroll = read('app/src/composerNativeScroll.css')
 const main = read('app/src/main.jsx')
@@ -30,9 +31,12 @@ const gradle = read('android/app/build.gradle')
 
 const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
-  ['Queue stage owns platform scrolling', queue.includes("stageOwnsScroll = stage.classList.contains('q')") && queue.includes('scrollerRef.current = stage') && nativeComposerScroll.includes('.stage.q {') && nativeComposerScroll.includes('overflow-y: auto !important')],
+  ['Main queue stage owns platform scrolling only', queue.includes("!stage.classList.contains('more-queue-stage')") && queue.includes('scrollerRef.current = stage') && nativeComposerScroll.includes('.stage.q:not(.more-queue-stage)') && nativeComposerScroll.includes('overflow-y: auto !important')],
+  ['More keeps qvp-owned scrolling', moreScreen.includes('more-queue-stage') && moreScreen.includes('ref={queue.scrollerRef}') && moreScreen.includes('{...queue.scrollProps}') && !nativeComposerScroll.includes('.more-queue-stage) > .qvp {\n  position: sticky')],
+  ['Main queue scroll range is bounded to valid slots', queue.includes('stage.append(extent)') && queue.includes('extent.style.height = `${Math.ceil(maxPosition)}px`') && !queue.includes('Math.max(measuredHeight') && nativeComposerScroll.includes('grid-template-rows: 100% auto') && nativeComposerScroll.includes('queue-scroll-space') && nativeComposerScroll.includes('display: none')],
+  ['Main visual viewport is sticky without scrollTop counter-translate', nativeComposerScroll.includes('position: sticky !important') && nativeComposerScroll.includes('grid-row: 1') && !nativeComposerScroll.includes('translate: 0 var(--queue-scroll-top')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
-  ['Floating UI shares the native stage scroll owner', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && !nativeComposerScroll.includes('composer-native-scroll-hit') && queue.includes('queue-stage-scroll-extent') && nativeComposerScroll.includes('> .queue-composer-wrap') && nativeComposerScroll.includes('var(--queue-scroll-top, 0px)') && !main.includes("import './composerNativeScroll.js'")],
+  ['Floating UI shares the native main-stage scroll owner', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && !nativeComposerScroll.includes('composer-native-scroll-hit') && queue.includes('queue-stage-scroll-extent') && nativeComposerScroll.includes('> .queue-composer-wrap') && !main.includes("import './composerNativeScroll.js'")],
   ['Text input reserves vertical touch while composer surface can scroll', nativeComposerScroll.includes('.queue-composer-wrap .si') && nativeComposerScroll.includes('touch-action: pan-x') && nativeComposerScroll.includes('.queue-composer-wrap .asgrow') && nativeComposerScroll.includes('touch-action: pan-x pan-y')],
   ['Grip swipe can stay native before reorder arms', taskCard.includes("style={{ touchAction: 'pan-y' }}")],
   ['Armed reorder blocks native touch scrolling', taskCard.includes("document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })") && taskCard.includes('touchEvent.preventDefault()')],
