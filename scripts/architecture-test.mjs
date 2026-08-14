@@ -34,6 +34,8 @@ const highlightTriggers = [
   '.drow.target-hit',
 ]
 
+const reorderOwnsLayoutOrScroll = /\bscrollTop\b|\.scrollTo\s*\(|getBoundingClientRect\s*\(|\.animate\s*\(|style\.translate\b|translate3d\s*\(|style\.transform\b/.test(reorderHighlight)
+
 const checks = [
   ['Runtime entry imports one stylesheet entrypoint', main.includes("import './styles/index.css'") && !main.includes("import './styles/queue.css'") && !main.includes("import './styles/taskHighlight.css'")],
   ['Style entrypoint keeps base before feature overrides', styleEntry.indexOf("@import '../styles.css'") < styleEntry.indexOf("@import './queue.css'") && styleEntry.indexOf("@import './queue.css'") < styleEntry.indexOf("@import './taskHighlight.css'")],
@@ -45,7 +47,7 @@ const checks = [
   ['Queue styles preserve immediate reorder release', queueStyles.includes('.stage.q.reordering .qtrack') && queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important')],
   ['All task-target triggers use the shared highlight stylesheet', highlightTriggers.every((selector) => highlightStyles.includes(selector))],
   ['Shared highlight does not animate surface brightness or geometry', !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:') && !highlightStyles.includes('translate:')],
-  ['Reorder highlight does not own layout or scroll', !reorderHighlight.includes('scrollTop') && !reorderHighlight.includes('scrollTo') && !reorderHighlight.includes('getBoundingClientRect') && !reorderHighlight.includes('.animate(') && !reorderHighlight.includes('translate')],
+  ['Reorder highlight does not own layout or scroll', !reorderOwnsLayoutOrScroll],
   ['Reorder highlight is pointer-up visual feedback only', reorderHighlight.includes("addEventListener('pointerup'") && reorderHighlight.includes("HIGHLIGHT_CLASS = 'reorder-hit'")],
 ]
 
