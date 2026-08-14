@@ -1,1 +1,4 @@
 .stage.q.reordering .qtrack,.stage.q.reorder-releasing .qtrack{transition:none!important}
+.card.reorder-hit{animation:kkiu-new-insert 1.7s cubic-bezier(.2,.78,.25,1) both!important}
+.card.reorder-hit::after{content:"";position:absolute;left:5px;top:13px;bottom:13px;width:3px;border-radius:3px;background:#30d158;animation:kkiu-new-marker 1.7s ease-out both;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.card.reorder-hit,.card.reorder-hit::after{animation:none!important}.card.reorder-hit{box-shadow:0 0 0 1px rgba(48,209,88,.28),var(--sh-card)}}
