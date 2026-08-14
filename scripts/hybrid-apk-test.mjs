@@ -21,7 +21,6 @@ const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
 const nativeComposerScroll = read('app/src/composerNativeScroll.css')
-const nativeComposerScrollJs = read('app/src/composerNativeScroll.js')
 const main = read('app/src/main.jsx')
 const nativeAuth = read('app/src/services/nativeAuth.js')
 const supabase = read('app/src/services/supabaseClient.js')
@@ -31,10 +30,10 @@ const gradle = read('android/app/build.gradle')
 
 const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
-  ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
+  ['Queue stage owns platform scrolling', queue.includes("stageOwnsScroll = stage.classList.contains('q')") && queue.includes('scrollerRef.current = stage') && nativeComposerScroll.includes('.stage.q {') && nativeComposerScroll.includes('overflow-y: auto !important')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
-  ['Floating UI uses a real native queue hit child', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && queue.includes("--queue-scroll-top") && nativeComposerScroll.includes('.composer-native-scroll-hit') && nativeComposerScroll.includes('touch-action: pan-y') && nativeComposerScrollJs.includes("scroller.append(hit)") && main.includes("import './composerNativeScroll.js'")],
-  ['Floating UI shields underlying task actions', nativeComposerScroll.includes('z-index: 20') && nativeComposerScroll.includes('.queue-composer-wrap .si') && nativeComposerScroll.includes('.queue-composer-wrap .save') && nativeComposerScroll.includes('.queue-composer-wrap .asgc')],
+  ['Floating UI shares the native stage scroll owner', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && !nativeComposerScroll.includes('composer-native-scroll-hit') && queue.includes('queue-stage-scroll-extent') && nativeComposerScroll.includes('> .queue-composer-wrap') && nativeComposerScroll.includes('var(--queue-scroll-top, 0px)') && !main.includes("import './composerNativeScroll.js'")],
+  ['Text input reserves vertical touch while composer surface can scroll', nativeComposerScroll.includes('.queue-composer-wrap .si') && nativeComposerScroll.includes('touch-action: pan-x') && nativeComposerScroll.includes('.queue-composer-wrap .asgrow') && nativeComposerScroll.includes('touch-action: pan-x pan-y')],
   ['Grip swipe can stay native before reorder arms', taskCard.includes("style={{ touchAction: 'pan-y' }}")],
   ['Armed reorder blocks native touch scrolling', taskCard.includes("document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })") && taskCard.includes('touchEvent.preventDefault()')],
   ['Reorder auto-scrolls near queue edges', queueScreen.includes('REORDER_EDGE_PX') && queueScreen.includes('REORDER_MAX_SCROLL_PX') && queueScreen.includes('requestAnimationFrame(runReorderAutoScroll)')],
