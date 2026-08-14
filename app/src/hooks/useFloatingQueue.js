@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { interactionFeedback } from '../services/interactionFeedback.js'
 
+const ENTRY_SYNC_GRACE_MS = 500
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 const nearest = (positions, value) => {
   let best = 0
@@ -32,11 +33,28 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const fallbackScrollListenerRef = useRef(null)
   const proxyGestureRef = useRef(null)
   const scrollExtentRef = useRef(null)
+  const lastUserIntentAtRef = useRef(0)
+  const transitionRestoreFrameRef = useRef(null)
   const ariaLabel = options.ariaLabel || 'Queue position'
   const ariaValueText = options.ariaValueText?.(index + 1, count + 1) || `${index + 1} of ${count + 1}`
 
-  const setVisualPosition = useCallback((position) => {
-    if (trackRef.current) trackRef.current.style.transform = `translate3d(0,${-position}px,0)`
+  const recentlyUserDriven = useCallback(() => performance.now() - lastUserIntentAtRef.current <= ENTRY_SYNC_GRACE_MS, [])
+
+  const setVisualPosition = useCallback((position, instant = false) => {
+    const track = trackRef.current
+    if (!track) return
+    if (instant) {
+      cancelAnimationFrame(transitionRestoreFrameRef.current)
+      track.style.transition = 'none'
+      track.style.transform = `translate3d(0,${-position}px,0)`
+      void track.offsetHeight
+      transitionRestoreFrameRef.current = requestAnimationFrame(() => {
+        if (trackRef.current === track) track.style.transition = ''
+        transitionRestoreFrameRef.current = null
+      })
+      return
+    }
+    track.style.transform = `translate3d(0,${-position}px,0)`
   }, [])
 
   const notifyCrossedSlots = useCallback((from, to) => {
@@ -120,9 +138,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     const position = positionsRef.current[value] || 0
     programmaticRef.current = true
     if (scrollerRef.current) scrollerRef.current.scrollTop = position
-    setVisualPosition(position)
+    setVisualPosition(position, !recentlyUserDriven())
     requestAnimationFrame(() => { programmaticRef.current = false })
-  }, [count, setVisualPosition])
+  }, [count, recentlyUserDriven, setVisualPosition])
 
   const setStageElement = useCallback((element) => {
     stageRef.current = element
@@ -132,6 +150,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   useEffect(() => () => {
     window.clearTimeout(scrollEndTimerRef.current)
     window.clearTimeout(settleTimerRef.current)
+    cancelAnimationFrame(transitionRestoreFrameRef.current)
   }, [])
 
   useLayoutEffect(() => {
@@ -175,6 +194,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     }
 
     const onUserIntent = () => {
+      lastUserIntentAtRef.current = performance.now()
       if (programmaticRef.current) cancelMotion()
       window.clearTimeout(scrollEndTimerRef.current)
       window.clearTimeout(settleTimerRef.current)
@@ -257,10 +277,10 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
       scrollExtentRef.current.style.height = `${Math.ceil(scrollerRef.current.clientHeight + maxPosition)}px`
     }
-    setVisualPosition(position)
+    setVisualPosition(position, !recentlyUserDriven())
     initializedRef.current = true
     requestAnimationFrame(() => { programmaticRef.current = false })
-  }, [count, positionsKey, setVisualPosition])
+  }, [count, positionsKey, recentlyUserDriven, setVisualPosition])
 
   useLayoutEffect(() => {
     if (!dragging || !scrollerRef.current) return
@@ -268,6 +288,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   }, [dragging, index, setVisualPosition])
 
   const onKeyDown = useCallback((event) => {
+    lastUserIntentAtRef.current = performance.now()
     if (event.key === 'ArrowUp') { event.preventDefault(); setIndex(indexRef.current - 1) }
     if (event.key === 'ArrowDown') { event.preventDefault(); setIndex(indexRef.current + 1) }
     if (event.key === 'Home') { event.preventDefault(); setIndex(0) }
