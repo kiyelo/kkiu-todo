@@ -32,6 +32,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const programmaticRef = useRef(false)
   const fallbackScrollListenerRef = useRef(null)
   const scrollExtentRef = useRef(null)
+  const stageScrollExtentRef = useRef(null)
   const lastUserIntentAtRef = useRef(0)
   const transitionRestoreFrameRef = useRef(null)
   const ariaLabel = options.ariaLabel || 'Queue position'
@@ -40,8 +41,10 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const recentlyUserDriven = useCallback(() => performance.now() - lastUserIntentAtRef.current <= ENTRY_SYNC_GRACE_MS, [])
 
   const setVisualPosition = useCallback((position, instant = false) => {
+    const stage = stageRef.current
+    if (stage) stage.style.setProperty('--queue-scroll-top', `${position}px`)
     const scroller = scrollerRef.current
-    if (scroller) scroller.style.setProperty('--queue-scroll-top', `${position}px`)
+    if (scroller && scroller !== stage) scroller.style.setProperty('--queue-scroll-top', `${position}px`)
     const track = trackRef.current
     if (!track) return
     if (instant) {
@@ -154,12 +157,22 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     cancelAnimationFrame(transitionRestoreFrameRef.current)
   }, [])
 
+  // QueueScreen still supplies scrollerRef to .qvp. For the main queue, restore the
+  // actual scroll owner after every commit so all imperative reads/writes target stage.q.
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    if (stage?.classList.contains('q')) scrollerRef.current = stage
+  })
+
   useLayoutEffect(() => {
     const stage = stageRef.current
     if (!stage) return undefined
 
+    const stageOwnsScroll = stage.classList.contains('q')
     let fallbackScroller = false
-    if (!scrollerRef.current) {
+    if (stageOwnsScroll) {
+      scrollerRef.current = stage
+    } else if (!scrollerRef.current) {
       scrollerRef.current = stage.querySelector('.qvp')
       fallbackScroller = Boolean(scrollerRef.current)
     }
@@ -185,7 +198,27 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       extent.style.height = `${Math.ceil(scroller.clientHeight + maxPosition)}px`
     }
 
-    if (fallbackScroller && scroller) {
+    if (stageOwnsScroll) {
+      let extent = stage.querySelector(':scope > .queue-stage-scroll-extent')
+      if (!extent) {
+        extent = document.createElement('div')
+        extent.className = 'queue-stage-scroll-extent'
+        extent.setAttribute('aria-hidden', 'true')
+        Object.assign(extent.style, {
+          width: '1px',
+          opacity: '0',
+          pointerEvents: 'none',
+        })
+        stage.prepend(extent)
+      }
+      stageScrollExtentRef.current = extent
+      const sourceExtent = stage.querySelector('.queue-scroll-space')
+      const measuredHeight = sourceExtent?.getBoundingClientRect().height || 0
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      extent.style.height = `${Math.ceil(Math.max(measuredHeight, stage.clientHeight + maxPosition))}px`
+    }
+
+    if ((fallbackScroller || stageOwnsScroll) && scroller) {
       const listener = () => {
         if (!initializedRef.current) return
         handleScrollPosition(scroller.scrollTop)
@@ -205,26 +238,36 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     stage.addEventListener('wheel', onUserIntent, { passive: true })
 
     return () => {
-      if (fallbackScroller && scroller && fallbackScrollListenerRef.current) {
+      if ((fallbackScroller || stageOwnsScroll) && scroller && fallbackScrollListenerRef.current) {
         scroller.removeEventListener('scroll', fallbackScrollListenerRef.current)
       }
       if (scrollExtentRef.current?.parentNode) scrollExtentRef.current.remove()
       scrollExtentRef.current = null
+      if (stageScrollExtentRef.current?.parentNode) stageScrollExtentRef.current.remove()
+      stageScrollExtentRef.current = null
       stage.removeEventListener('pointerdown', onUserIntent)
       stage.removeEventListener('wheel', onUserIntent)
     }
   }, [cancelMotion, handleScrollPosition])
 
   useLayoutEffect(() => {
+    const stage = stageRef.current
+    if (stage?.classList.contains('q')) scrollerRef.current = stage
     const value = clamp(indexRef.current, 0, count)
     const position = positionsRef.current[value] || 0
     if (scrollerRef.current) {
       programmaticRef.current = true
       scrollerRef.current.scrollTop = position
     }
-    if (stageRef.current?.classList.contains('more-qstage') && scrollExtentRef.current && scrollerRef.current) {
+    if (stage?.classList.contains('more-qstage') && scrollExtentRef.current && scrollerRef.current) {
       const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
       scrollExtentRef.current.style.height = `${Math.ceil(scrollerRef.current.clientHeight + maxPosition)}px`
+    }
+    if (stage?.classList.contains('q') && stageScrollExtentRef.current) {
+      const sourceExtent = stage.querySelector('.queue-scroll-space')
+      const measuredHeight = sourceExtent?.getBoundingClientRect().height || 0
+      const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
+      stageScrollExtentRef.current.style.height = `${Math.ceil(Math.max(measuredHeight, stage.clientHeight + maxPosition))}px`
     }
     setVisualPosition(position, !recentlyUserDriven())
     initializedRef.current = true
