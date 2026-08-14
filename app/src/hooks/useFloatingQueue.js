@@ -40,6 +40,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const recentlyUserDriven = useCallback(() => performance.now() - lastUserIntentAtRef.current <= ENTRY_SYNC_GRACE_MS, [])
 
   const setVisualPosition = useCallback((position, instant = false) => {
+    const scroller = scrollerRef.current
+    if (scroller) scroller.style.setProperty('--queue-scroll-top', `${position}px`)
     const track = trackRef.current
     if (!track) return
     if (instant) {
