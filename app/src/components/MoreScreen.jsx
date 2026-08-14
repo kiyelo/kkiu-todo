@@ -124,9 +124,8 @@ function ContactConfirmModal({ language, onClose }) {
 
 export default function MoreScreen({ values, onSetting, user, onSignOut, language = 'ko', onBackup, onRestore, onReset, onSeed, onEmpty, onUnread, testMode = false, onExitTestMode }) {
   const fileRef = useRef(null)
-  const trackRef = useRef(null)
-  const stageRef = useRef(null)
   const lastQueueIndex = useRef(null)
+  const entryAlignedRef = useRef(false)
   const rollTimer = useRef(null)
   const hitTimer = useRef(null)
   const initial = useMemo(loadSlot, [])
@@ -178,22 +177,11 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
     return result
   }, [en, language, onBackup, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onSignOut, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
 
-  useEffect(() => {
-    const next = [...(trackRef.current?.querySelectorAll('.more-qitem') || [])].map((element) => Math.ceil(element.getBoundingClientRect().height))
-    if (next.length && next.some((height, index) => height !== heights[index])) setHeights(next)
-  }, [items, language, user])
   const positions = []
   let cursor = 0
   items.forEach((item, index) => { positions.push(cursor); cursor += (heights[index] || item.h) + 10 })
   const slotPositions = [...positions, cursor]
-  const desiredEntryOffset = Math.max(0, (typeof window === 'undefined' ? 0 : window.innerHeight) / 2 - 10)
-  let initialQueueIndex = 0
-  let initialQueueDistance = Infinity
-  slotPositions.forEach((position, index) => {
-    const distance = Math.abs(position - desiredEntryOffset)
-    if (distance < initialQueueDistance) { initialQueueDistance = distance; initialQueueIndex = index }
-  })
-  const queue = useFloatingQueue(items.length, initialQueueIndex, {
+  const queue = useFloatingQueue(items.length, 0, {
     positions: slotPositions,
     rowHeight: 72,
     ariaLabel: en ? 'Settings position' : '설정 목록 위치',
@@ -201,6 +189,21 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   })
   const offset = slotPositions[Math.min(queue.index, slotPositions.length - 1)] || 0
 
+  useLayoutEffect(() => {
+    const next = [...(queue.trackRef.current?.querySelectorAll('.more-qitem') || [])].map((element) => Math.ceil(element.getBoundingClientRect().height))
+    if (next.length && (next.length !== heights.length || next.some((height, index) => height !== heights[index]))) setHeights(next)
+  }, [items, language, user, heights, queue.trackRef])
+
+  useLayoutEffect(() => {
+    if (entryAlignedRef.current || heights.length !== items.length || !queue.scrollerRef.current) return
+    const target = queue.scrollerRef.current.clientHeight / 2 + 2
+    let entryIndex = 0
+    slotPositions.forEach((position, index) => {
+      if (position <= target) entryIndex = index
+    })
+    entryAlignedRef.current = true
+    queue.setIndex(entryIndex)
+  }, [heights.length, items.length, queue, slotPositions])
 
   const spin = () => {
     const pool = ['🌙', '🍊', '🌿', '🔥', '🐈', '🧦', '🐸']
@@ -221,5 +224,5 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const combo = max === 3 ? 'triple' : max === 2 ? 'pair' : 'mixed'
   const symbolClass = combo === 'triple' ? ({ '🔥': ' symbol-fire', '🌙': ' symbol-moon', '🍊': ' symbol-orange', '🌿': ' symbol-leaf', '🐈': ' symbol-cat', '🧦': ' symbol-sock', '🐸': ' symbol-frog' }[symbols[0]] || '') : ''
 
-  return <div ref={stageRef} className={`stage q more-qstage entry-settled${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp"><div ref={trackRef} className="qtrack more-qtrack" style={{ top: '50%', transform: `translate3d(0,calc(-${offset}px + ${queue.dragY}px),0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" /><div className="slotwrap" style={{ top: 'calc(50% + 30px)' }}><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore} />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{history && <ReleaseNotesModal language={language} onClose={() => setHistory(false)} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}</div>
+  return <div className={`stage q more-queue-stage entry-settled${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp" ref={queue.scrollerRef} {...queue.scrollProps}><div ref={queue.trackRef} className="qtrack more-qtrack" style={{ top: '50%', transform: `translate3d(0,${-offset}px,0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div><div className="queue-scroll-space" style={{ height: `calc(100% + ${cursor}px)` }} aria-hidden="true" /></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" /><div className="slotwrap" style={{ top: 'calc(50% + 30px)' }}><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore} />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{history && <ReleaseNotesModal language={language} onClose={() => setHistory(false)} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}</div>
 }
