@@ -1,6 +1,0 @@
-/* Keep queue content visually attached to the finger during direct manipulation.
-   Snap/easing resumes as soon as dragging ends. */
-.stage.q.dragging .qtrack > *,
-.more-qstage.dragging .qtrack > * {
-  transition: none !important;
-}
