@@ -6,6 +6,7 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8')
 const exists = (path) => existsSync(resolve(root, path))
 
 const main = read('app/src/main.jsx')
+const styleEntry = read('app/src/styles/index.css')
 const queueStyles = read('app/src/styles/queue.css')
 const highlightStyles = read('app/src/styles/taskHighlight.css')
 const reorderHighlight = read('app/src/interactions/reorderHighlight.js')
@@ -19,6 +20,12 @@ const obsoleteRuntimeFiles = [
   'app/src/legacy/AppSupabase.jsx',
 ]
 
+const generatedRootArtifacts = [
+  'index.html',
+  '404.html',
+  'assets',
+]
+
 const highlightTriggers = [
   '.card.new-hit',
   '.card.search-hit',
@@ -28,11 +35,12 @@ const highlightTriggers = [
 ]
 
 const checks = [
-  ['Runtime entry imports consolidated queue styles', main.includes("import './styles/queue.css'")],
-  ['Runtime entry imports shared task highlight styles', main.includes("import './styles/taskHighlight.css'")],
+  ['Runtime entry imports one stylesheet entrypoint', main.includes("import './styles/index.css'") && !main.includes("import './styles/queue.css'") && !main.includes("import './styles/taskHighlight.css'")],
+  ['Style entrypoint keeps base before feature overrides', styleEntry.indexOf("@import '../styles.css'") < styleEntry.indexOf("@import './queue.css'") && styleEntry.indexOf("@import './queue.css'") < styleEntry.indexOf("@import './taskHighlight.css'")],
   ['Runtime entry imports reorder highlight interaction', main.includes("import './interactions/reorderHighlight.js'")],
   ['Runtime entry no longer imports superseded queue/reorder modules', !main.includes('queueNativeScroll.css') && !main.includes('queuePerformance.css') && !main.includes('reorderFix.css') && !main.includes('successHighlight.css') && !main.includes('reorderDropFlip.js')],
   ['Superseded runtime files are removed', obsoleteRuntimeFiles.every((path) => !exists(path))],
+  ['Generated root web artifacts are not committed', generatedRootArtifacts.every((path) => !exists(path))],
   ['Queue styles preserve one native floating layer architecture', queueStyles.includes('.qvp > .queue-floating-layer') && queueStyles.includes('position: sticky') && queueStyles.includes('height: 0')],
   ['Queue styles preserve immediate reorder release', queueStyles.includes('.stage.q.reordering .qtrack') && queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important')],
   ['All task-target triggers use the shared highlight stylesheet', highlightTriggers.every((selector) => highlightStyles.includes(selector))],
