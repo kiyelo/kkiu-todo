@@ -4,12 +4,16 @@ import { resolve } from 'node:path'
 const root = resolve(import.meta.dirname, '..')
 const read = (path) => readFileSync(resolve(root, path), 'utf8')
 const exists = (path) => existsSync(resolve(root, path))
+const stripComments = (source) => source
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '')
 
 const main = read('app/src/main.jsx')
 const styleEntry = read('app/src/styles/index.css')
 const queueStyles = read('app/src/styles/queue.css')
 const highlightStyles = read('app/src/styles/taskHighlight.css')
 const reorderHighlight = read('app/src/interactions/reorderHighlight.js')
+const reorderHighlightCode = stripComments(reorderHighlight)
 
 const obsoleteRuntimeFiles = [
   'app/src/queueNativeScroll.css',
@@ -34,7 +38,7 @@ const highlightTriggers = [
   '.drow.target-hit',
 ]
 
-const reorderOwnsLayoutOrScroll = /\bscrollTop\b|\.scrollTo\s*\(|getBoundingClientRect\s*\(|\.animate\s*\(|style\.translate\b|translate3d\s*\(|style\.transform\b/.test(reorderHighlight)
+const reorderOwnsLayoutOrScroll = /\bscrollTop\b|\.scrollTo\s*\(|getBoundingClientRect\s*\(|\.animate\s*\(|style\.translate\b|translate3d\s*\(|style\.transform\b/.test(reorderHighlightCode)
 
 const checks = [
   ['Runtime entry imports one stylesheet entrypoint', main.includes("import './styles/index.css'") && !main.includes("import './styles/queue.css'") && !main.includes("import './styles/taskHighlight.css'")],
@@ -48,7 +52,7 @@ const checks = [
   ['All task-target triggers use the shared highlight stylesheet', highlightTriggers.every((selector) => highlightStyles.includes(selector))],
   ['Shared highlight does not animate surface brightness or geometry', !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:') && !highlightStyles.includes('translate:')],
   ['Reorder highlight does not own layout or scroll', !reorderOwnsLayoutOrScroll],
-  ['Reorder highlight is pointer-up visual feedback only', reorderHighlight.includes("addEventListener('pointerup'") && reorderHighlight.includes("HIGHLIGHT_CLASS = 'reorder-hit'")],
+  ['Reorder highlight is pointer-up visual feedback only', reorderHighlightCode.includes("addEventListener('pointerup'") && reorderHighlightCode.includes("HIGHLIGHT_CLASS = 'reorder-hit'")],
 ]
 
 const failed = checks.filter(([, pass]) => !pass).map(([name]) => name)
