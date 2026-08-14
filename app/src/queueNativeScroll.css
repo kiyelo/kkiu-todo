@@ -1,0 +1,21 @@
+/* Keep every queue surface under the same native .qvp scroll owner without
+   letting the floating controls contribute to scroll extent. */
+.stage.q .qvp > .queue-floating-layer {
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.stage.q .queue-floating-layer > .slotwrap {
+  top: 0;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+
+/* The text field remains an input surface rather than a queue-pan origin. */
+.stage.q .queue-floating-layer .si {
+  touch-action: none;
+}
