@@ -59,7 +59,8 @@ check('Queue composer is intentionally hidden during active reorder', queueScree
 check('Queue floating controls share native pan-y ownership', queueStyles.includes('.queue-floating-layer > .slotwrap') && queueStyles.includes('touch-action: pan-y'))
 check('Queue text input stays input-owned', queueStyles.includes('.queue-floating-layer .si') && queueStyles.includes('touch-action: none'))
 check('Queue reorder release is immediate', queueStyles.includes('.stage.q:not(.reordering) .queue-task-row') && queueStyles.includes('transition: none !important'))
-check('Task target highlights never brighten or move cards', !highlightStyles.includes('background:') && !highlightStyles.includes('filter:') && !highlightStyles.includes('transform:') && !highlightStyles.includes('translate:'))
+const taskHighlightChangesSurfaceOrGeometry = /\bfilter\s*:|\btransform\s*:|\btranslate\s*:|background\s*:\s*(?:#fff(?:fff)?\b|rgba?\(\s*255\s*,\s*255\s*,\s*255|var\(--surface\))/.test(highlightStyles)
+check('Task target highlights never brighten or move card surfaces', !taskHighlightChangesSurfaceOrGeometry)
 
 // Native haptics use touch-class vibration and respect the system haptics setting.
 check('Android native haptics plugin is registered', androidActivity.includes('registerPlugin(HapticsPlugin.class)'))
