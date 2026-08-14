@@ -75,6 +75,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     window.clearTimeout(grip.current?.timer)
     point.current?.cleanup?.()
     const current = grip.current
+    current?.cleanupTouch?.()
     if (current?.element) { current.element.dataset.reorderArmed = 'false'; current.element.dataset.queueMoved = 'false' }
     hold.current = null; point.current = null; grip.current = null; suppressHoldClick.current = false
   }, [])
@@ -82,11 +83,14 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   const startGrip = (event) => {
     if (!reorderable || selecting) return
     const element = event.currentTarget
-    const state = { element, pointerId: event.pointerId, x: event.clientX, y: event.clientY, armed: false, timer: null }
+    const state = { element, pointerId: event.pointerId, x: event.clientX, y: event.clientY, armed: false, timer: null, cleanupTouch: null }
     element.dataset.reorderArmed = 'false'; element.dataset.queueMoved = 'false'
     state.timer = window.setTimeout(() => {
       if (element.dataset.queueMoved === 'true' || grip.current !== state) return
       state.armed = true; element.dataset.reorderArmed = 'true'
+      const stopTouchScroll = (touchEvent) => { if (grip.current === state && state.armed) touchEvent.preventDefault() }
+      document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })
+      state.cleanupTouch = () => document.removeEventListener('touchmove', stopTouchScroll, true)
       try { element.setPointerCapture(event.pointerId) } catch {}
       interactionFeedback(14)
       onDragStart?.(task.id, event)
@@ -105,6 +109,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     const state = grip.current
     if (!state || state.pointerId !== event.pointerId) return
     window.clearTimeout(state.timer)
+    state.cleanupTouch?.()
     if (state.armed) {
       event.preventDefault(); event.stopPropagation()
       try { state.element.releasePointerCapture(event.pointerId) } catch {}
@@ -122,7 +127,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     <button className={`ck${task.done || selected || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={selecting ? `${selected ? (language==='en'?'Deselect':'선택 해제') : (language==='en'?'Select':'선택')}: ${task.title}` : `${language==='en'?'Complete to-do':'할 일 완료'}: ${task.title}`} data-act={selecting ? 'sel' : 'complete'} data-id={task.id} onClick={() => selecting ? onSelect(task.id) : finish()}>{(task.done || selected || leaving) && <CheckIcon />}</button>
     {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
     <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" aria-label={`${language === 'en' ? 'Edit to-do' : '할 일 수정'}: ${task.title}`} value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" aria-label={task.title} data-act="title" data-id={task.id} onClick={() => selecting ? onSelect(task.id) : !task.done && setEditing(true)}><span aria-hidden="true" className="t-main">{line1}</span>{line2 && <span aria-hidden="true" className="t-rest">{line2}</span>}</button>}</div>
-    <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className={`who${assignedMembers[0].leftAt ? ' former' : ''}`}>{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className={`who${member.leftAt ? ' former' : ''}`} key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
+    <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className={`who${assignedMembers[0].leftAt ? ' former' : ''}`}>{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className={`who${member.leftAt ? ' former' : ''}`} key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" style={{ touchAction: 'pan-y' }} data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
     {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{assignableMembers.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText></button>)}</div>}
   </article>
 }
