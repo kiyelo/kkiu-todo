@@ -6,6 +6,7 @@ import { restoreStartupTabForExistingSession } from './services/startupTab.js'
 import './styles.css'
 import './queuePerformance.css'
 import './reorderFix.css'
+import './reorderDropStability.js'
 
 restoreStartupTabForExistingSession()
 void initializeNativeAuth()
