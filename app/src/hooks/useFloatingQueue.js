@@ -10,6 +10,7 @@ const nearest = (positions, value) => {
   }
   return best
 }
+const stageOwnsNativeScroll = (stage) => Boolean(stage?.classList.contains('q') && !stage.classList.contains('more-queue-stage'))
 
 export default function useFloatingQueue(count, initialIndex = count, options = {}) {
   const rowHeight = options.rowHeight || 80
@@ -157,18 +158,18 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     cancelAnimationFrame(transitionRestoreFrameRef.current)
   }, [])
 
-  // QueueScreen still supplies scrollerRef to .qvp. For the main queue, restore the
-  // actual scroll owner after every commit so all imperative reads/writes target stage.q.
+  // QueueScreen supplies scrollerRef to .qvp during render. Only the main queue
+  // replaces that owner with stage.q; More keeps its known-good qvp scroll owner.
   useLayoutEffect(() => {
     const stage = stageRef.current
-    if (stage?.classList.contains('q')) scrollerRef.current = stage
+    if (stageOwnsNativeScroll(stage)) scrollerRef.current = stage
   })
 
   useLayoutEffect(() => {
     const stage = stageRef.current
     if (!stage) return undefined
 
-    const stageOwnsScroll = stage.classList.contains('q')
+    const stageOwnsScroll = stageOwnsNativeScroll(stage)
     let fallbackScroller = false
     if (stageOwnsScroll) {
       scrollerRef.current = stage
@@ -209,13 +210,11 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
           opacity: '0',
           pointerEvents: 'none',
         })
-        stage.prepend(extent)
+        stage.append(extent)
       }
       stageScrollExtentRef.current = extent
-      const sourceExtent = stage.querySelector('.queue-scroll-space')
-      const measuredHeight = sourceExtent?.getBoundingClientRect().height || 0
       const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
-      extent.style.height = `${Math.ceil(Math.max(measuredHeight, stage.clientHeight + maxPosition))}px`
+      extent.style.height = `${Math.ceil(maxPosition)}px`
     }
 
     if ((fallbackScroller || stageOwnsScroll) && scroller) {
@@ -252,7 +251,7 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
 
   useLayoutEffect(() => {
     const stage = stageRef.current
-    if (stage?.classList.contains('q')) scrollerRef.current = stage
+    if (stageOwnsNativeScroll(stage)) scrollerRef.current = stage
     const value = clamp(indexRef.current, 0, count)
     const position = positionsRef.current[value] || 0
     if (scrollerRef.current) {
@@ -263,11 +262,9 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
       scrollExtentRef.current.style.height = `${Math.ceil(scrollerRef.current.clientHeight + maxPosition)}px`
     }
-    if (stage?.classList.contains('q') && stageScrollExtentRef.current) {
-      const sourceExtent = stage.querySelector('.queue-scroll-space')
-      const measuredHeight = sourceExtent?.getBoundingClientRect().height || 0
+    if (stageOwnsNativeScroll(stage) && stageScrollExtentRef.current) {
       const maxPosition = positionsRef.current[positionsRef.current.length - 1] || 0
-      stageScrollExtentRef.current.style.height = `${Math.ceil(Math.max(measuredHeight, stage.clientHeight + maxPosition))}px`
+      stageScrollExtentRef.current.style.height = `${Math.ceil(maxPosition)}px`
     }
     setVisualPosition(position, !recentlyUserDriven())
     initializedRef.current = true
