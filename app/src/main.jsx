@@ -4,11 +4,9 @@ import App from './App.jsx'
 import { initializeNativeAuth } from './services/nativeAuth.js'
 import { restoreStartupTabForExistingSession } from './services/startupTab.js'
 import './styles.css'
-import './queuePerformance.css'
-import './queueNativeScroll.css'
-import './reorderFix.css'
-import './successHighlight.css'
-import './reorderDropFlip.js'
+import './styles/queue.css'
+import './styles/taskHighlight.css'
+import './interactions/reorderHighlight.js'
 
 restoreStartupTabForExistingSession()
 void initializeNativeAuth()
