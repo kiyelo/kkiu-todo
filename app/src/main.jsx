@@ -5,6 +5,7 @@ import { initializeNativeAuth } from './services/nativeAuth.js'
 import { restoreStartupTabForExistingSession } from './services/startupTab.js'
 import './styles.css'
 import './queuePerformance.css'
+import './composerNativeScroll.css'
 import './reorderFix.css'
 import './reorderDropFlip.js'
 

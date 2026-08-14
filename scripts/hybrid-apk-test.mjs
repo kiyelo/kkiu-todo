@@ -20,6 +20,8 @@ const haptics = read('app/src/services/interactionFeedback.js')
 const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
+const nativeComposerScroll = read('app/src/composerNativeScroll.css')
+const main = read('app/src/main.jsx')
 const nativeAuth = read('app/src/services/nativeAuth.js')
 const supabase = read('app/src/services/supabaseClient.js')
 const terms = read('app/src/services/termsRepository.js')
@@ -30,7 +32,8 @@ const checks = [
   ...Object.entries(behaviorHashes).map(([path, hash]) => [`17:49 behavior preserved: ${path}`, sha256(path) === hash]),
   ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
-  ['Floating UI can proxy vertical scroll gestures', queue.includes(".queue-composer-wrap, .slotwrap") && queue.includes("stage.addEventListener('touchmove'")],
+  ['Floating UI uses native queue scrolling', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && queue.includes("--queue-scroll-top") && nativeComposerScroll.includes('.qvp::after') && nativeComposerScroll.includes('touch-action: pan-y') && main.includes("import './composerNativeScroll.css'")],
+  ['Floating UI shields underlying task actions', nativeComposerScroll.includes('z-index: 20') && nativeComposerScroll.includes('.queue-composer-wrap .si') && nativeComposerScroll.includes('.queue-composer-wrap .save') && nativeComposerScroll.includes('.queue-composer-wrap .asgc')],
   ['Grip swipe can stay native before reorder arms', taskCard.includes("style={{ touchAction: 'pan-y' }}")],
   ['Armed reorder blocks native touch scrolling', taskCard.includes("document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })") && taskCard.includes('touchEvent.preventDefault()')],
   ['Reorder auto-scrolls near queue edges', queueScreen.includes('REORDER_EDGE_PX') && queueScreen.includes('REORDER_MAX_SCROLL_PX') && queueScreen.includes('requestAnimationFrame(runReorderAutoScroll)')],
