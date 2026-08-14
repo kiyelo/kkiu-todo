@@ -67,23 +67,41 @@ export default function QueueScreen(props) {
   useEffect(() => { onPositionChange?.(currentSlot.globalIndex) }, [currentSlot.globalIndex, onPositionChange])
   useEffect(() => { const next = model.slots.findIndex((item) => item.globalIndex >= wantedGlobal); if (next >= 0) queue.setIndex(next) }, [viewKey, dataReady, filter, expanded, focusTaskId, focusVisit])
   const draggingId = reorder?.id || null
-  const readReorderCenters = () => [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), center: rect.top + rect.height / 2 } }).sort((a, b) => a.index - b.index)
+  const readReorderRows = () => [...document.querySelectorAll('.queue-task-row[data-task-index]')].map((row) => { const rect = row.getBoundingClientRect(); return { id: row.dataset.taskId, index: Number(row.dataset.taskIndex), top: rect.top, bottom: rect.bottom, center: rect.top + rect.height / 2, height: rect.height } }).sort((a, b) => a.index - b.index)
   const updateReorderAt = (pointerY) => {
     const current = reorderRef.current
     if (!current) return
-    const scroller = queue.scrollerRef.current
-    const scrollDelta = (scroller?.scrollTop || 0) - current.startScrollTop
-    const centers = readReorderCenters()
-    const candidates = [{ index: current.from, center: current.originCenter - scrollDelta }, ...centers.filter((item) => item.id !== current.id)].sort((a, b) => a.index - b.index)
-    let candidate = current.to; let candidateDistance = Infinity
-    candidates.forEach((item) => { const distance = Math.abs(pointerY - item.center); if (distance < candidateDistance) { candidateDistance = distance; candidate = item.index } })
-    let to = current.to
-    if (candidate !== current.to) {
-      const heldCenter = candidates.find((item) => item.index === current.to)?.center ?? current.originCenter - scrollDelta
-      const heldDistance = Math.abs(pointerY - heldCenter)
-      if (candidateDistance + 10 < heldDistance) to = candidate
+    const rows = readReorderRows()
+    const dragged = rows.find((item) => item.id === current.id)
+    if (!dragged) return
+
+    const baseTop = dragged.top - current.offset
+    const desiredTop = pointerY - current.grabOffsetY
+    const offset = desiredTop - baseTop
+    const draggedCenter = desiredTop + current.height / 2
+    const remaining = rows.filter((item) => item.id !== current.id)
+    const slots = []
+
+    remaining.forEach((item) => {
+      const to = item.index > current.from ? item.index - 1 : item.index
+      slots.push({ to, y: item.top })
+    })
+    if (remaining.length) {
+      const last = remaining[remaining.length - 1]
+      const lastTo = last.index > current.from ? last.index - 1 : last.index
+      slots.push({ to: Math.min(active.length - 1, lastTo + 1), y: last.bottom })
+    } else {
+      slots.push({ to: current.from, y: draggedCenter })
     }
-    const next = { ...current, to, pointerY, offset: pointerY - current.startY + scrollDelta }
+
+    let to = current.to; let bestDistance = Infinity
+    slots.forEach((slot) => {
+      const distance = Math.abs(draggedCenter - slot.y)
+      if (distance < bestDistance) { bestDistance = distance; to = slot.to }
+    })
+    to = Math.max(0, Math.min(active.length - 1, to))
+
+    const next = { ...current, to, pointerY, offset }
     if (to !== current.to) interactionFeedback(6)
     reorderRef.current = next
     setReorder(next)
@@ -108,9 +126,10 @@ export default function QueueScreen(props) {
   const startReorder = (id, event) => {
     const from = active.findIndex((task) => task.id === id)
     if (from < 0) return
-    const centers = readReorderCenters()
-    const originCenter = centers.find((item) => item.id === id)?.center ?? event.clientY
-    const next = { id, from, to: from, startY: event.clientY, pointerY: event.clientY, originCenter, startScrollTop: queue.scrollerRef.current?.scrollTop || 0, offset: 0 }
+    const row = readReorderRows().find((item) => item.id === id)
+    const top = row?.top ?? event.clientY - H.task / 2
+    const height = row?.height || H.task
+    const next = { id, from, to: from, startY: event.clientY, pointerY: event.clientY, grabOffsetY: event.clientY - top, height, offset: 0 }
     reorderRef.current = next; reorderPointerYRef.current = event.clientY; setReorder(next)
     if (!reorderFrameRef.current) reorderFrameRef.current = requestAnimationFrame(runReorderAutoScroll)
   }
