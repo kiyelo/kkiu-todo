@@ -19,6 +19,7 @@ const auth = read('app/src/components/AuthScreen.jsx')
 const authStorage = read('app/src/services/authStorage.js')
 const haptics = read('app/src/services/interactionFeedback.js')
 const queue = read('app/src/hooks/useFloatingQueue.js')
+const styles = read('app/src/styles.css')
 const nativeAuth = read('app/src/services/nativeAuth.js')
 const supabase = read('app/src/services/supabaseClient.js')
 const terms = read('app/src/services/termsRepository.js')
@@ -30,7 +31,7 @@ const checks = [
   ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
   ['Floating UI can proxy vertical scroll gestures', queue.includes(".queue-composer-wrap, .slotwrap") && queue.includes("stage.addEventListener('touchmove'")],
-  ['Queue grips allow vertical scrolling', queue.includes("element.style.touchAction = 'pan-y'")],
+  ['Queue grips reserve touch for long-press reordering', styles.includes('.ico.grip{color:#d2cabb;cursor:grab;touch-action:none}') && !queue.includes("element.style.touchAction = 'pan-y'")],
   ['Queue visual track follows actual native scroll', queue.includes('setVisualPosition(scrollerRef.current.scrollTop)')],
   ['Queue emits feedback for crossed slots', queue.includes('notifyCrossedSlots') && queue.includes('interactionFeedback(8)')],
   ['Native PKCE auth enabled', supabase.includes("flowType: isNative ? 'pkce' : 'implicit'") && nativeAuth.includes('exchangeCodeForSession')],
