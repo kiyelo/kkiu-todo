@@ -22,6 +22,7 @@ const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
 const moreScreen = read('app/src/components/MoreScreen.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
+const styleEntry = read('app/src/styles/index.css')
 const queueStyles = read('app/src/styles/queue.css')
 const highlightStyles = read('app/src/styles/taskHighlight.css')
 const reorderHighlight = read('app/src/interactions/reorderHighlight.js')
@@ -37,7 +38,7 @@ const checks = [
   ['Queue uses platform scrolling', queue.includes("stage.querySelector('.qvp')") && queue.includes('handleScrollPosition')],
   ['Queue settles to the nearest slot', queue.includes('settleToNearest') && queue.includes("behavior: 'smooth'")],
   ['All floating surfaces share the native qvp owner', queueScreen.includes('queue-floating-layer queue-composer-wrap') && moreScreen.includes('queue-floating-layer more-slot-layer') && queueStyles.includes('position: sticky') && queueStyles.includes('height: 0')],
-  ['Shared floating layer does not add a second scroll engine', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && main.includes("import './styles/queue.css'") && !main.includes('composerNativeScroll')],
+  ['Shared floating layer does not add a second scroll engine', !queue.includes('proxyGestureRef') && !queue.includes("stage.addEventListener('touchmove'") && main.includes("import './styles/index.css'") && styleEntry.includes("@import './queue.css'") && !main.includes('composerNativeScroll')],
   ['Floating surfaces pan vertically while textarea stays input-owned', queueStyles.includes('touch-action: pan-y') && queueStyles.includes('.si') && queueStyles.includes('touch-action: none')],
   ['Grip swipe can stay native before reorder arms', taskCard.includes("style={{ touchAction: 'pan-y' }}")],
   ['Armed reorder blocks native touch scrolling', taskCard.includes("document.addEventListener('touchmove', stopTouchScroll, { passive: false, capture: true })") && taskCard.includes('touchEvent.preventDefault()')],
