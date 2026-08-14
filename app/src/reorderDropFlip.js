@@ -10,16 +10,24 @@ const snapshotRows = (stage) => new Map(
   taskRows(stage).map((row) => [row.dataset.taskId, row.getBoundingClientRect().top]),
 )
 
+const clearReorderHighlights = (stage) => {
+  if (!stage) return
+  stage.querySelectorAll('.card.reorder-hit').forEach((card) => card.classList.remove('reorder-hit'))
+}
+
 const highlightReleasedTask = (stage, taskId) => {
-  if (!stage || !taskId) return
+  if (!stage) return
+  window.clearTimeout(highlightTimer)
+  clearReorderHighlights(stage)
+  if (!taskId) return
   const row = taskRows(stage).find((item) => item.dataset.taskId === taskId)
   const card = row?.querySelector('.card')
   if (!card) return
-  window.clearTimeout(highlightTimer)
-  card.classList.remove('reorder-hit')
   void card.offsetWidth
   card.classList.add('reorder-hit')
-  highlightTimer = window.setTimeout(() => card.classList.remove('reorder-hit'), 1750)
+  highlightTimer = window.setTimeout(() => {
+    if (card.isConnected) card.classList.remove('reorder-hit')
+  }, 1750)
 }
 
 const clearRowHold = (stage) => {
