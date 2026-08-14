@@ -31,7 +31,6 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
   const initializedRef = useRef(false)
   const programmaticRef = useRef(false)
   const fallbackScrollListenerRef = useRef(null)
-  const proxyGestureRef = useRef(null)
   const scrollExtentRef = useRef(null)
   const lastUserIntentAtRef = useRef(0)
   const transitionRestoreFrameRef = useRef(null)
@@ -200,56 +199,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       window.clearTimeout(settleTimerRef.current)
     }
 
-    const onTouchStart = (event) => {
-      onUserIntent()
-      const touch = event.touches?.[0]
-      const target = event.target
-      if (!touch || !scroller || scroller.contains(target)) return
-      if (!target.closest?.('.queue-composer-wrap, .slotwrap')) return
-      proxyGestureRef.current = {
-        startY: touch.clientY,
-        startScrollTop: scroller.scrollTop,
-        lastY: touch.clientY,
-        lastTime: performance.now(),
-        velocity: 0,
-        moved: false,
-      }
-    }
-
-    const onTouchMove = (event) => {
-      const gesture = proxyGestureRef.current
-      const touch = event.touches?.[0]
-      if (!gesture || !touch || !scroller) return
-      const delta = touch.clientY - gesture.startY
-      if (!gesture.moved && Math.abs(delta) < 6) return
-      gesture.moved = true
-      event.preventDefault()
-      const now = performance.now()
-      const dt = Math.max(1, now - gesture.lastTime)
-      gesture.velocity = (touch.clientY - gesture.lastY) / dt
-      gesture.lastY = touch.clientY
-      gesture.lastTime = now
-      const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-      scroller.scrollTop = clamp(gesture.startScrollTop - delta, 0, max)
-    }
-
-    const onTouchEnd = () => {
-      const gesture = proxyGestureRef.current
-      proxyGestureRef.current = null
-      if (!gesture?.moved || !scroller) return
-      const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-      const projected = clamp(scroller.scrollTop - gesture.velocity * 180, 0, max)
-      scroller.scrollTo({ top: projected, behavior: 'smooth' })
-      window.clearTimeout(scrollEndTimerRef.current)
-      scrollEndTimerRef.current = window.setTimeout(settleToNearest, 170)
-    }
-
     stage.addEventListener('pointerdown', onUserIntent, { passive: true })
     stage.addEventListener('wheel', onUserIntent, { passive: true })
-    stage.addEventListener('touchstart', onTouchStart, { passive: true })
-    stage.addEventListener('touchmove', onTouchMove, { passive: false })
-    stage.addEventListener('touchend', onTouchEnd, { passive: true })
-    stage.addEventListener('touchcancel', onTouchEnd, { passive: true })
 
     return () => {
       if (fallbackScroller && scroller && fallbackScrollListenerRef.current) {
@@ -259,12 +210,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
       scrollExtentRef.current = null
       stage.removeEventListener('pointerdown', onUserIntent)
       stage.removeEventListener('wheel', onUserIntent)
-      stage.removeEventListener('touchstart', onTouchStart)
-      stage.removeEventListener('touchmove', onTouchMove)
-      stage.removeEventListener('touchend', onTouchEnd)
-      stage.removeEventListener('touchcancel', onTouchEnd)
     }
-  }, [cancelMotion, handleScrollPosition, settleToNearest])
+  }, [cancelMotion, handleScrollPosition])
 
   useLayoutEffect(() => {
     const value = clamp(indexRef.current, 0, count)
