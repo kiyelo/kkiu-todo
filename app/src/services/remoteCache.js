@@ -1,4 +1,5 @@
 const CACHE_PREFIX = 'kkiu-remote-cache-v1:'
+const LAST_REMOTE_USER_KEY = 'kkiu-last-remote-user-v1'
 
 const cacheKey = (userId) => `${CACHE_PREFIX}${userId}`
 
@@ -21,6 +22,23 @@ export function loadRemoteSnapshot(userId) {
   }
 }
 
+export function loadLastRemoteSnapshot() {
+  try {
+    const userId = localStorage.getItem(LAST_REMOTE_USER_KEY)
+    const snapshot = loadRemoteSnapshot(userId)
+    return userId && snapshot ? { userId, snapshot } : null
+  } catch {
+    return null
+  }
+}
+
+export function clearLastRemoteUser(userId) {
+  try {
+    const current = localStorage.getItem(LAST_REMOTE_USER_KEY)
+    if (!userId || current === userId) localStorage.removeItem(LAST_REMOTE_USER_KEY)
+  } catch {}
+}
+
 export function saveRemoteSnapshot(userId, snapshot) {
   if (!userId || !validSnapshot(snapshot)) return false
   try {
@@ -28,6 +46,7 @@ export function saveRemoteSnapshot(userId, snapshot) {
       ...snapshot,
       cachedAt: new Date().toISOString(),
     }))
+    localStorage.setItem(LAST_REMOTE_USER_KEY, userId)
     return true
   } catch {
     return false
