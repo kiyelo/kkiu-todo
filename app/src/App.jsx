@@ -18,6 +18,7 @@ import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBa
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
 import { loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
+import { enqueueTaskCreates, flushPendingTaskCreates, loadPendingTaskCreates, mergePendingTaskCreates } from './services/remoteSyncQueue.js'
 import { watchThemePreference } from './services/themePlatform.js'
 
 const tabs = ['home', 'circle', 'more']
@@ -64,6 +65,7 @@ export default function App() {
   const [qaLoginError, setQaLoginError] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(undefined)
   const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
+  const [remoteSnapshotReady, setRemoteSnapshotReady] = useState(false)
   const [syncError, setSyncError] = useState('')
   const [toast, setToast] = useState('')
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
@@ -94,6 +96,7 @@ export default function App() {
   const [testMode, setTestMode] = useState(false)
   const swipeRef = useRef(null)
   const authRecoveryRef = useRef(false)
+  const authUserRef = useRef(null)
   const testSnapshotRef = useRef(null)
   const activeReadScopeRef = useRef(null)
   const completedReadScopeRef = useRef(null)
@@ -105,13 +108,15 @@ export default function App() {
   const applyRemoteCache = useCallback((userId) => {
     const cached = loadRemoteSnapshot(userId)
     if (!cached) return false
+    const hydrated = mergePendingTaskCreates(cached, loadPendingTaskCreates(userId))
     setData((current) => ({
       ...current,
-      personal: cached.personal,
-      circles: cached.circles,
-      settings: { ...current.settings, ...cached.settings },
+      personal: hydrated.personal,
+      circles: hydrated.circles,
+      settings: { ...current.settings, ...hydrated.settings },
     }))
-    setCircleId((current) => cached.circles.some((item) => item.id === current) ? current : cached.circles[0]?.id)
+    setCircleId((current) => hydrated.circles.some((item) => item.id === current) ? current : hydrated.circles[0]?.id)
+    setRemoteSnapshotReady(true)
     return true
   }, [])
 
@@ -123,17 +128,11 @@ export default function App() {
 
   useEffect(() => {
     if (!hasSupabaseConfig) { setSession(null); setRemoteLoading(false); return undefined }
-    let cancelled = false
-    const startSession = async () => {
-      const { data: authData, error } = await supabase.auth.getSession()
-      if (cancelled) return
-      if (error) reportSyncError(error)
-      if (authData.session || !qaAccount) {
-        if (authData.session?.user) setRemoteLoading(!applyRemoteCache(authData.session.user.id))
-        else setRemoteLoading(false)
-        setSession(authData.session)
-        return
-      }
+    let active = true
+    let qaLoginStarted = false
+    const signInQa = async () => {
+      if (qaLoginStarted) return
+      qaLoginStarted = true
       if (!qaAccount.password) {
         setQaLoginError(`${qaAccount.label} 비밀번호가 .env.local에 설정되지 않았어요.`)
         setSession(null)
@@ -144,24 +143,34 @@ export default function App() {
         email: qaAccount.email,
         password: qaAccount.password,
       })
-      if (cancelled) return
+      if (!active) return
       if (signInError) {
         setQaLoginError(signInError.message || 'QA 자동 로그인에 실패했어요.')
         setSession(null)
         setRemoteLoading(false)
         return
       }
-      setSession(signedIn.session)
+      if (!signedIn.session) setRemoteLoading(false)
     }
-    startSession()
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (nextSession?.user) setRemoteLoading(!applyRemoteCache(nextSession.user.id))
-      else setRemoteLoading(false)
+      if (!active) return
+      const nextUserId = nextSession?.user?.id || null
+      if (nextUserId && authUserRef.current !== nextUserId) {
+        authUserRef.current = nextUserId
+        setRemoteLoading(!applyRemoteCache(nextUserId))
+      } else if (!nextUserId) {
+        authUserRef.current = null
+        setRemoteSnapshotReady(false)
+        if (event === 'INITIAL_SESSION' && qaAccount) {
+          window.setTimeout(() => { void signInQa() }, 0)
+          return
+        }
+        setRemoteLoading(false)
+      }
       setSession(nextSession)
       if (event === 'SIGNED_IN') setTab('home')
-      if (event === 'TOKEN_REFRESHED') setRemoteReloadKey((current) => current + 1)
     })
-    return () => { cancelled = true; listener.subscription.unsubscribe() }
+    return () => { active = false; listener.subscription.unsubscribe() }
   }, [applyRemoteCache])
 
   useEffect(() => {
@@ -186,14 +195,25 @@ export default function App() {
   useEffect(() => {
     if (!hasSupabaseConfig || !session?.user) return
     let cancelled = false
-    const cached = loadRemoteSnapshot(session.user.id)
+    const userId = session.user.id
+    const cached = mergePendingTaskCreates(loadRemoteSnapshot(userId), loadPendingTaskCreates(userId))
     if (!cached) setRemoteLoading(true)
 
+    const createQueuedTask = (operation) => operation.circleId
+      ? createCircleTask(userId, operation.circleId, operation.task, operation.position)
+      : createPersonalTask(userId, operation.task, operation.position)
+
     const loadRemoteData = async (attempt = 0) => {
+      let outboxError = null
+      try {
+        await flushPendingTaskCreates(userId, createQueuedTask)
+      } catch (error) {
+        outboxError = error
+      }
       const results = await Promise.allSettled([
-        loadPersonalTasks(session.user.id),
-        loadCircles(session.user.id),
-        loadPreferences(session.user.id),
+        loadPersonalTasks(userId),
+        loadCircles(userId),
+        loadPreferences(userId),
       ])
       if (cancelled) return
 
@@ -201,8 +221,20 @@ export default function App() {
       const personal = personalResult.status === 'fulfilled' ? personalResult.value : cached?.personal
       const circles = circlesResult.status === 'fulfilled' ? circlesResult.value : cached?.circles
       const preferences = preferencesResult.status === 'fulfilled' ? preferencesResult.value : (cached?.settings || {})
+      const pendingCreates = loadPendingTaskCreates(userId)
+      const remoteSnapshot = personal && circles
+        ? mergePendingTaskCreates({ personal, circles, settings: preferences }, pendingCreates)
+        : null
 
-      if (personal || circles || preferences) {
+      if (remoteSnapshot) {
+        setData((current) => ({
+          ...current,
+          personal: remoteSnapshot.personal,
+          circles: remoteSnapshot.circles,
+          settings: { ...current.settings, ...remoteSnapshot.settings },
+        }))
+        setRemoteSnapshotReady(true)
+      } else if (personal || circles || preferences) {
         setData((current) => ({
           ...current,
           ...(personal ? { personal } : {}),
@@ -210,16 +242,13 @@ export default function App() {
           ...(preferences ? { settings: { ...current.settings, ...preferences } } : {}),
         }))
       }
-      if (circles) setCircleId((current) => circles.some((item) => item.id === current) ? current : circles[0]?.id)
+      const nextCircles = remoteSnapshot?.circles || circles
+      if (nextCircles) setCircleId((current) => nextCircles.some((item) => item.id === current) ? current : nextCircles[0]?.id)
 
-      // Tasks are the important fast-start payload. Keep their latest successful
-      // response even when a non-critical preference request needs a retry.
-      if (personal && circles && preferences) {
-        saveRemoteSnapshot(session.user.id, { personal, circles, settings: preferences })
-      }
+      if (remoteSnapshot) saveRemoteSnapshot(userId, remoteSnapshot)
 
       const failures = results.filter((result) => result.status === 'rejected')
-      if (!failures.length) {
+      if (!failures.length && !outboxError) {
         setRemoteLoading(false)
         return
       }
@@ -235,6 +264,7 @@ export default function App() {
       }
 
       failures.forEach((result) => reportSyncError(result.reason))
+      if (outboxError) reportSyncError(outboxError)
       setRemoteLoading(false)
     }
 
@@ -244,11 +274,16 @@ export default function App() {
 
   useEffect(() => {
     if (!session?.user) return undefined
+    const reloadRemoteData = () => setRemoteReloadKey((current) => current + 1)
     const reloadWhenVisible = () => {
-      if (document.visibilityState === 'visible') setRemoteReloadKey((current) => current + 1)
+      if (document.visibilityState === 'visible') reloadRemoteData()
     }
     document.addEventListener('visibilitychange', reloadWhenVisible)
-    return () => document.removeEventListener('visibilitychange', reloadWhenVisible)
+    window.addEventListener('online', reloadRemoteData)
+    return () => {
+      document.removeEventListener('visibilitychange', reloadWhenVisible)
+      window.removeEventListener('online', reloadRemoteData)
+    }
   }, [session?.user?.id])
 
   useEffect(() => { if (!pendingInvite || remoteLoading || (hasSupabaseConfig && !session?.user)) return; setCirclePickerOpen(true) }, [pendingInvite, remoteLoading, session?.user?.id])
@@ -258,6 +293,12 @@ export default function App() {
       setSyncError(data.settings?.language === 'en' ? 'Local storage is full. Your latest change was not saved.' : '저장 공간이 부족해 최근 변경을 저장하지 못했어요.')
     }
   }, [data])
+  useEffect(() => {
+    if (!remoteUser || !remoteSnapshotReady) return
+    if (!saveRemoteSnapshot(remoteUser.id, { personal: data.personal, circles: data.circles, settings: data.settings })) {
+      setSyncError(data.settings?.language === 'en' ? 'Device cache is full. Pending changes may load slowly.' : '기기 저장 공간이 부족해 최신 캐시를 저장하지 못했어요.')
+    }
+  }, [data, remoteSnapshotReady, remoteUser?.id])
   useEffect(() => { localStorage.setItem('kkiu-ui-v1', JSON.stringify({ tab, circleId, filter, queuePositions })) }, [tab, circleId, filter, queuePositions])
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 1700); return () => window.clearTimeout(timer) }, [toast])
   useEffect(() => { if (!syncError) return undefined; const timer = window.setTimeout(() => setSyncError(''), 3200); return () => window.clearTimeout(timer) }, [syncError])
@@ -324,6 +365,21 @@ export default function App() {
     const at = Math.max(0, Math.min(position, active.length))
     const next = [...active]
     next.splice(at, 0, ...created)
+    const queuedCreates = created.map((task, index) => ({
+      id: task.id,
+      task,
+      circleId: tab === 'circle' ? circle.id : null,
+      position: at + index,
+    }))
+    let queuedDurably = false
+    if (remoteUser) {
+      try {
+        enqueueTaskCreates(remoteUser.id, queuedCreates)
+        queuedDurably = true
+      } catch (error) {
+        reportSyncError(error)
+      }
+    }
     updateTasks(() => [...next, ...completed])
     setQueuePositions((current) => ({ ...current, [tab]: at + created.length }))
     setFocusVisit((current) => current + 1)
@@ -331,8 +387,13 @@ export default function App() {
       ? (language === 'en' ? `Inserted ${created.length} tasks from #${at + 1}` : `${at + 1}번째부터 할 일 ${created.length}개를 끼웠어요`)
       : (language === 'en' ? `Inserted at #${at + 1}` : `${at + 1}번째에 끼웠어요`))
     if (remoteUser) {
-      const creates = created.map((task, index) => tab === 'home' ? createPersonalTask(remoteUser.id, task, at + index) : createCircleTask(remoteUser.id, circle.id, task, at + index))
-      Promise.all(creates).then(() => updateTaskPositions(next)).catch(reportSyncError)
+      const createQueuedTask = (operation) => operation.circleId
+        ? createCircleTask(remoteUser.id, operation.circleId, operation.task, operation.position)
+        : createPersonalTask(remoteUser.id, operation.task, operation.position)
+      const persist = queuedDurably
+        ? flushPendingTaskCreates(remoteUser.id, createQueuedTask).then(() => flushPendingTaskCreates(remoteUser.id, createQueuedTask))
+        : Promise.all(queuedCreates.map(createQueuedTask))
+      persist.then(() => updateTaskPositions(next)).catch(reportSyncError)
     }
   }
 

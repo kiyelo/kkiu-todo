@@ -34,25 +34,25 @@ export async function loadPersonalTasks(userId) {
 
 export async function loadCircles(userId) {
   const client = requireSupabase()
-  const { data: circles, error: circleError } = await client
-    .from('circles')
-    .select('id,name,emoji,invite_code,join_locked,created_by,created_at')
-    .order('created_at', { ascending: true })
-  if (circleError) throw circleError
-  if (!circles.length) return []
-
-  const ids = circles.map((circle) => circle.id)
-  const [{ data: memberRows, error: memberError }, { data: taskRows, error: taskError }] = await Promise.all([
-    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at,left_at').in('circle_id', ids).order('position', { ascending: true }),
-    client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_position,completed_at,created_at,updated_at').in('circle_id', ids).order('position', { ascending: true }),
+  // RLS already limits every query to circles the signed-in user can access.
+  // Start all reads together so native startup pays one network round trip
+  // instead of waiting for circles before requesting their members and tasks.
+  const [
+    { data: circles, error: circleError },
+    { data: memberRows, error: memberError },
+    { data: taskRows, error: taskError },
+    { data: receipts, error: receiptError },
+  ] = await Promise.all([
+    client.from('circles').select('id,name,emoji,invite_code,join_locked,created_by,created_at').order('created_at', { ascending: true }),
+    client.from('circle_members').select('circle_id,user_id,role,nickname,emoji,position,joined_at,left_at').order('position', { ascending: true }),
+    client.from('tasks').select('id,owner_id,circle_id,assignee_id,title,position,completed_position,completed_at,created_at,updated_at').not('circle_id', 'is', null).order('position', { ascending: true }),
+    client.from('task_read_receipts').select('task_id').eq('user_id', userId),
   ])
+  if (circleError) throw circleError
   if (memberError) throw memberError
   if (taskError) throw taskError
-  let readIds = new Set()
-  if (userId && taskRows.length) {
-    const { data: receipts, error: receiptError } = await client.from('task_read_receipts').select('task_id').eq('user_id', userId).in('task_id', taskRows.map((row) => row.id))
-    if (!receiptError) readIds = new Set((receipts || []).map((row) => row.task_id))
-  }
+  if (!circles.length) return []
+  const readIds = receiptError ? new Set() : new Set((receipts || []).map((row) => row.task_id))
   return circles.map((circle) => {
     const rows = taskRows.filter((row) => row.circle_id === circle.id)
     const tasks = rows.map((row) => taskFromRow({ ...row, sourceUnread: Boolean(userId && row.owner_id !== userId && !readIds.has(row.id)) }))
@@ -124,24 +124,24 @@ export async function leaveCircle(circleId, userId) {
 }
 
 export async function createCircleTask(userId, circleId, task, position) {
-  const { error } = await requireSupabase().from('tasks').insert({
+  const { error } = await requireSupabase().from('tasks').upsert({
     id: task.id,
     owner_id: userId,
     circle_id: circleId,
     assignee_id: task.assignee || null,
     title: task.title,
     position,
-  })
+  }, { onConflict: 'id', ignoreDuplicates: true })
   if (error) throw error
 }
 
 export async function createPersonalTask(userId, task, position) {
-  const { error } = await requireSupabase().from('tasks').insert({
+  const { error } = await requireSupabase().from('tasks').upsert({
     id: task.id,
     owner_id: userId,
     title: task.title,
     position,
-  })
+  }, { onConflict: 'id', ignoreDuplicates: true })
   if (error) throw error
 }
 
