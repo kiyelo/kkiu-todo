@@ -17,7 +17,7 @@ import { CIRCLE_NAME_LIMIT, PROFILE_NAME_LIMIT, graphemeLength, limitGraphemes, 
 import { BackupValidationError, MAX_BACKUP_BYTES, backupErrorMessage, validateBackupData } from './services/backup.js'
 import { getNormalLoginUrl, getQaUrl, getSelectedQaAccount } from './services/qaAuth.js'
 import { setInteractionFeedbackEnabled } from './services/interactionFeedback.js'
-import { loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
+import { clearLastRemoteUser, loadLastRemoteSnapshot, loadRemoteSnapshot, saveRemoteSnapshot } from './services/remoteCache.js'
 import { enqueueTaskCreates, flushPendingTaskCreates, loadPendingTaskCreates, mergePendingTaskCreates } from './services/remoteSyncQueue.js'
 import { watchThemePreference } from './services/themePlatform.js'
 
@@ -60,19 +60,23 @@ const withUnreadCounts = (circle) => {
 
 export default function App() {
   const qaAccount = getSelectedQaAccount()
+  const [initialRemote] = useState(() => hasSupabaseConfig ? loadLastRemoteSnapshot() : null)
   const [session, setSession] = useState(undefined)
   const [remoteReloadKey, setRemoteReloadKey] = useState(0)
   const [qaLoginError, setQaLoginError] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(undefined)
-  const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig)
-  const [remoteSnapshotReady, setRemoteSnapshotReady] = useState(false)
+  const [remoteLoading, setRemoteLoading] = useState(hasSupabaseConfig && !initialRemote)
+  const [remoteSnapshotReady, setRemoteSnapshotReady] = useState(Boolean(initialRemote))
   const [syncError, setSyncError] = useState('')
   const [toast, setToast] = useState('')
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
   const initialUi = useRef((() => { try { return JSON.parse(localStorage.getItem('kkiu-ui-v1')) || {} } catch { return {} } })()).current
-  const [tab, setTab] = useState('home')
+  const [tab, setTab] = useState(initialRemote && tabs.includes(initialUi.tab) ? initialUi.tab : 'home')
   const [data, setData] = useState(() => {
     const initialData = freshStarterData()
+    if (initialRemote) {
+      return mergePendingTaskCreates(initialRemote.snapshot, loadPendingTaskCreates(initialRemote.userId))
+    }
     return hasSupabaseConfig
       ? { ...initialData, personal: [], circles: [], settings: { ...initialData.settings, theme: loadCachedThemePreference() } }
       : localRepository.load(initialData)
@@ -96,7 +100,7 @@ export default function App() {
   const [testMode, setTestMode] = useState(false)
   const swipeRef = useRef(null)
   const authRecoveryRef = useRef(false)
-  const authUserRef = useRef(null)
+  const authUserRef = useRef(initialRemote?.userId || null)
   const testSnapshotRef = useRef(null)
   const activeReadScopeRef = useRef(null)
   const completedReadScopeRef = useRef(null)
@@ -159,6 +163,7 @@ export default function App() {
         authUserRef.current = nextUserId
         setRemoteLoading(!applyRemoteCache(nextUserId))
       } else if (!nextUserId) {
+        clearLastRemoteUser(authUserRef.current)
         authUserRef.current = null
         setRemoteSnapshotReady(false)
         if (event === 'INITIAL_SESSION' && qaAccount) {
@@ -685,7 +690,8 @@ const undoTaskDelete = () => {
     if (next !== index) switchTab(tabs[next])
   }
 
-  if (hasSupabaseConfig && session === undefined) return <div className="app-shell" aria-hidden="true" />
+  const restoringCachedSession = hasSupabaseConfig && session === undefined && Boolean(initialRemote)
+  if (hasSupabaseConfig && session === undefined && !initialRemote) return <div className="app-shell" aria-hidden="true" />
   if (hasSupabaseConfig && qaAccount && !session && qaLoginError) return <QaLoginError account={qaAccount} message={qaLoginError} />
   if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />
 
@@ -703,7 +709,7 @@ const undoTaskDelete = () => {
 
   return <div className="wrap">
     {qaAccount && session && <QaAccountBadge account={qaAccount} />}
-    <section className={`phone${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}${query!==null?' searching':''}`} onPointerDownCapture={startSwipe} onPointerUpCapture={endSwipe} onPointerCancelCapture={() => { swipeRef.current = null }}>
+    <section className={`phone${settingValues.compact ? ' compact-mode' : ''}${settingValues.motion ? '' : ' reduce-motion'}${query!==null?' searching':''}${restoringCachedSession?' session-restoring':''}`} inert={restoringCachedSession} aria-busy={restoringCachedSession} onPointerDownCapture={startSwipe} onPointerUpCapture={endSwipe} onPointerCancelCapture={() => { swipeRef.current = null }}>
       <div id="app" className={selected.size ? 'sel-mode' : ''}>
       <Header lang={settingValues.language} tab={tab} circle={circle} searchOpen={query !== null} onSearch={() => setQuery((current) => current === null ? '' : null)} onCircleSelect={() => setCirclePickerOpen(true)} onCompleted={() => setCompletedOpen(true)} onManage={() => setCircleEditorOpen('edit')} />
       {syncError && <button className="sync-error" onClick={() => setSyncError('')}>{syncError}</button>}

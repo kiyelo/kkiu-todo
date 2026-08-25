@@ -7,6 +7,11 @@ import {
   loadPendingTaskCreates,
   mergePendingTaskCreates,
 } from '../app/src/services/remoteSyncQueue.js'
+import {
+  clearLastRemoteUser,
+  loadLastRemoteSnapshot,
+  saveRemoteSnapshot,
+} from '../app/src/services/remoteCache.js'
 
 const memoryStorage = () => {
   const values = new Map()
@@ -65,12 +70,29 @@ unblockFirst()
 await flushed
 assert.deepEqual(loadPendingTaskCreates('user-2', concurrentStorage), [])
 
+const previousLocalStorage = globalThis.localStorage
+const bootstrapStorage = memoryStorage()
+globalThis.localStorage = bootstrapStorage
+const bootstrapSnapshot = { personal: [{ id: 'cached' }], circles: [], settings: { language: 'ko' } }
+assert.equal(saveRemoteSnapshot('user-3', bootstrapSnapshot), true)
+assert.deepEqual(loadLastRemoteSnapshot(), { userId: 'user-3', snapshot: { ...bootstrapSnapshot, cachedAt: loadLastRemoteSnapshot().snapshot.cachedAt } })
+clearLastRemoteUser('another-user')
+assert.equal(loadLastRemoteSnapshot().userId, 'user-3')
+clearLastRemoteUser('user-3')
+assert.equal(loadLastRemoteSnapshot(), null)
+globalThis.localStorage = previousLocalStorage
+
 const root = resolve(import.meta.dirname, '..')
 const appSource = readFileSync(resolve(root, 'app/src/App.jsx'), 'utf8')
+const mainSource = readFileSync(resolve(root, 'app/src/main.jsx'), 'utf8')
 const repositorySource = readFileSync(resolve(root, 'app/src/services/supabaseRepository.js'), 'utf8')
 assert(!appSource.includes("if (event === 'TOKEN_REFRESHED') setRemoteReloadKey"))
 assert(appSource.includes('enqueueTaskCreates(remoteUser.id, queuedCreates)'))
 assert(appSource.includes('mergePendingTaskCreates'))
+assert(appSource.includes('loadLastRemoteSnapshot'))
+assert(appSource.includes('restoringCachedSession'))
+assert(!mainSource.includes('getSession()'))
+assert(!mainSource.includes('restoreStartupTabForExistingSession'))
 assert(repositorySource.includes("{ onConflict: 'id', ignoreDuplicates: true }"))
 
-console.log(JSON.stringify({ pass: true, checks: 11 }, null, 2))
+console.log(JSON.stringify({ pass: true, checks: 19 }, null, 2))
