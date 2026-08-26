@@ -3,3 +3,8 @@
 @import '../styles.css';
 @import './queue.css';
 @import './taskHighlight.css';
+
+/* Startup/auth restoration must never paint the legacy beige prototype shell.
+   Keep this layer transparent so the already-resolved light/dark document
+   background remains visually continuous until the app content mounts. */
+.app-shell { background: transparent; }
