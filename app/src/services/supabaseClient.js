@@ -15,35 +15,49 @@ const projectRef = (() => {
 })()
 // Keep Supabase's historical default key so sessions from older APKs migrate.
 const authStorageKey = getQaAuthStorageKey() || `sb-${projectRef}-auth-token`
+const CACHED_SESSION_RESTORE_GRACE_MS = 1500
 
 const stabilizeCachedInitialSession = (client) => {
   if (!client) return client
   const onAuthStateChange = client.auth.onAuthStateChange.bind(client.auth)
 
   client.auth.onAuthStateChange = (callback) => {
-    let deferredInitialSession = false
+    let pendingInitialNull = false
+    let settleTimer = null
+
+    const clearPendingInitialNull = () => {
+      pendingInitialNull = false
+      if (settleTimer !== null) globalThis.clearTimeout(settleTimer)
+      settleTimer = null
+    }
+
+    const settleCachedSession = async () => {
+      if (!pendingInitialNull) return
+      const { data, error } = await client.auth.getSession()
+      if (!pendingInitialNull) return
+      clearPendingInitialNull()
+      callback('INITIAL_SESSION', error ? null : data.session)
+    }
 
     return onAuthStateChange((event, nextSession) => {
-      const shouldConfirmCachedSession = (
+      const shouldHoldCachedStartup = (
         event === 'INITIAL_SESSION'
         && !nextSession
         && Boolean(loadLastRemoteSnapshot())
       )
 
-      if (!shouldConfirmCachedSession) {
-        if (nextSession || event === 'SIGNED_OUT') deferredInitialSession = false
-        callback(event, nextSession)
+      if (shouldHoldCachedStartup) {
+        // A native cold start can briefly report no session while Capacitor
+        // Preferences and Supabase token refresh are still settling. Keep the
+        // cached app shell in its restoring state instead of flashing AuthScreen.
+        pendingInitialNull = true
+        if (settleTimer !== null) globalThis.clearTimeout(settleTimer)
+        settleTimer = globalThis.setTimeout(() => { void settleCachedSession() }, CACHED_SESSION_RESTORE_GRACE_MS)
         return
       }
 
-      deferredInitialSession = true
-      globalThis.setTimeout(async () => {
-        if (!deferredInitialSession) return
-        const { data, error } = await client.auth.getSession()
-        if (!deferredInitialSession) return
-        deferredInitialSession = false
-        callback('INITIAL_SESSION', error ? null : data.session)
-      }, 0)
+      if (pendingInitialNull && (nextSession || event === 'SIGNED_OUT')) clearPendingInitialNull()
+      callback(event, nextSession)
     })
   }
 
