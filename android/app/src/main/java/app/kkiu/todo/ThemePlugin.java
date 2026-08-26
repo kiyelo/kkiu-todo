@@ -6,6 +6,8 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -37,6 +39,18 @@ public class ThemePlugin extends Plugin {
         return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
     }
 
+    private void applyStatusBarIcons(String theme) {
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(
+                getActivity().getWindow(),
+                getActivity().getWindow().getDecorView()
+            );
+            // "Light status bars" means a light background with dark foreground icons.
+            controller.setAppearanceLightStatusBars("light".equals(theme));
+        });
+    }
+
     @PluginMethod
     public void getSystemTheme(PluginCall call) {
         JSObject result = new JSObject();
@@ -58,10 +72,19 @@ public class ThemePlugin extends Plugin {
             AppCompatDelegate.setDefaultNightMode(appCompatMode(preference));
         }
 
+        String resolvedTheme = "system".equals(preference) ? getDeviceSystemTheme() : preference;
         JSObject result = new JSObject();
         result.put("preference", preference);
-        result.put("theme", "system".equals(preference) ? getDeviceSystemTheme() : preference);
+        result.put("theme", resolvedTheme);
         call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setStatusBarTheme(PluginCall call) {
+        String theme = call.getString("theme", "light");
+        if (!"dark".equals(theme)) theme = "light";
+        applyStatusBarIcons(theme);
+        call.resolve();
     }
 
     @Override

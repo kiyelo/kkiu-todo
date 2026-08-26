@@ -22,6 +22,10 @@ const syncNativeThemePreference = async (preference) => {
 
 const setSystemBarTheme = async (resolvedTheme) => {
   if (!Capacitor.isNativePlatform()) return
+  if (Capacitor.getPlatform() === 'android') {
+    await NativeTheme.setStatusBarTheme({ theme: resolvedTheme }).catch(() => undefined)
+    return
+  }
   await StatusBar.setStyle({
     style: resolvedTheme === 'dark' ? Style.Light : Style.Dark,
   }).catch(() => undefined)
