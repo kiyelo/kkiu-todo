@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import { authStorage } from './authStorage.js'
 import { getQaAuthStorageKey } from './qaAuth.js'
+import { loadLastRemoteSnapshot } from './remoteCache.js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
@@ -15,8 +16,42 @@ const projectRef = (() => {
 // Keep Supabase's historical default key so sessions from older APKs migrate.
 const authStorageKey = getQaAuthStorageKey() || `sb-${projectRef}-auth-token`
 
+const stabilizeCachedInitialSession = (client) => {
+  if (!client) return client
+  const onAuthStateChange = client.auth.onAuthStateChange.bind(client.auth)
+
+  client.auth.onAuthStateChange = (callback) => {
+    let deferredInitialSession = false
+
+    return onAuthStateChange((event, nextSession) => {
+      const shouldConfirmCachedSession = (
+        event === 'INITIAL_SESSION'
+        && !nextSession
+        && Boolean(loadLastRemoteSnapshot())
+      )
+
+      if (!shouldConfirmCachedSession) {
+        if (nextSession || event === 'SIGNED_OUT') deferredInitialSession = false
+        callback(event, nextSession)
+        return
+      }
+
+      deferredInitialSession = true
+      globalThis.setTimeout(async () => {
+        if (!deferredInitialSession) return
+        const { data, error } = await client.auth.getSession()
+        if (!deferredInitialSession) return
+        deferredInitialSession = false
+        callback('INITIAL_SESSION', error ? null : data.session)
+      }, 0)
+    })
+  }
+
+  return client
+}
+
 export const supabase = hasSupabaseConfig
-  ? createClient(supabaseUrl, supabasePublishableKey, {
+  ? stabilizeCachedInitialSession(createClient(supabaseUrl, supabasePublishableKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -28,7 +63,7 @@ export const supabase = hasSupabaseConfig
         storage: authStorage,
         storageKey: authStorageKey,
       },
-    })
+    }))
   : null
 
 export function getAuthRedirectUrl() {
