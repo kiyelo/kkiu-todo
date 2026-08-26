@@ -693,7 +693,7 @@ const undoTaskDelete = () => {
   const restoringCachedSession = hasSupabaseConfig && session === undefined && Boolean(initialRemote)
   if (hasSupabaseConfig && session === undefined && !initialRemote) return <div className="app-shell" aria-hidden="true" />
   if (hasSupabaseConfig && qaAccount && !session && qaLoginError) return <QaLoginError account={qaAccount} message={qaLoginError} />
-  if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />
+  if (hasSupabaseConfig && session === null) return <AuthScreen pendingInvite={pendingInvite} />
 
   if (hasSupabaseConfig && session?.user && termsAccepted === false) {
     return (
