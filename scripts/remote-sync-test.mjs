@@ -8,6 +8,11 @@ import {
   mergePendingTaskCreates,
 } from '../app/src/services/remoteSyncQueue.js'
 import {
+  enqueueTaskMutation,
+  flushPendingTaskMutations,
+  loadPendingTaskMutations,
+} from '../app/src/services/taskMutationOutbox.js'
+import {
   clearLastRemoteUser,
   loadLastRemoteSnapshot,
   saveRemoteSnapshot,
@@ -70,6 +75,26 @@ unblockFirst()
 await flushed
 assert.deepEqual(loadPendingTaskCreates('user-2', concurrentStorage), [])
 
+const mutationStorage = memoryStorage()
+enqueueTaskMutation('user-m', { id: 'u1', kind: 'update', taskId: 'task-1', changes: { title: 'one' } }, mutationStorage)
+enqueueTaskMutation('user-m', { id: 'u2', kind: 'update', taskId: 'task-1', changes: { assignee: 'member-2' } }, mutationStorage)
+assert.equal(loadPendingTaskMutations('user-m', mutationStorage).length, 1)
+assert.deepEqual(loadPendingTaskMutations('user-m', mutationStorage)[0].changes, { title: 'one', assignee: 'member-2' })
+enqueueTaskMutation('user-m', { id: 'p1', kind: 'positions', taskIds: ['task-2', 'task-1'] }, mutationStorage)
+enqueueTaskMutation('user-m', { id: 'd1', kind: 'delete', taskIds: ['task-3'] }, mutationStorage)
+const executedKinds = []
+await assert.rejects(
+  flushPendingTaskMutations('user-m', async (pending) => {
+    executedKinds.push(pending.kind)
+    if (pending.kind === 'positions') throw new Error('offline-mutation')
+  }, mutationStorage),
+  /offline-mutation/,
+)
+assert.deepEqual(executedKinds, ['update', 'positions'])
+assert.deepEqual(loadPendingTaskMutations('user-m', mutationStorage).map(({ kind }) => kind), ['positions', 'delete'])
+await flushPendingTaskMutations('user-m', async () => {}, mutationStorage)
+assert.deepEqual(loadPendingTaskMutations('user-m', mutationStorage), [])
+
 const previousLocalStorage = globalThis.localStorage
 const bootstrapStorage = memoryStorage()
 globalThis.localStorage = bootstrapStorage
@@ -84,7 +109,9 @@ globalThis.localStorage = previousLocalStorage
 
 const root = resolve(import.meta.dirname, '..')
 const appSource = readFileSync(resolve(root, 'app/src/App.jsx'), 'utf8')
+const authScreenSource = readFileSync(resolve(root, 'app/src/components/AuthScreen.jsx'), 'utf8')
 const mainSource = readFileSync(resolve(root, 'app/src/main.jsx'), 'utf8')
+const clientSource = readFileSync(resolve(root, 'app/src/services/supabaseClient.js'), 'utf8')
 const repositorySource = readFileSync(resolve(root, 'app/src/services/supabaseRepository.js'), 'utf8')
 assert(!appSource.includes("if (event === 'TOKEN_REFRESHED') setRemoteReloadKey"))
 assert(appSource.includes('enqueueTaskCreates(remoteUser.id, queuedCreates)'))
@@ -92,7 +119,14 @@ assert(appSource.includes('mergePendingTaskCreates'))
 assert(appSource.includes('loadLastRemoteSnapshot'))
 assert(appSource.includes('restoringCachedSession'))
 assert(!mainSource.includes('getSession()'))
+assert(mainSource.includes('await restoreInitialSession()'))
 assert(!mainSource.includes('restoreStartupTabForExistingSession'))
+assert(clientSource.includes('getRestoredInitialSession'))
+assert(authScreenSource.includes('if (getRestoredInitialSession())'))
+assert(repositorySource.includes('flushDurableTaskMutations(userId)'))
+assert(repositorySource.includes("kind: 'update'"))
+assert(repositorySource.includes("kind: 'positions'"))
+assert(repositorySource.includes("kind: 'delete'"))
 assert(repositorySource.includes("{ onConflict: 'id', ignoreDuplicates: true }"))
 
-console.log(JSON.stringify({ pass: true, checks: 19 }, null, 2))
+console.log(JSON.stringify({ pass: true, checks: 32 }, null, 2))
