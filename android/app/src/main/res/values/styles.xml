@@ -9,19 +9,19 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/kkiu_launch_background</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/kkiu_launch_background</item>
     </style>
 
-    <!-- Android requires a launch splash, but it does not need to look like a
-         separate logo screen. Match the app paper color and use an invisible
-         icon so cold start reads as a short background transition. -->
+    <!-- Keep the mandatory Android launch surface visually continuous with the
+         first app frame. values-night supplies the matching dark background. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#FBF8F2</item>
+        <item name="windowSplashScreenBackground">@color/kkiu_launch_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_transparent</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
