@@ -1,0 +1,37 @@
+name: Patch instant cached resume
+
+on:
+  push:
+    branches: [fix/instant-cached-resume]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ github.event.head_commit.message != 'Apply instant cached resume guard' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/instant-cached-resume
+          fetch-depth: 0
+      - name: Apply exact resume guard patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/App.jsx')
+          text = path.read_text()
+          old = '  if (hasSupabaseConfig && !session) return <AuthScreen pendingInvite={pendingInvite} />'
+          new = '  if (hasSupabaseConfig && session === null) return <AuthScreen pendingInvite={pendingInvite} />'
+          if old not in text:
+              raise SystemExit('Expected auth guard not found; refusing to patch')
+          if text.count(old) != 1:
+              raise SystemExit('Auth guard is not unique; refusing to patch')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app/src/App.jsx
+          git commit -m 'Apply instant cached resume guard'
+          git push origin HEAD:fix/instant-cached-resume
