@@ -17,9 +17,12 @@
         <item name="android:background">@null</item>
     </style>
 
-
+    <!-- Android requires a launch splash, but it does not need to look like a
+         separate logo screen. Match the app paper color and use an invisible
+         icon so cold start reads as a short background transition. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">#FBF8F2</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_transparent</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
