@@ -15,6 +15,11 @@ const readSystemTheme = async () => {
   return systemMedia.matches ? 'dark' : 'light'
 }
 
+const syncNativeThemePreference = async (preference) => {
+  if (Capacitor.getPlatform() !== 'android') return
+  await NativeTheme.setThemePreference({ preference }).catch(() => undefined)
+}
+
 const setSystemBarTheme = async (resolvedTheme) => {
   if (!Capacitor.isNativePlatform()) return
   await StatusBar.setStyle({
@@ -33,8 +38,13 @@ export async function applyThemePreference(preference) {
   try { localStorage.setItem('kkiu-theme-preference', normalized) } catch {}
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
     'content',
-    resolvedTheme === 'dark' ? '#0d1015' : '#dfe6f0',
+    resolvedTheme === 'dark' ? '#0d1015' : '#f2f5fa',
   )
+
+  // Android 12+ renders the system splash before WebView/React exists. Keep
+  // Android's persisted app night mode aligned with Kkiu's own preference so
+  // the next cold start uses the same light/dark launch resource.
+  await syncNativeThemePreference(normalized)
   await setSystemBarTheme(resolvedTheme)
   return resolvedTheme
 }
