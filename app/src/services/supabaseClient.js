@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import { authStorage } from './authStorage.js'
 import { getQaAuthStorageKey } from './qaAuth.js'
-import { loadLastRemoteSnapshot } from './remoteCache.js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
@@ -15,57 +14,9 @@ const projectRef = (() => {
 })()
 // Keep Supabase's historical default key so sessions from older APKs migrate.
 const authStorageKey = getQaAuthStorageKey() || `sb-${projectRef}-auth-token`
-const CACHED_SESSION_RESTORE_GRACE_MS = 1500
-
-const stabilizeCachedInitialSession = (client) => {
-  if (!client) return client
-  const onAuthStateChange = client.auth.onAuthStateChange.bind(client.auth)
-
-  client.auth.onAuthStateChange = (callback) => {
-    let pendingInitialNull = false
-    let settleTimer = null
-
-    const clearPendingInitialNull = () => {
-      pendingInitialNull = false
-      if (settleTimer !== null) globalThis.clearTimeout(settleTimer)
-      settleTimer = null
-    }
-
-    const settleCachedSession = async () => {
-      if (!pendingInitialNull) return
-      const { data, error } = await client.auth.getSession()
-      if (!pendingInitialNull) return
-      clearPendingInitialNull()
-      callback('INITIAL_SESSION', error ? null : data.session)
-    }
-
-    return onAuthStateChange((event, nextSession) => {
-      const shouldHoldCachedStartup = (
-        event === 'INITIAL_SESSION'
-        && !nextSession
-        && Boolean(loadLastRemoteSnapshot())
-      )
-
-      if (shouldHoldCachedStartup) {
-        // A native cold start can briefly report no session while Capacitor
-        // Preferences and Supabase token refresh are still settling. Keep the
-        // cached app shell in its restoring state instead of flashing AuthScreen.
-        pendingInitialNull = true
-        if (settleTimer !== null) globalThis.clearTimeout(settleTimer)
-        settleTimer = globalThis.setTimeout(() => { void settleCachedSession() }, CACHED_SESSION_RESTORE_GRACE_MS)
-        return
-      }
-
-      if (pendingInitialNull && (nextSession || event === 'SIGNED_OUT')) clearPendingInitialNull()
-      callback(event, nextSession)
-    })
-  }
-
-  return client
-}
 
 export const supabase = hasSupabaseConfig
-  ? stabilizeCachedInitialSession(createClient(supabaseUrl, supabasePublishableKey, {
+  ? createClient(supabaseUrl, supabasePublishableKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -77,8 +28,15 @@ export const supabase = hasSupabaseConfig
         storage: authStorage,
         storageKey: authStorageKey,
       },
-    }))
+    })
   : null
+
+export async function restoreInitialSession() {
+  if (!supabase) return null
+  const { data, error } = await supabase.auth.getSession()
+  if (error) return null
+  return data.session || null
+}
 
 export function getAuthRedirectUrl() {
   if (typeof window === 'undefined') return undefined

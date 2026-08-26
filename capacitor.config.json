@@ -2,7 +2,7 @@
   "appId": "app.kkiu.todo",
   "appName": "끼우 투두",
   "webDir": "dist",
-  "backgroundColor": "#ffffff",
+  "backgroundColor": "#fbf8f2",
   "server": {
     "androidScheme": "https"
   },
