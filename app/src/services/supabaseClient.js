@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import { authStorage } from './authStorage.js'
+import { setRestoredSession } from './authBootstrap.js'
 import { getQaAuthStorageKey } from './qaAuth.js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
@@ -31,26 +32,16 @@ export const supabase = hasSupabaseConfig
     })
   : null
 
-let restoredInitialSession
-
-export function getRestoredInitialSession() {
-  return restoredInitialSession
-}
-
 export async function restoreInitialSession() {
-  if (!supabase) {
-    restoredInitialSession = null
-    return null
-  }
+  if (!supabase) return setRestoredSession(null)
   const { data, error } = await supabase.auth.getSession()
-  restoredInitialSession = error ? null : (data.session || null)
-  return restoredInitialSession
+  return setRestoredSession(error ? null : data.session)
 }
 
 if (supabase) {
   supabase.auth.onAuthStateChange((event, nextSession) => {
-    if (nextSession) restoredInitialSession = nextSession
-    else if (event === 'SIGNED_OUT') restoredInitialSession = null
+    if (nextSession) setRestoredSession(nextSession)
+    else if (event === 'SIGNED_OUT') setRestoredSession(null)
   })
 }
 
