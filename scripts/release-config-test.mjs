@@ -45,6 +45,7 @@ check('Android splash has post theme', androidStyles.includes('<item name="postS
 check('Android launch uses one adaptive color resource', androidStyles.includes('@color/kkiu_launch_background') && androidLaunchLight.includes('#F2F5FA') && androidLaunchDark.includes('#0D1015'))
 check('Android WebView uses adaptive launch color before first paint', androidActivity.includes('getWebView().setBackgroundColor(launchBackgroundColor())'))
 check('Android app theme preference reaches system splash mode', androidThemePlugin.includes('setApplicationNightMode') && androidThemePlugin.includes('setThemePreference') && themePlatform.includes('NativeTheme.setThemePreference'))
+check('Android status bar icon contrast follows resolved app theme', androidThemePlugin.includes('setAppearanceLightStatusBars("light".equals(theme))') && androidThemePlugin.includes('setStatusBarTheme') && themePlatform.includes('NativeTheme.setStatusBarTheme'))
 check('System theme read bypasses an app-local night override', androidThemePlugin.includes('Resources.getSystem().getConfiguration()'))
 check('Legacy beige bootstrap shell cannot cover the launch surface', runtimeStyles.includes('.app-shell { background: transparent; }'))
 check('Capacitor does not override launch with a fixed color', !Object.hasOwn(capacitor, 'backgroundColor'))
