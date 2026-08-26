@@ -31,11 +31,27 @@ export const supabase = hasSupabaseConfig
     })
   : null
 
+let restoredInitialSession
+
+export function getRestoredInitialSession() {
+  return restoredInitialSession
+}
+
 export async function restoreInitialSession() {
-  if (!supabase) return null
+  if (!supabase) {
+    restoredInitialSession = null
+    return null
+  }
   const { data, error } = await supabase.auth.getSession()
-  if (error) return null
-  return data.session || null
+  restoredInitialSession = error ? null : (data.session || null)
+  return restoredInitialSession
+}
+
+if (supabase) {
+  supabase.auth.onAuthStateChange((event, nextSession) => {
+    if (nextSession) restoredInitialSession = nextSession
+    else if (event === 'SIGNED_OUT') restoredInitialSession = null
+  })
 }
 
 export function getAuthRedirectUrl() {
