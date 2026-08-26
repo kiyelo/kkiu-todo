@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { getAuthRedirectUrl, requireSupabase } from '../services/supabaseClient.js'
+import { hasRestoredSession } from '../services/authBootstrap.js'
 import { startNativeOAuth } from '../services/nativeAuth.js'
 
 const PROVIDERS = [
@@ -75,6 +76,14 @@ export default function AuthScreen({ pendingInvite = '' }) {
   }
 
   const disabled = Boolean(pendingProvider) || passwordPending
+
+  // main.jsx restores persisted auth before React mounts. App's auth listener can
+  // still attach one render later, so never paint the signed-out screen while a
+  // verified restored session already exists. A real SIGNED_OUT event clears the
+  // bootstrap state and this screen renders normally on the next parent render.
+  if (hasRestoredSession()) {
+    return <div className="app-shell" aria-hidden="true" />
+  }
 
   return (
     <div className="auth-screen">

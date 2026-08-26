@@ -1,4 +1,12 @@
 import { requireSupabase } from './supabaseClient.js'
+import { enqueueTaskMutation, flushPendingTaskMutations } from './taskMutationOutbox.js'
+
+let activeMutationUserId = null
+
+const rememberMutationUser = (userId) => {
+  if (userId) activeMutationUserId = userId
+  return userId
+}
 
 const taskFromRow = (row) => ({
   id: row.id,
@@ -20,7 +28,64 @@ const memberFromRow = (row) => ({
   leftAt: row.left_at || null,
 })
 
+const taskUpdatePayload = (changes) => {
+  const payload = {}
+  if (changes.title !== undefined) payload.title = changes.title
+  if (changes.done !== undefined) {
+    payload.completed_at = changes.done ? new Date().toISOString() : null
+    payload.completed_position = changes.done ? (changes.doneAt ?? null) : null
+  }
+  if (changes.assignee !== undefined) payload.assignee_id = changes.assignee || null
+  return payload
+}
+
+const executeTaskUpdate = async (taskId, changes) => {
+  const { error } = await requireSupabase().from('tasks').update(taskUpdatePayload(changes)).eq('id', taskId)
+  if (error) throw error
+}
+
+const executeTaskPositions = async (taskIds, notifyTaskId = null) => {
+  const client = requireSupabase()
+  const notificationAt = notifyTaskId ? new Date().toISOString() : null
+  const results = await Promise.all(taskIds.map((taskId, position) => client.from('tasks').update(taskId === notifyTaskId ? { position, notification_at: notificationAt } : { position }).eq('id', taskId)))
+  const failed = results.find((result) => result.error)
+  if (failed?.error && notifyTaskId && (failed.error.code === 'PGRST204' || /notification_at/i.test(failed.error.message || ''))) {
+    const fallback = await Promise.all(taskIds.map((taskId, position) => client.from('tasks').update({ position }).eq('id', taskId)))
+    const fallbackFailed = fallback.find((result) => result.error)
+    if (fallbackFailed?.error) throw fallbackFailed.error
+    return
+  }
+  if (failed?.error) throw failed.error
+}
+
+const executeTaskDelete = async (taskIds) => {
+  if (!taskIds.length) return
+  const { error } = await requireSupabase().from('tasks').delete().in('id', taskIds)
+  if (error) throw error
+}
+
+const executeQueuedTaskMutation = async (operation) => {
+  if (operation.kind === 'update') return executeTaskUpdate(operation.taskId, operation.changes)
+  if (operation.kind === 'positions') return executeTaskPositions(operation.taskIds, operation.notifyTaskId || null)
+  if (operation.kind === 'delete') return executeTaskDelete(operation.taskIds)
+  throw new Error('UNKNOWN_TASK_MUTATION')
+}
+
+const flushDurableTaskMutations = async (userId) => {
+  if (!userId) return []
+  rememberMutationUser(userId)
+  return flushPendingTaskMutations(userId, executeQueuedTaskMutation)
+}
+
+const queueCoreTaskMutation = async (operation) => {
+  if (!activeMutationUserId) return executeQueuedTaskMutation(operation)
+  enqueueTaskMutation(activeMutationUserId, operation)
+  return flushDurableTaskMutations(activeMutationUserId)
+}
+
 export async function loadPersonalTasks(userId) {
+  rememberMutationUser(userId)
+  await flushDurableTaskMutations(userId)
   const { data, error } = await requireSupabase()
     .from('tasks')
     .select('id,title,position,completed_position,completed_at,created_at')
@@ -33,6 +98,8 @@ export async function loadPersonalTasks(userId) {
 }
 
 export async function loadCircles(userId) {
+  rememberMutationUser(userId)
+  await flushDurableTaskMutations(userId)
   const client = requireSupabase()
   // RLS already limits every query to circles the signed-in user can access.
   // Start all reads together so native startup pays one network round trip
@@ -64,6 +131,7 @@ export async function loadCircles(userId) {
 }
 
 export async function createCircle(userId, { name, emoji, profileName, profileEmoji }) {
+  rememberMutationUser(userId)
   const { data, error } = await requireSupabase().rpc('create_circle_with_member', {
     circle_name: name,
     circle_emoji: emoji,
@@ -91,6 +159,7 @@ export async function createCircle(userId, { name, emoji, profileName, profileEm
 }
 
 export async function updateCircle(circleId, userId, { name, emoji, profileName, profileEmoji }) {
+  rememberMutationUser(userId)
   const { error } = await requireSupabase().rpc('update_circle_identity', {
     target_circle_id: circleId,
     circle_name: name,
@@ -112,6 +181,7 @@ export async function joinCircleByCode(code, profileName, profileEmoji) {
 }
 
 export async function leaveCircle(circleId, userId) {
+  rememberMutationUser(userId)
   const { data, error } = await requireSupabase()
     .from('circle_members')
     .update({ left_at: new Date().toISOString() })
@@ -124,6 +194,7 @@ export async function leaveCircle(circleId, userId) {
 }
 
 export async function createCircleTask(userId, circleId, task, position) {
+  rememberMutationUser(userId)
   const { error } = await requireSupabase().from('tasks').upsert({
     id: task.id,
     owner_id: userId,
@@ -136,6 +207,7 @@ export async function createCircleTask(userId, circleId, task, position) {
 }
 
 export async function createPersonalTask(userId, task, position) {
+  rememberMutationUser(userId)
   const { error } = await requireSupabase().from('tasks').upsert({
     id: task.id,
     owner_id: userId,
@@ -146,52 +218,53 @@ export async function createPersonalTask(userId, task, position) {
 }
 
 export async function updatePersonalTask(taskId, changes) {
-  const payload = {}
-  if (changes.title !== undefined) payload.title = changes.title
-  if (changes.done !== undefined) { payload.completed_at = changes.done ? new Date().toISOString() : null; payload.completed_position = changes.done ? (changes.doneAt ?? null) : null }
-  if (changes.assignee !== undefined) payload.assignee_id = changes.assignee || null
-  const { error } = await requireSupabase().from('tasks').update(payload).eq('id', taskId)
-  if (error) throw error
+  return queueCoreTaskMutation({
+    id: `update:${taskId}:${crypto.randomUUID()}`,
+    kind: 'update',
+    taskId,
+    changes,
+  })
 }
 
 export const updateTask = updatePersonalTask
 
 export async function updatePersonalPositions(tasks, notifyTaskId = null) {
-  const client = requireSupabase()
-  const notificationAt = notifyTaskId ? new Date().toISOString() : null
-  const results = await Promise.all(tasks.map((task, position) => client.from('tasks').update(task.id === notifyTaskId ? { position, notification_at: notificationAt } : { position }).eq('id', task.id)))
-  const failed = results.find((result) => result.error)
-  if (failed?.error && notifyTaskId && (failed.error.code === 'PGRST204' || /notification_at/i.test(failed.error.message || ''))) {
-    const fallback = await Promise.all(tasks.map((task, position) => client.from('tasks').update({ position }).eq('id', task.id)))
-    const fallbackFailed = fallback.find((result) => result.error)
-    if (fallbackFailed?.error) throw fallbackFailed.error
-    return
-  }
-  if (failed?.error) throw failed.error
+  return queueCoreTaskMutation({
+    id: `positions:${crypto.randomUUID()}`,
+    kind: 'positions',
+    taskIds: tasks.map((task) => task.id),
+    notifyTaskId,
+  })
 }
 
 export const updateTaskPositions = updatePersonalPositions
 
 export async function deletePersonalTasks(taskIds) {
   if (!taskIds.length) return
-  const { error } = await requireSupabase().from('tasks').delete().in('id', taskIds)
-  if (error) throw error
+  return queueCoreTaskMutation({
+    id: `delete:${crypto.randomUUID()}`,
+    kind: 'delete',
+    taskIds: [...new Set(taskIds)],
+  })
 }
 
 export const deleteTasks = deletePersonalTasks
 
 export async function loadPreferences(userId) {
+  rememberMutationUser(userId)
   const { data, error } = await requireSupabase().from('profiles').select('preferences').eq('user_id', userId).single()
   if (error) throw error
   return data?.preferences || {}
 }
 
 export async function savePreferences(userId, preferences) {
+  rememberMutationUser(userId)
   const { error } = await requireSupabase().from('profiles').update({ preferences }).eq('user_id', userId)
   if (error) throw error
 }
 
 export async function markTasksRead(userId, taskIds) {
+  rememberMutationUser(userId)
   if (!taskIds.length) return
   const rows = taskIds.map((taskId) => ({ task_id: taskId, user_id: userId, seen_at: new Date().toISOString() }))
   const { error } = await requireSupabase().from('task_read_receipts').upsert(rows, { onConflict: 'task_id,user_id' })
@@ -199,6 +272,7 @@ export async function markTasksRead(userId, taskIds) {
 }
 
 export async function loadReadTaskIds(userId, taskIds) {
+  rememberMutationUser(userId)
   if (!taskIds.length) return []
   const { data, error } = await requireSupabase().from('task_read_receipts').select('task_id').eq('user_id', userId).in('task_id', taskIds)
   if (error) throw error
@@ -206,12 +280,14 @@ export async function loadReadTaskIds(userId, taskIds) {
 }
 
 export async function logCompletionEvent(userId, task, circleId = null) {
+  rememberMutationUser(userId)
   const created = typeof task.createdAt === 'number' ? task.createdAt : new Date(task.createdAt || Date.now()).getTime()
   const { error } = await requireSupabase().from('completion_events').insert({ task_id: task.id, user_id: userId, circle_id: circleId, title: task.title, lead_ms: Math.max(0, Date.now() - created) })
   if (error) throw error
 }
 
 export async function loadCompletionEvents(userId, limit = 100) {
+  rememberMutationUser(userId)
   const { data, error } = await requireSupabase().from('completion_events').select('id,task_id,circle_id,title,lead_ms,completed_at').eq('user_id', userId).order('completed_at', { ascending: false }).limit(limit)
   if (error) throw error
   return data
