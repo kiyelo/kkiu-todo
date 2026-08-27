@@ -1,12 +1,9 @@
 package app.kkiu.todo;
 
 import android.app.UiModeManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.Build;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -18,16 +15,48 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 @CapacitorPlugin(name = "KkiuTheme")
 public class ThemePlugin extends Plugin {
+    private static final String PREFS_NAME = "kkiu_theme";
+    private static final String PREF_KEY = "preference";
+
     private String currentPreference = "system";
-    private String lastDeviceSystemTheme;
-    private BroadcastReceiver configurationReceiver;
+    private String lastSystemTheme;
+
+    private static String normalizePreference(String preference) {
+        if ("light".equals(preference) || "dark".equals(preference) || "system".equals(preference)) {
+            return preference;
+        }
+        return "system";
+    }
+
+    private static int appCompatMode(String preference) {
+        if ("dark".equals(preference)) return AppCompatDelegate.MODE_NIGHT_YES;
+        if ("light".equals(preference)) return AppCompatDelegate.MODE_NIGHT_NO;
+        return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+    }
+
+    public static String readSavedPreference(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return normalizePreference(preferences.getString(PREF_KEY, "system"));
+    }
+
+    public static void applySavedPreference(Context context) {
+        AppCompatDelegate.setDefaultNightMode(appCompatMode(readSavedPreference(context)));
+    }
+
+    private void savePreference(String preference) {
+        getContext()
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(PREF_KEY, preference)
+            .apply();
+    }
 
     private String getTheme(Configuration configuration) {
         int nightMode = configuration.uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return nightMode == Configuration.UI_MODE_NIGHT_YES ? "dark" : "light";
     }
 
-    private String getDeviceSystemTheme() {
+    private String getSystemTheme() {
         UiModeManager manager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
         if (manager != null) {
             int systemNightMode = manager.getNightMode();
@@ -35,47 +64,19 @@ public class ThemePlugin extends Plugin {
             if (systemNightMode == UiModeManager.MODE_NIGHT_NO) return "light";
         }
 
-        // AUTO/CUSTOM modes do not expose their currently resolved light/dark
-        // phase through UiModeManager. Fall back to the process configuration.
-        // Manual Android Light/Dark toggles resolve above through getNightMode(),
-        // which is deliberately independent of Kkiu's app-local night override.
+        // AUTO/CUSTOM are uncommon for the manual Light/Dark setting. When the
+        // system does not expose a direct YES/NO value, use the effective
+        // configuration as the fallback.
         return getTheme(getContext().getResources().getConfiguration());
     }
 
-    private int resolvedUiMode(String preference) {
-        if ("dark".equals(preference)) return UiModeManager.MODE_NIGHT_YES;
-        if ("light".equals(preference)) return UiModeManager.MODE_NIGHT_NO;
-        return "dark".equals(getDeviceSystemTheme())
-            ? UiModeManager.MODE_NIGHT_YES
-            : UiModeManager.MODE_NIGHT_NO;
-    }
-
-    private int appCompatMode(String preference) {
-        if ("dark".equals(preference)) return AppCompatDelegate.MODE_NIGHT_YES;
-        if ("light".equals(preference)) return AppCompatDelegate.MODE_NIGHT_NO;
-        return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-    }
-
-    private void applyNativeNightMode(String preference) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            UiModeManager manager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
-            if (manager != null) manager.setApplicationNightMode(resolvedUiMode(preference));
-        } else {
-            AppCompatDelegate.setDefaultNightMode(appCompatMode(preference));
-        }
-    }
-
     private void emitSystemThemeIfChanged() {
-        String deviceTheme = getDeviceSystemTheme();
-        if (deviceTheme.equals(lastDeviceSystemTheme)) return;
-        lastDeviceSystemTheme = deviceTheme;
-
-        if ("system".equals(currentPreference) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            applyNativeNightMode("system");
-        }
+        String systemTheme = getSystemTheme();
+        if (systemTheme.equals(lastSystemTheme)) return;
+        lastSystemTheme = systemTheme;
 
         JSObject result = new JSObject();
-        result.put("theme", deviceTheme);
+        result.put("theme", systemTheme);
         notifyListeners("systemThemeChanged", result);
     }
 
@@ -93,42 +94,30 @@ public class ThemePlugin extends Plugin {
     @Override
     public void load() {
         super.load();
-        lastDeviceSystemTheme = getDeviceSystemTheme();
-        configurationReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (Intent.ACTION_CONFIGURATION_CHANGED.equals(intent.getAction())) {
-                    emitSystemThemeIfChanged();
-                }
-            }
-        };
-        IntentFilter filter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            getContext().registerReceiver(configurationReceiver, filter, Context.RECEIVER_EXPORTED);
-        } else {
-            getContext().registerReceiver(configurationReceiver, filter);
-        }
+        currentPreference = readSavedPreference(getContext());
+        lastSystemTheme = getSystemTheme();
     }
 
     @PluginMethod
     public void getSystemTheme(PluginCall call) {
         JSObject result = new JSObject();
-        result.put("theme", getDeviceSystemTheme());
+        result.put("theme", getSystemTheme());
         call.resolve(result);
     }
 
     @PluginMethod
     public void setThemePreference(PluginCall call) {
-        String preference = call.getString("preference", "system");
-        if (!"dark".equals(preference) && !"light".equals(preference) && !"system".equals(preference)) {
-            preference = "system";
-        }
+        String preference = normalizePreference(call.getString("preference", "system"));
         currentPreference = preference;
-        String deviceThemeBeforeApply = getDeviceSystemTheme();
-        lastDeviceSystemTheme = deviceThemeBeforeApply;
-        applyNativeNightMode(preference);
+        savePreference(preference);
 
-        String resolvedTheme = "system".equals(preference) ? deviceThemeBeforeApply : preference;
+        // One controller only: Light, Dark and System map directly to the
+        // documented AppCompat DayNight modes. UiModeManager is read-only here.
+        AppCompatDelegate.setDefaultNightMode(appCompatMode(preference));
+
+        String resolvedTheme = "system".equals(preference) ? getSystemTheme() : preference;
+        lastSystemTheme = getSystemTheme();
+
         JSObject result = new JSObject();
         result.put("preference", preference);
         result.put("theme", resolvedTheme);
@@ -151,16 +140,5 @@ public class ThemePlugin extends Plugin {
     @Override
     protected void handleOnConfigurationChanged(Configuration newConfig) {
         emitSystemThemeIfChanged();
-    }
-
-    @Override
-    protected void handleOnDestroy() {
-        if (configurationReceiver != null) {
-            try {
-                getContext().unregisterReceiver(configurationReceiver);
-            } catch (IllegalArgumentException ignored) {
-            }
-            configurationReceiver = null;
-        }
     }
 }
