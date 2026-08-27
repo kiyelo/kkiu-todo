@@ -26,36 +26,36 @@ const setSystemBarTheme = async (resolvedTheme) => {
     await NativeTheme.setStatusBarTheme({ theme: resolvedTheme }).catch(() => undefined)
     return
   }
-  await StatusBar.setStyle({
-    style: resolvedTheme === 'dark' ? Style.Light : Style.Dark,
-  }).catch(() => undefined)
+  await StatusBar.setStyle({ style: resolvedTheme === 'dark' ? Style.Light : Style.Dark }).catch(() => undefined)
 }
 
-export async function applyThemePreference(preference) {
-  const normalized = ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
-  const resolvedTheme = normalized === 'system' ? await readSystemTheme() : normalized
+const applyResolvedTheme = async (preference, resolvedTheme) => {
   const root = document.documentElement
-
   root.dataset.theme = resolvedTheme
-  root.dataset.themePreference = normalized
+  root.dataset.themePreference = preference
   root.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
-  try { localStorage.setItem('kkiu-theme-preference', normalized) } catch {}
-  document.querySelector('meta[name="theme-color"]')?.setAttribute(
-    'content',
-    resolvedTheme === 'dark' ? '#0d1015' : '#f2f5fa',
-  )
-
-  // Android 12+ renders the system splash before WebView/React exists. Keep
-  // Android's persisted app night mode aligned with Kkiu's own preference so
-  // the next cold start uses the same light/dark launch resource.
-  await syncNativeThemePreference(normalized)
+  try { localStorage.setItem('kkiu-theme-preference', preference) } catch {}
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0d1015' : '#f2f5fa')
   await setSystemBarTheme(resolvedTheme)
   return resolvedTheme
 }
 
+export async function applyThemePreference(preference) {
+  const normalized = ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
+  await syncNativeThemePreference(normalized)
+  const resolvedTheme = normalized === 'system' ? await readSystemTheme() : normalized
+  return applyResolvedTheme(normalized, resolvedTheme)
+}
+
+const refreshThemePreference = async (preference) => {
+  const normalized = ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
+  const resolvedTheme = normalized === 'system' ? await readSystemTheme() : normalized
+  return applyResolvedTheme(normalized, resolvedTheme)
+}
+
 export function watchThemePreference(preference) {
   let disposed = false
-  const refresh = () => { void applyThemePreference(preference) }
+  const refresh = () => { void refreshThemePreference(preference) }
   const onMediaChange = () => { if (preference === 'system') refresh() }
   systemMedia.addEventListener('change', onMediaChange)
 
