@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.os.Build;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
@@ -29,7 +28,18 @@ public class ThemePlugin extends Plugin {
     }
 
     private String getDeviceSystemTheme() {
-        return getTheme(Resources.getSystem().getConfiguration());
+        UiModeManager manager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
+        if (manager != null) {
+            int systemNightMode = manager.getNightMode();
+            if (systemNightMode == UiModeManager.MODE_NIGHT_YES) return "dark";
+            if (systemNightMode == UiModeManager.MODE_NIGHT_NO) return "light";
+        }
+
+        // AUTO/CUSTOM modes do not expose their currently resolved light/dark
+        // phase through UiModeManager. Fall back to the process configuration.
+        // Manual Android Light/Dark toggles resolve above through getNightMode(),
+        // which is deliberately independent of Kkiu's app-local night override.
+        return getTheme(getContext().getResources().getConfiguration());
     }
 
     private int resolvedUiMode(String preference) {
@@ -47,10 +57,6 @@ public class ThemePlugin extends Plugin {
     }
 
     private void applyNativeNightMode(String preference) {
-        // Android's dark-theme guidance separates these APIs by OS version.
-        // Never apply AppCompatDelegate on Android 12+ after UiModeManager: doing
-        // both can make the two controllers fight over uiMode and repeatedly
-        // trigger configuration changes in the running Capacitor Activity.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             UiModeManager manager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
             if (manager != null) manager.setApplicationNightMode(resolvedUiMode(preference));
@@ -64,10 +70,6 @@ public class ThemePlugin extends Plugin {
         if (deviceTheme.equals(lastDeviceSystemTheme)) return;
         lastDeviceSystemTheme = deviceTheme;
 
-        // UiModeManager has no FOLLOW_SYSTEM constant. While Kkiu is in System
-        // mode, mirror the real device theme whenever the global configuration
-        // changes. This keeps Android 12+ launch resources synchronized without
-        // mixing UiModeManager and AppCompatDelegate in the same runtime path.
         if ("system".equals(currentPreference) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             applyNativeNightMode("system");
         }
@@ -84,7 +86,6 @@ public class ThemePlugin extends Plugin {
                 getActivity().getWindow(),
                 getActivity().getWindow().getDecorView()
             );
-            // "Light status bars" means a light background with dark foreground icons.
             controller.setAppearanceLightStatusBars("light".equals(theme));
         });
     }
@@ -123,10 +124,11 @@ public class ThemePlugin extends Plugin {
             preference = "system";
         }
         currentPreference = preference;
-        lastDeviceSystemTheme = getDeviceSystemTheme();
+        String deviceThemeBeforeApply = getDeviceSystemTheme();
+        lastDeviceSystemTheme = deviceThemeBeforeApply;
         applyNativeNightMode(preference);
 
-        String resolvedTheme = "system".equals(preference) ? getDeviceSystemTheme() : preference;
+        String resolvedTheme = "system".equals(preference) ? deviceThemeBeforeApply : preference;
         JSObject result = new JSObject();
         result.put("preference", preference);
         result.put("theme", resolvedTheme);
