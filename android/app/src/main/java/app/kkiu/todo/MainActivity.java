@@ -13,6 +13,10 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Apply Kkiu's persisted Light / Dark / System preference before the
+        // Activity is created, so AppCompat owns DayNight from startup onward.
+        ThemePlugin.applySavedPreference(this);
+
         registerPlugin(ThemePlugin.class);
         registerPlugin(HapticsPlugin.class);
         getWindow().setBackgroundDrawableResource(R.color.kkiu_launch_background);
