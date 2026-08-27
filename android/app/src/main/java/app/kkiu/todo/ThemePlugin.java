@@ -65,12 +65,18 @@ public class ThemePlugin extends Plugin {
             preference = "system";
         }
 
+        // Android 12+ persists an app-local night mode so the system splash can
+        // use the matching -night resource on the next launch. For "system",
+        // persist only the currently resolved device theme for that launch hint.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             UiModeManager manager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
             if (manager != null) manager.setApplicationNightMode(resolvedUiMode(preference));
-        } else {
-            AppCompatDelegate.setDefaultNightMode(appCompatMode(preference));
         }
+
+        // Keep the live Activity on AppCompat's real follow-system mode. Without
+        // this on Android 12+, choosing "system" becomes a snapshot of the device
+        // theme instead of continuing to react to later light/dark changes.
+        AppCompatDelegate.setDefaultNightMode(appCompatMode(preference));
 
         String resolvedTheme = "system".equals(preference) ? getDeviceSystemTheme() : preference;
         JSObject result = new JSObject();
