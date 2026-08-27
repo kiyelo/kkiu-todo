@@ -79,7 +79,7 @@ export function watchThemePreference(preference) {
     }
   }
 
-  refresh()
+  void applyThemePreference(preference)
   return () => {
     disposed = true
     systemMedia.removeEventListener('change', onMediaChange)
