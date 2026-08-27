@@ -33,6 +33,11 @@ const setSystemBarTheme = async (resolvedTheme) => {
 
 export async function applyThemePreference(preference) {
   const normalized = ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
+
+  // On Android, clear/apply the native preference before asking what the
+  // effective system theme is. Reading first returns the app's previous forced
+  // light/dark configuration when the user switches back to System.
+  await syncNativeThemePreference(normalized)
   const resolvedTheme = normalized === 'system' ? await readSystemTheme() : normalized
   const root = document.documentElement
 
@@ -45,10 +50,6 @@ export async function applyThemePreference(preference) {
     resolvedTheme === 'dark' ? '#0d1015' : '#f2f5fa',
   )
 
-  // Android 12+ renders the system splash before WebView/React exists. Keep
-  // Android's persisted app night mode aligned with Kkiu's own preference so
-  // the next cold start uses the same light/dark launch resource.
-  await syncNativeThemePreference(normalized)
   await setSystemBarTheme(resolvedTheme)
   return resolvedTheme
 }
