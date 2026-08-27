@@ -5,6 +5,8 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 const NativeTheme = registerPlugin('KkiuTheme')
 const systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
 
+const normalizePreference = (preference) => ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
+
 const readSystemTheme = async () => {
   if (Capacitor.getPlatform() === 'android') {
     try {
@@ -16,8 +18,12 @@ const readSystemTheme = async () => {
 }
 
 const syncNativeThemePreference = async (preference) => {
-  if (Capacitor.getPlatform() !== 'android') return
-  await NativeTheme.setThemePreference({ preference }).catch(() => undefined)
+  if (Capacitor.getPlatform() !== 'android') return null
+  try {
+    return await NativeTheme.setThemePreference({ preference })
+  } catch {
+    return null
+  }
 }
 
 const setSystemBarTheme = async (resolvedTheme) => {
@@ -31,31 +37,46 @@ const setSystemBarTheme = async (resolvedTheme) => {
   }).catch(() => undefined)
 }
 
-export async function applyThemePreference(preference) {
-  const normalized = ['system', 'light', 'dark'].includes(preference) ? preference : 'system'
-  const resolvedTheme = normalized === 'system' ? await readSystemTheme() : normalized
+const applyResolvedTheme = async (preference, resolvedTheme) => {
   const root = document.documentElement
-
   root.dataset.theme = resolvedTheme
-  root.dataset.themePreference = normalized
+  root.dataset.themePreference = preference
   root.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
-  try { localStorage.setItem('kkiu-theme-preference', normalized) } catch {}
+  try { localStorage.setItem('kkiu-theme-preference', preference) } catch {}
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
     'content',
     resolvedTheme === 'dark' ? '#0d1015' : '#f2f5fa',
   )
-
-  // Android 12+ renders the system splash before WebView/React exists. Keep
-  // Android's persisted app night mode aligned with Kkiu's own preference so
-  // the next cold start uses the same light/dark launch resource.
-  await syncNativeThemePreference(normalized)
   await setSystemBarTheme(resolvedTheme)
   return resolvedTheme
 }
 
+// This is the only path allowed to write Android's app-local night mode.
+// It runs once when the saved/user-selected preference changes.
+export async function applyThemePreference(preference) {
+  const normalized = normalizePreference(preference)
+  const nativeResult = await syncNativeThemePreference(normalized)
+  const nativeTheme = nativeResult?.theme
+  const resolvedTheme = normalized === 'system'
+    ? (nativeTheme === 'dark' || nativeTheme === 'light' ? nativeTheme : await readSystemTheme())
+    : normalized
+  return applyResolvedTheme(normalized, resolvedTheme)
+}
+
+// Configuration/resume/media refreshes are intentionally read-only. Calling
+// setThemePreference from here would feed a native configuration event back
+// into another native write.
+const refreshThemePreference = async (preference, eventTheme) => {
+  const normalized = normalizePreference(preference)
+  const resolvedTheme = normalized === 'system'
+    ? (eventTheme === 'dark' || eventTheme === 'light' ? eventTheme : await readSystemTheme())
+    : normalized
+  return applyResolvedTheme(normalized, resolvedTheme)
+}
+
 export function watchThemePreference(preference) {
   let disposed = false
-  const refresh = () => { void applyThemePreference(preference) }
+  const refresh = (eventTheme) => { if (!disposed) void refreshThemePreference(preference, eventTheme) }
   const onMediaChange = () => { if (preference === 'system') refresh() }
   systemMedia.addEventListener('change', onMediaChange)
 
@@ -70,8 +91,8 @@ export function watchThemePreference(preference) {
     })
 
     if (Capacitor.getPlatform() === 'android') {
-      void NativeTheme.addListener('systemThemeChanged', () => {
-        if (preference === 'system') refresh()
+      void NativeTheme.addListener('systemThemeChanged', ({ theme }) => {
+        if (preference === 'system') refresh(theme)
       }).then((handle) => {
         if (disposed) void handle.remove()
         else nativeThemeHandle = handle
@@ -79,7 +100,10 @@ export function watchThemePreference(preference) {
     }
   }
 
-  refresh()
+  // Apply the persisted/user-selected native preference exactly once for this
+  // preference value. Subsequent configuration events use refresh() above.
+  void applyThemePreference(preference)
+
   return () => {
     disposed = true
     systemMedia.removeEventListener('change', onMediaChange)
