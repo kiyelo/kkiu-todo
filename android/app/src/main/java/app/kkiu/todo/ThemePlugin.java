@@ -20,6 +20,9 @@ public class ThemePlugin extends Plugin {
         // Kkiu no longer writes Android's native night mode. The Activity remains
         // system-owned, so its current configuration is the authoritative system
         // light/dark state and can be read without any app-local override loop.
+        // In particular, do not restore the old Resources.getSystem().getConfiguration()
+        // workaround; the Activity configuration is correct precisely because no
+        // application-local night override is written anymore.
         return getTheme(getContext().getResources().getConfiguration());
     }
 
