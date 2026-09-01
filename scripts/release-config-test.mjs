@@ -65,7 +65,7 @@ check('Native redirect declared in Android', androidStrings.includes('app.kkiu.t
 check('Native OAuth uses PKCE', authClient.includes("flowType: isNative ? 'pkce' : 'implicit'"))
 check('Google OAuth remains available', authScreen.includes("{ id: 'google'") && authScreen.includes('signInWithOAuth'))
 check('Native OAuth uses the native bridge', authScreen.includes('Capacitor.isNativePlatform()') && authScreen.includes('startNativeOAuth(provider)'))
-check('Password login path is explicit and isolated in AuthScreen', authScreen.includes('signInWithPassword') && authScreen.includes('<form className="auth-social" onSubmit={signInWithPassword}>'))
+check('Auth screen exposes Google only', !authScreen.includes('signInWithPassword') && !authScreen.includes('type="password"') && !authScreen.includes('pendingInvite') && authScreen.includes('auth-google-button'))
 check('Cached app mounts before auth network restoration', !mainEntry.includes('await restoreInitialSession()') && !mainEntry.includes("from './services/supabaseClient.js'"))
 check('Cached session restore never renders login until auth confirms signed out', appSource.includes('if (hasSupabaseConfig && session === null) return <AuthScreen pendingInvite={pendingInvite} />') && appSource.includes('const restoringCachedSession = hasSupabaseConfig && session === undefined && Boolean(initialRemote)'))
 check('Required terms preserve a valid cached acceptance on read failure', appSource.includes('setTermsAccepted(cached ? true : false)'))
