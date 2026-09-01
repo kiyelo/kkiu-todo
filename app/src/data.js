@@ -1,3 +1,5 @@
+import { getDefaultLanguage } from './i18n.js'
+
 export const members=[
 {id:'me',name:'영롱',emoji:'🌿'},{id:'su',name:'수호',emoji:'🐶'},{id:'da',name:'다온',emoji:'🍊'},{id:'jh',name:'지호',emoji:'🪁'},{id:'ha',name:'하은',emoji:'🌸'},{id:'jw',name:'준서',emoji:'🌊'},{id:'sy',name:'서연',emoji:'☀️'},{id:'mj',name:'민준',emoji:'🌳'},{id:'yu',name:'유나',emoji:'🧡'},{id:'dy',name:'도윤',emoji:'🚲'}]
 const titles=['프로젝트 킥오프 안건 정리','디자인 시스템 컬러 토큰 검토','이번 주 회고 메모 작성','장보기 — 우유, 달걀, 커피, 휴지, 세제, 고양이 모래까지 잊지 말고 한 번에 사오기','30분 운동하기','부모님께 안부 전화','여행 숙소 후보 비교하고 가격·위치·후기까지 표로 정리해서 공유하기','읽을 아티클 모아두기','세금 서류 제출','자전거 라이트 교체','도서관 책 반납','블로그 초안 퇴고','화분 물주기','주간 회의 안건 공유']
@@ -29,4 +31,4 @@ personal:titles.map((title,i)=>({id:`p${i}`,title,done:false,createdAt:now-i*100
 circles:[
 {id:'c1',name:'우리집',emoji:'🏠',code:'KKIU-VOMZ',joinLocked:false,unread:0,unreadDone:1,members,memberUnread:{me:2,su:1},tasks:homeTasks,activityLogs},
 {id:'c2',name:'강릉 여행',emoji:'✈️',code:'KKIU-TRIP',joinLocked:false,unread:3,unreadDone:0,members:members.slice(0,3),memberUnread:{},tasks:tripTitles.map((title,i)=>({id:`c2t${i}`,title,assignee:['me','da','su','da','me'][i],done:false})),activityLogs:activityLogs.slice(0,5).map((log,index)=>({...log,id:`trip-${index}`,payload:{...log.payload,actor_name:['영롱','다온','수호','다온','영롱'][index]}}))}
-],settings:{compact:false,motion:true,notifications:true,serviceNotifications:true,interactionFeedback:true,theme:'system',language:'ko'}}
+],settings:{compact:false,motion:true,notifications:true,serviceNotifications:true,interactionFeedback:true,theme:'system',language:getDefaultLanguage()}}
