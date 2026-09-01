@@ -4,8 +4,10 @@ import { getAuthRedirectUrl, requireSupabase } from '../services/supabaseClient.
 import { hasRestoredSession } from '../services/authBootstrap.js'
 import { startNativeOAuth } from '../services/nativeAuth.js'
 
+const GOOGLE_G_LOGO = 'https://developers.google.com/static/identity/images/g-logo.png'
+
 const PROVIDERS = [
-  { id: 'google', label: 'Google로 계속하기' },
+  { id: 'google', label: 'Google 계정으로 로그인' },
 ]
 
 export default function AuthScreen({ pendingInvite = '' }) {
@@ -135,6 +137,18 @@ export default function AuthScreen({ pendingInvite = '' }) {
             className={`auth-social-btn auth-social-${id}`}
             disabled={disabled}
             onClick={() => signInWith(id)}
+            style={id === 'google' ? {
+              position: 'relative',
+              padding: '0 12px',
+              border: '1px solid #747775',
+              borderRadius: 999,
+              background: '#fff',
+              color: '#1f1f1f',
+              fontFamily: 'Roboto, Arial, sans-serif',
+              fontSize: 14,
+              fontWeight: 500,
+              lineHeight: '20px',
+            } : undefined}
           >
             <ProviderIcon id={id} />
             <span>{pendingProvider === id ? '이동 중…' : label}</span>
@@ -149,12 +163,14 @@ export default function AuthScreen({ pendingInvite = '' }) {
 function ProviderIcon({ id }) {
   if (id === 'google') {
     return (
-      <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
-        <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.12-.85 2.07-1.82 2.71v2.26h2.93c1.72-1.58 2.69-3.91 2.69-6.61z" />
-        <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.93-2.26c-.81.55-1.85.87-3.03.87-2.33 0-4.3-1.57-5-3.68H1v2.33C2.47 15.98 5.48 18 9 18z" />
-        <path fill="#FBBC05" d="M4 10.74a5.4 5.4 0 0 1 0-3.48V4.93H1a9 9 0 0 0 0 8.14l3-2.33z" />
-        <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.6-2.6C13.46.89 11.43 0 9 0 5.48 0 2.02 1 4.93l3 2.33c.7-2.11 2.67-3.68 5-3.68z" />
-      </svg>
+      <img
+        src={GOOGLE_G_LOGO}
+        width="20"
+        height="20"
+        alt=""
+        aria-hidden="true"
+        style={{ position: 'absolute', left: 12, display: 'block' }}
+      />
     )
   }
   if (id === 'apple') {
