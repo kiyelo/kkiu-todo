@@ -6,9 +6,13 @@ import { startNativeOAuth } from '../services/nativeAuth.js'
 import { getDefaultLanguage, t } from '../i18n.js'
 
 const GOOGLE_G_LOGO = 'https://developers.google.com/static/identity/images/g-logo.png'
+const PROVIDERS = [
+  { id: 'google', labelKey: 'authGoogle' },
+]
 
 export default function AuthScreen({ pendingInvite = '' }) {
   const language = getDefaultLanguage()
+  const googleProvider = PROVIDERS[0]
   const initialMessage = useMemo(() => {
     const values = new URLSearchParams(`${window.location.search.slice(1)}&${window.location.hash.slice(1)}`)
     const errorCode = values.get('error_code')
@@ -133,7 +137,7 @@ export default function AuthScreen({ pendingInvite = '' }) {
           type="button"
           className="auth-social-btn auth-social-google"
           disabled={disabled}
-          onClick={() => signInWith('google')}
+          onClick={() => signInWith(googleProvider.id)}
           style={{
             position: 'relative',
             padding: '0 12px',
@@ -155,7 +159,7 @@ export default function AuthScreen({ pendingInvite = '' }) {
             aria-hidden="true"
             style={{ position: 'absolute', left: 12, display: 'block' }}
           />
-          <span>{pendingProvider === 'google' ? t(language, 'authMoving') : t(language, 'authGoogle')}</span>
+          <span>{pendingProvider === googleProvider.id ? t(language, 'authMoving') : t(language, googleProvider.labelKey)}</span>
         </button>
       </div>
       {message && <p className="auth-message">{message}</p>}
