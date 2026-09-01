@@ -6,8 +6,6 @@ import { startNativeOAuth } from '../services/nativeAuth.js'
 
 const PROVIDERS = [
   { id: 'google', label: 'Google로 계속하기' },
-  { id: 'apple', label: 'Apple로 계속하기' },
-  { id: 'kakao', label: 'Kakao로 계속하기' },
 ]
 
 export default function AuthScreen({ pendingInvite = '' }) {
