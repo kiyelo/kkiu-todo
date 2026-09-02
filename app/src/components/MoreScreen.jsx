@@ -1,17 +1,19 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFloatingQueue from '../hooks/useFloatingQueue.js'
-import { HTML_ORACLE_VERSION, REACT_VERSION, localizedVersionHistory } from '../versionHistory.js'
+import { REACT_VERSION } from '../versionHistory.js'
 import InfoModal from './InfoScreens.jsx'
 import DialogSurface from './DialogSurface.jsx'
 import { checkNotificationPermission, ensureNotificationChannel, openNotificationSettings } from '../services/notificationPlatform.js'
 
 const icons = {
   account: '👤', bell: '🔔', theme: '◐', feedback: '◎', language: '🌐',
-  contact: '✉️', shield: '🛡️', privacy: '🔏', license: '⌘', notes: '✦',
-  backup: '↓', restore: '↑', reset: '⟲', starter: '↺', remove: '⌫', unread: '!',
+  contact: '✉️', shield: '🛡️', privacy: '🔏', license: '⌘',
+  reset: '⟲', starter: '↺', remove: '⌫', unread: '!',
 }
 const SLOT_KEY = 'kkiu-more-slot-v1'
 const CONTACT_FORM_URL = import.meta.env.VITE_CONTACT_FORM_URL || 'https://forms.gle/9Ljt3w7MaNJfumLb8'
+const TERMS_URL = 'https://kkiu.3dayweekendlab.com/terms/'
+const PRIVACY_URL = 'https://kkiu.3dayweekendlab.com/privacy/'
 const showDevelopmentTools = import.meta.env.DEV || new URLSearchParams(window.location.search).has('qa')
 
 const loadSlot = () => {
@@ -53,11 +55,6 @@ function Segmented({ label, value, options, onChange }) {
       {options.map((option) => <button type="button" role="radio" key={option.value} aria-checked={value === option.value} className={`more-lang${value === option.value ? ' on' : ''}`} onClick={() => onChange(option.value)}>{option.label}</button>)}
     </div>
   )
-}
-
-function ReleaseNotesModal({ language, onClose }) {
-  const en = language === 'en'
-  return <DialogSurface className="history-modal" labelledBy="release-notes-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>REACT</span><h3 id="release-notes-title">{en ? 'Release notes' : '수정 노트'}</h3></div><b>v{REACT_VERSION}</b></div><div className="release-list">{localizedVersionHistory(language).map((entry) => <article className="release-entry" key={entry.version}><div className="release-meta"><b>v{entry.version}</b><time>{entry.time}</time></div><h4>{entry.title}</h4><ul>{entry.changes.map((change) => <li key={change}>{change}</li>)}</ul></article>)}</div><div className="mrow"><button className="mbtn primary" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
 }
 
 function NotificationModal({ values, onSetting, language, onClose }) {
@@ -122,8 +119,27 @@ function ContactConfirmModal({ language, onClose }) {
   )
 }
 
-export default function MoreScreen({ values, onSetting, user, onSignOut, language = 'ko', onBackup, onRestore, onReset, onSeed, onEmpty, onUnread, testMode = false, onExitTestMode }) {
-  const fileRef = useRef(null)
+function ExternalPageConfirmModal({ kind, language, onClose }) {
+  const en = language === 'en'
+  const titleId = useId()
+  const messageId = useId()
+  const isTerms = kind === 'terms'
+  const title = isTerms ? (en ? 'Terms of service' : '이용약관') : (en ? 'Privacy policy' : '개인정보처리방침')
+  const url = isTerms ? TERMS_URL : PRIVACY_URL
+  const openPage = () => {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    onClose()
+  }
+  return (
+    <DialogSurface role="alertdialog" labelledBy={titleId} describedBy={messageId} scrimLabel={en ? 'Cancel' : '취소'} onClose={onClose}>
+      <h3 id={titleId}>{title}</h3>
+      <p id={messageId} className="confirm-message">{en ? `The Kkiu ${isTerms ? 'terms of service' : 'privacy policy'} page will open in your browser.` : `끼우 홈페이지의 ${title} 페이지로 이동해요.`}</p>
+      <div className="mrow"><button className="mbtn" onClick={onClose}>{en ? 'Cancel' : '취소'}</button><button className="mbtn primary" onClick={openPage}>{en ? 'Open page' : '이동하기'}</button></div>
+    </DialogSurface>
+  )
+}
+
+export default function MoreScreen({ values, onSetting, user, onSignOut, language = 'ko', onReset, onSeed, onEmpty, onUnread, testMode = false, onExitTestMode }) {
   const lastQueueIndex = useRef(null)
   const entryAlignedRef = useRef(false)
   const rollTimer = useRef(null)
@@ -132,17 +148,16 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const [locked, setLocked] = useState(initial.locked)
   const [symbols, setSymbols] = useState(initial.symbols)
   const [rolling, setRolling] = useState(false)
-  const [history, setHistory] = useState(false)
   const [heights, setHeights] = useState([])
   const [hit, setHit] = useState(false)
   const [doc, setDoc] = useState(null)
+  const [externalDoc, setExternalDoc] = useState(null)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const en = language === 'en'
   const provider = user ? providerLabel(user, language) : (en ? 'No account' : '로그인하지 않음')
 
   useEffect(() => { localStorage.setItem(SLOT_KEY, JSON.stringify({ locked, symbols })) }, [locked, symbols])
-  const restore = (event) => { const file = event.target.files?.[0]; if (file) onRestore?.(file); event.target.value = '' }
   const themeOptions = en
     ? [{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]
     : [{ value: 'system', label: '시스템 설정' }, { value: 'light', label: '라이트' }, { value: 'dark', label: '다크' }]
@@ -155,12 +170,9 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
       { h: 72, node: <SettingCard action="interaction-feedback" icon={icons.feedback} label={en ? 'Interaction feedback' : '조작 피드백'}><Toggle checked={Boolean(values.interactionFeedback)} label={en ? 'Interaction feedback' : '조작 피드백'} onChange={(next) => onSetting('interactionFeedback', next)} /></SettingCard> },
       { h: 126, node: <SettingCard action="language" icon={icons.language} label={en ? 'Language' : '언어'}><Segmented label={en ? 'Language' : '언어'} value={language} options={[{ value: 'ko', label: '한국어' }, { value: 'en', label: 'English' }]} onChange={(next) => onSetting('language', next)} /></SettingCard> },
       { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'SUPPORT' : '고객지원'}</p><Row action="contact" icon={icons.contact} label={en ? 'Contact us' : '문의하기'} onClick={() => setContactOpen(true)} /></div> },
-      { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'SERVICE INFO' : '서비스 정보'}</p><Row action="terms" icon={icons.shield} label={en ? 'Terms of service' : '이용약관'} onClick={() => setDoc('terms')} /></div> },
-      { h: 64, node: <Row action="privacy" icon={icons.privacy} label={en ? 'Privacy policy' : '개인정보처리방침'} onClick={() => setDoc('privacy')} /> },
+      { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'SERVICE INFO' : '서비스 정보'}</p><Row action="terms" icon={icons.shield} label={en ? 'Terms of service' : '이용약관'} onClick={() => setExternalDoc('terms')} /></div> },
+      { h: 64, node: <Row action="privacy" icon={icons.privacy} label={en ? 'Privacy policy' : '개인정보처리방침'} onClick={() => setExternalDoc('privacy')} /> },
       { h: 64, node: <Row action="licenses" icon={icons.license} label={en ? 'Open-source licenses' : '오픈소스 라이선스'} onClick={() => setDoc('licenses')} /> },
-      { h: 64, node: <Row action="history" icon={icons.notes} label={en ? 'Release notes' : '수정 노트'} onClick={() => setHistory(true)} /> },
-      { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'DATA' : '데이터'}</p><Row action="backup" icon={icons.backup} label={en ? 'Back up data' : '데이터 백업'} onClick={onBackup} /></div> },
-      { h: 64, node: <Row action="restore-data" icon={icons.restore} label={en ? 'Restore data' : '데이터 복원'} onClick={() => fileRef.current?.click()} /> },
       { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'ACCOUNT' : '계정'}</p><Row action="account" icon={icons.account} label={en ? 'Account information' : '계정 정보'} sub={provider} onClick={() => setDoc('account')} /></div> },
       ...(user ? [{ h: 54, node: <button className="more-version signout" data-act="signout" onClick={onSignOut}>{en ? 'Sign out' : '로그아웃'}</button> }] : []),
       { h: 48, node: <div className="more-app-version" aria-label={`${en ? 'Kkiu version' : '끼우 버전'} ${REACT_VERSION}`}>Kkiu v{REACT_VERSION}</div> },
@@ -175,7 +187,7 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
       )
     }
     return result
-  }, [en, language, onBackup, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onSignOut, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
+  }, [en, language, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onSignOut, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
 
   const positions = []
   let cursor = 0
@@ -224,5 +236,5 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
   const combo = max === 3 ? 'triple' : max === 2 ? 'pair' : 'mixed'
   const symbolClass = combo === 'triple' ? ({ '🔥': ' symbol-fire', '🌙': ' symbol-moon', '🍊': ' symbol-orange', '🌿': ' symbol-leaf', '🐈': ' symbol-cat', '🧦': ' symbol-sock', '🐸': ' symbol-frog' }[symbols[0]] || '') : ''
 
-  return <div className={`stage q more-queue-stage entry-settled${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp" ref={queue.scrollerRef} {...queue.scrollProps}><div ref={queue.trackRef} className="qtrack more-qtrack" style={{ top: '50%', transform: `translate3d(0,${-offset}px,0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div><div className="queue-floating-layer more-slot-layer" style={{ top: 'calc(50% + 30px)' }}><div className="slotwrap"><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div></div><div className="queue-scroll-space" style={{ height: `calc(100% + ${cursor}px)` }} aria-hidden="true" /></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" /><input ref={fileRef} hidden type="file" accept=".json,application/json" onChange={restore} />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{history && <ReleaseNotesModal language={language} onClose={() => setHistory(false)} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}</div>
+  return <div className={`stage q more-queue-stage entry-settled${queue.dragging ? ' dragging' : ''}${queue.edge ? ` edge-${queue.edge}` : ''}`} style={{ '--edge-pull': queue.edgeAmount }} {...queue.gestureProps}><div className="qvp" ref={queue.scrollerRef} {...queue.scrollProps}><div ref={queue.trackRef} className="qtrack more-qtrack" style={{ top: '50%', transform: `translate3d(0,${-offset}px,0)` }}>{items.map((item, index) => <div className="more-qitem" key={index} style={{ top: `${positions[index] + (positions[index] >= offset ? 81 : 2)}px` }}>{item.node}</div>)}</div><div className="queue-floating-layer more-slot-layer" style={{ top: 'calc(50% + 30px)' }}><div className="slotwrap"><button className={`ins quip emoji-slot-btn combo-${combo}${locked ? ' locked' : ''}${rolling ? ' rolling' : ''}${hit ? ' trigger' : ''}${symbolClass}`} data-act="quip-next" aria-label={en ? 'Toggle emoji slot lock' : '이모지 슬롯 잠금 전환'} onClick={roll}><span className="emoji-reels">{symbols.map((symbol, index) => <i className={`emoji-reel${counts[symbol] > 1 ? ' matched' : ''}`} key={index}>{symbol}</i>)}</span><span className="slot-mode">{locked ? '🔒' : '↻'}</span></button></div></div><div className="queue-scroll-space" style={{ height: `calc(100% + ${cursor}px)` }} aria-hidden="true" /></div><div className="queue-edge-feedback" aria-hidden="true" /><div className="qfade t" /><div className="qfade b" />{doc && <InfoModal kind={doc} user={user} language={language} onClose={() => setDoc(null)} onSignOut={onSignOut} />}{notificationsOpen && <NotificationModal values={values} onSetting={onSetting} language={language} onClose={() => setNotificationsOpen(false)} />}{contactOpen && <ContactConfirmModal language={language} onClose={() => setContactOpen(false)} />}{externalDoc && <ExternalPageConfirmModal kind={externalDoc} language={language} onClose={() => setExternalDoc(null)} />}</div>
 }
