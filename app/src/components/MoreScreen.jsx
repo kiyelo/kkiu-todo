@@ -164,7 +164,7 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
 
   const items = useMemo(() => {
     const result = [
-      { h: 116, node: <section className="more-account-summary" aria-label={en ? 'Signed-in account' : '로그인 계정'}><span className="mrank" aria-hidden="true">{icons.account}</span><div><small>{provider}</small><strong>{user?.email || (en ? 'Stored on this device' : '이 기기에만 저장 중')}</strong></div></section> },
+      { h: 116, node: <button type="button" className="more-account-summary" style={{ width: '100%', textAlign: 'left' }} aria-label={en ? 'Account management' : '계정 관리'} data-act="account" onClick={() => setDoc('account')}><span className="mrank" aria-hidden="true">{icons.account}</span><div><small>{provider}</small><strong>{user?.email || (en ? 'Stored on this device' : '이 기기에만 저장 중')}</strong></div><span aria-hidden="true" style={{ marginLeft: 'auto', color: 'var(--sub)', fontSize: '22px', fontWeight: 300 }}>›</span></button> },
       { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'SETTINGS' : '설정'}</p><Row action="notifications" icon={icons.bell} label={en ? 'Notification settings' : '알림 설정'} sub={values.notifications ? (en ? 'On' : '켜짐') : (en ? 'Off' : '꺼짐')} onClick={() => setNotificationsOpen(true)} /></div> },
       { h: 126, node: <SettingCard action="theme" icon={icons.theme} label={en ? 'Display mode' : '화면 모드'}><Segmented label={en ? 'Display mode' : '화면 모드'} value={values.theme} options={themeOptions} onChange={(next) => onSetting('theme', next)} /></SettingCard> },
       { h: 72, node: <SettingCard action="interaction-feedback" icon={icons.feedback} label={en ? 'Interaction feedback' : '조작 피드백'}><Toggle checked={Boolean(values.interactionFeedback)} label={en ? 'Interaction feedback' : '조작 피드백'} onChange={(next) => onSetting('interactionFeedback', next)} /></SettingCard> },
@@ -173,8 +173,6 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
       { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'SERVICE INFO' : '서비스 정보'}</p><Row action="terms" icon={icons.shield} label={en ? 'Terms of service' : '이용약관'} onClick={() => setExternalDoc('terms')} /></div> },
       { h: 64, node: <Row action="privacy" icon={icons.privacy} label={en ? 'Privacy policy' : '개인정보처리방침'} onClick={() => setExternalDoc('privacy')} /> },
       { h: 64, node: <Row action="licenses" icon={icons.license} label={en ? 'Open-source licenses' : '오픈소스 라이선스'} onClick={() => setDoc('licenses')} /> },
-      { h: 82, node: <div className="more-qsection"><p className="more-section-label">{en ? 'ACCOUNT' : '계정'}</p><Row action="account" icon={icons.account} label={en ? 'Account information' : '계정 정보'} sub={provider} onClick={() => setDoc('account')} /></div> },
-      ...(user ? [{ h: 54, node: <button className="more-version signout" data-act="signout" onClick={onSignOut}>{en ? 'Sign out' : '로그아웃'}</button> }] : []),
       { h: 48, node: <div className="more-app-version" aria-label={`${en ? 'Kkiu version' : '끼우 버전'} ${REACT_VERSION}`}>Kkiu v{REACT_VERSION}</div> },
     ]
     if (showDevelopmentTools) {
@@ -187,7 +185,7 @@ export default function MoreScreen({ values, onSetting, user, onSignOut, languag
       )
     }
     return result
-  }, [en, language, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onSignOut, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
+  }, [en, language, onEmpty, onExitTestMode, onReset, onSeed, onSetting, onUnread, provider, testMode, themeOptions, user, values.interactionFeedback, values.notifications, values.theme])
 
   const positions = []
   let cursor = 0
