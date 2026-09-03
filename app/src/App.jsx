@@ -71,7 +71,7 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [pendingInvite, setPendingInvite] = useState(readPendingInvite)
   const initialUi = useRef((() => { try { return JSON.parse(localStorage.getItem('kkiu-ui-v1')) || {} } catch { return {} } })()).current
-  const [tab, setTab] = useState(initialRemote && tabs.includes(initialUi.tab) ? initialUi.tab : 'home')
+  const [tab, setTab] = useState('home')
   const [data, setData] = useState(() => {
     const initialData = freshStarterData()
     if (initialRemote) {
@@ -161,6 +161,7 @@ export default function App() {
       const nextUserId = nextSession?.user?.id || null
       if (nextUserId && authUserRef.current !== nextUserId) {
         authUserRef.current = nextUserId
+        setTab('home')
         setRemoteLoading(!applyRemoteCache(nextUserId))
       } else if (!nextUserId) {
         clearLastRemoteUser(authUserRef.current)
@@ -173,7 +174,6 @@ export default function App() {
         setRemoteLoading(false)
       }
       setSession(nextSession)
-      if (event === 'SIGNED_IN') setTab('home')
     })
     return () => { active = false; listener.subscription.unsubscribe() }
   }, [applyRemoteCache])
@@ -304,7 +304,7 @@ export default function App() {
       setSyncError(data.settings?.language === 'en' ? 'Device cache is full. Pending changes may load slowly.' : '기기 저장 공간이 부족해 최신 캐시를 저장하지 못했어요.')
     }
   }, [data, remoteSnapshotReady, remoteUser?.id])
-  useEffect(() => { localStorage.setItem('kkiu-ui-v1', JSON.stringify({ tab, circleId, filter, queuePositions })) }, [tab, circleId, filter, queuePositions])
+  useEffect(() => { localStorage.setItem('kkiu-ui-v1', JSON.stringify({ circleId, filter, queuePositions })) }, [circleId, filter, queuePositions])
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 1700); return () => window.clearTimeout(timer) }, [toast])
   useEffect(() => { if (!syncError) return undefined; const timer = window.setTimeout(() => setSyncError(''), 3200); return () => window.clearTimeout(timer) }, [syncError])
 
