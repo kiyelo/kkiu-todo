@@ -83,7 +83,6 @@ export default function AuthScreen() {
             <img src={GOOGLE_G_LOGO} width="20" height="20" alt="" aria-hidden="true" />
             <span>{pendingProvider === googleProvider.id ? t(language, 'authMoving') : t(language, googleProvider.labelKey)}</span>
           </button>
-          <p className="auth-login-hint">{t(language, 'authLoginHint')}</p>
           {message && <p className="auth-message" role="alert">{message}</p>}
         </div>
       </section>
