@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { REACT_VERSION } from '../versionHistory.js'
 import { ConfirmDialog } from './Sheets.jsx'
 import { deleteMyAccount } from '../services/supabaseRepository.js'
 import DialogSurface from './DialogSurface.jsx'
@@ -76,5 +75,5 @@ export default function InfoModal({ kind, user, language = 'ko', onClose, onSign
  const account = kind === 'account'
  const titles = { account: en ? 'Account management' : '계정 관리', licenses: en ? 'Open-source licenses' : '오픈소스 라이선스' }
  const kickers = { account: 'ACCOUNT', licenses: 'LICENSES' }
- return <DialogSurface className="history-modal info-modal" labelledBy="info-modal-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div>{!account&&<b>v{REACT_VERSION}</b>}</div><div className="release-list info-body">{account ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : <LicensesView language={language} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
+ return <DialogSurface className="history-modal info-modal" labelledBy="info-modal-title" scrimLabel={en ? 'Close' : '닫기'} onClose={onClose}><div className="release-head"><div><span>{kickers[kind]}</span><h3 id="info-modal-title">{titles[kind]}</h3></div></div><div className="release-list info-body">{account ? <AccountView user={user} language={language} onSignOut={onSignOut} onClose={onClose} /> : <LicensesView language={language} />}</div><div className="mrow"><button className="mbtn primary" data-act="modal-cancel" onClick={onClose}>{en ? 'Close' : '닫기'}</button></div></DialogSurface>
 }
