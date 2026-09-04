@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import {
   enqueueTaskCreates,
   flushPendingTaskCreates,
+  hasPendingTaskCreate,
   loadPendingTaskCreates,
   mergePendingTaskCreates,
 } from '../app/src/services/remoteSyncQueue.js'
@@ -39,6 +40,8 @@ const storage = memoryStorage()
 enqueueTaskCreates('user-1', [operation('a', 1), operation('b', 0, 'circle-1')], storage)
 enqueueTaskCreates('user-1', [operation('a', 0)], storage)
 assert.deepEqual(loadPendingTaskCreates('user-1', storage).map(({ id, position }) => [id, position]), [['a', 0], ['b', 0]])
+assert.equal(hasPendingTaskCreate('user-1', 'a', storage), true)
+assert.equal(hasPendingTaskCreate('user-1', 'missing', storage), false)
 
 const merged = mergePendingTaskCreates({
   personal: [{ id: 'existing', title: 'existing', done: false }],
@@ -55,8 +58,11 @@ await assert.rejects(
   /offline/,
 )
 assert.deepEqual(loadPendingTaskCreates('user-1', storage).map(({ id }) => id), ['b'])
+assert.equal(hasPendingTaskCreate('user-1', 'a', storage), false)
+assert.equal(hasPendingTaskCreate('user-1', 'b', storage), true)
 await flushPendingTaskCreates('user-1', async () => {}, storage)
 assert.deepEqual(loadPendingTaskCreates('user-1', storage), [])
+assert.equal(hasPendingTaskCreate('user-1', 'b', storage), false)
 
 const concurrentStorage = memoryStorage()
 enqueueTaskCreates('user-2', [operation('c', 0)], concurrentStorage)
@@ -121,6 +127,25 @@ enqueueTaskMutation('user-c', { id: 'cu2', kind: 'update', taskId: 'gone', chang
 assert.deepEqual(loadPendingTaskMutations('user-c', compactStorage).map(({ kind }) => kind), ['positions', 'delete'])
 assert.deepEqual(loadPendingTaskMutations('user-c', compactStorage)[0].taskIds, ['keep'])
 
+const dependencyStorage = memoryStorage()
+enqueueTaskCreates('user-dep', [operation('pending-new', 0)], dependencyStorage)
+enqueueTaskMutation('user-dep', { id: 'dep-u', kind: 'update', taskId: 'pending-new', changes: { title: 'edited-before-create' } }, dependencyStorage)
+await assert.rejects(
+  flushPendingTaskMutations('user-dep', async (pending) => {
+    if (pending.kind === 'update' && hasPendingTaskCreate('user-dep', pending.taskId, dependencyStorage)) {
+      const error = new Error('TASK_CREATE_PENDING')
+      error.code = 'TASK_CREATE_PENDING'
+      throw error
+    }
+  }, dependencyStorage),
+  /TASK_CREATE_PENDING/,
+)
+assert.equal(loadPendingTaskMutations('user-dep', dependencyStorage).length, 1)
+await flushPendingTaskCreates('user-dep', async () => {}, dependencyStorage)
+await flushPendingTaskMutations('user-dep', async () => {}, dependencyStorage)
+assert.deepEqual(loadPendingTaskCreates('user-dep', dependencyStorage), [])
+assert.deepEqual(loadPendingTaskMutations('user-dep', dependencyStorage), [])
+
 const previousLocalStorage = globalThis.localStorage
 const bootstrapStorage = memoryStorage()
 globalThis.localStorage = bootstrapStorage
@@ -156,6 +181,7 @@ const mainSource = readFileSync(resolve(root, 'app/src/main.jsx'), 'utf8')
 const clientSource = readFileSync(resolve(root, 'app/src/services/supabaseClient.js'), 'utf8')
 const repositorySource = readFileSync(resolve(root, 'app/src/services/supabaseRepository.js'), 'utf8')
 const remoteCacheSource = readFileSync(resolve(root, 'app/src/services/remoteCache.js'), 'utf8')
+const remoteQueueSource = readFileSync(resolve(root, 'app/src/services/remoteSyncQueue.js'), 'utf8')
 assert(!appSource.includes("if (event === 'TOKEN_REFRESHED') setRemoteReloadKey"))
 assert(appSource.includes('enqueueTaskCreates(remoteUser.id, queuedCreates)'))
 assert(appSource.includes('mergePendingTaskCreates'))
@@ -173,7 +199,12 @@ assert(repositorySource.includes("kind: 'update'"))
 assert(repositorySource.includes("kind: 'positions'"))
 assert(repositorySource.includes("kind: 'delete'"))
 assert(repositorySource.includes("{ onConflict: 'id', ignoreDuplicates: true }"))
+assert(repositorySource.includes(".update(taskUpdatePayload(changes)).eq('id', taskId).select('id')"))
+assert(repositorySource.includes(".delete().in('id', taskIds).select('id')"))
+assert(repositorySource.includes('hasPendingTaskCreate(userId, taskId)'))
+assert(repositorySource.includes("error.code = 'TASK_CREATE_PENDING'"))
 assert(remoteCacheSource.includes('mergePendingTaskMutations'))
 assert(remoteCacheSource.includes('mergePendingTaskCreates'))
+assert(remoteQueueSource.includes('export function hasPendingTaskCreate'))
 
-console.log(JSON.stringify({ pass: true, checks: 43 }, null, 2))
+console.log(JSON.stringify({ pass: true, checks: 55 }, null, 2))
