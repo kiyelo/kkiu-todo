@@ -1,5 +1,6 @@
 import { requireSupabase } from './supabaseClient.js'
 import { enqueueTaskMutation, flushPendingTaskMutations } from './taskMutationOutbox.js'
+import { hasPendingTaskCreate } from './remoteSyncQueue.js'
 
 let activeMutationUserId = null
 
@@ -39,46 +40,77 @@ const taskUpdatePayload = (changes) => {
   return payload
 }
 
-const executeTaskUpdate = async (taskId, changes) => {
-  const { error } = await requireSupabase().from('tasks').update(taskUpdatePayload(changes)).eq('id', taskId)
-  if (error) throw error
+const pendingCreateRetryError = (taskIds) => {
+  const error = new Error(`TASK_CREATE_PENDING:${taskIds.join(',')}`)
+  error.code = 'TASK_CREATE_PENDING'
+  error.taskIds = taskIds
+  return error
 }
 
-const executeTaskPositions = async (taskIds, notifyTaskId = null) => {
+const missingPendingCreateIds = (userId, taskIds, resultRows) => {
+  if (!userId) return []
+  const found = new Set((resultRows || []).map((row) => row.id))
+  return taskIds.filter((taskId) => !found.has(taskId) && hasPendingTaskCreate(userId, taskId))
+}
+
+const ensurePendingCreatesAreRemote = (userId, taskIds, resultRows) => {
+  const missing = missingPendingCreateIds(userId, taskIds, resultRows)
+  if (missing.length) throw pendingCreateRetryError(missing)
+}
+
+const executeTaskUpdate = async (userId, taskId, changes) => {
+  const { data, error } = await requireSupabase().from('tasks').update(taskUpdatePayload(changes)).eq('id', taskId).select('id')
+  if (error) throw error
+  ensurePendingCreatesAreRemote(userId, [taskId], data)
+}
+
+const executePositionBatch = async (userId, taskIds, notifyTaskId = null, includeNotification = true) => {
   const client = requireSupabase()
-  const notificationAt = notifyTaskId ? new Date().toISOString() : null
-  const results = await Promise.all(taskIds.map((taskId, position) => client.from('tasks').update(taskId === notifyTaskId ? { position, notification_at: notificationAt } : { position }).eq('id', taskId)))
+  const notificationAt = notifyTaskId && includeNotification ? new Date().toISOString() : null
+  const results = await Promise.all(taskIds.map((taskId, position) => {
+    const payload = taskId === notifyTaskId && includeNotification ? { position, notification_at: notificationAt } : { position }
+    return client.from('tasks').update(payload).eq('id', taskId).select('id')
+  }))
   const failed = results.find((result) => result.error)
-  if (failed?.error && notifyTaskId && (failed.error.code === 'PGRST204' || /notification_at/i.test(failed.error.message || ''))) {
-    const fallback = await Promise.all(taskIds.map((taskId, position) => client.from('tasks').update({ position }).eq('id', taskId)))
-    const fallbackFailed = fallback.find((result) => result.error)
-    if (fallbackFailed?.error) throw fallbackFailed.error
-    return
-  }
   if (failed?.error) throw failed.error
+  const rows = results.flatMap((result) => result.data || [])
+  ensurePendingCreatesAreRemote(userId, taskIds, rows)
 }
 
-const executeTaskDelete = async (taskIds) => {
+const executeTaskPositions = async (userId, taskIds, notifyTaskId = null) => {
+  try {
+    await executePositionBatch(userId, taskIds, notifyTaskId, true)
+  } catch (error) {
+    if (notifyTaskId && (error?.code === 'PGRST204' || /notification_at/i.test(error?.message || ''))) {
+      await executePositionBatch(userId, taskIds, null, false)
+      return
+    }
+    throw error
+  }
+}
+
+const executeTaskDelete = async (userId, taskIds) => {
   if (!taskIds.length) return
-  const { error } = await requireSupabase().from('tasks').delete().in('id', taskIds)
+  const { data, error } = await requireSupabase().from('tasks').delete().in('id', taskIds).select('id')
   if (error) throw error
+  ensurePendingCreatesAreRemote(userId, taskIds, data)
 }
 
-const executeQueuedTaskMutation = async (operation) => {
-  if (operation.kind === 'update') return executeTaskUpdate(operation.taskId, operation.changes)
-  if (operation.kind === 'positions') return executeTaskPositions(operation.taskIds, operation.notifyTaskId || null)
-  if (operation.kind === 'delete') return executeTaskDelete(operation.taskIds)
+const executeQueuedTaskMutation = async (operation, userId = activeMutationUserId) => {
+  if (operation.kind === 'update') return executeTaskUpdate(userId, operation.taskId, operation.changes)
+  if (operation.kind === 'positions') return executeTaskPositions(userId, operation.taskIds, operation.notifyTaskId || null)
+  if (operation.kind === 'delete') return executeTaskDelete(userId, operation.taskIds)
   throw new Error('UNKNOWN_TASK_MUTATION')
 }
 
 const flushDurableTaskMutations = async (userId) => {
   if (!userId) return []
   rememberMutationUser(userId)
-  return flushPendingTaskMutations(userId, executeQueuedTaskMutation)
+  return flushPendingTaskMutations(userId, (operation) => executeQueuedTaskMutation(operation, userId))
 }
 
 const queueCoreTaskMutation = async (operation) => {
-  if (!activeMutationUserId) return executeQueuedTaskMutation(operation)
+  if (!activeMutationUserId) return executeQueuedTaskMutation(operation, null)
   enqueueTaskMutation(activeMutationUserId, operation)
   return flushDurableTaskMutations(activeMutationUserId)
 }
