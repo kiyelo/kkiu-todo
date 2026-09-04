@@ -30,6 +30,11 @@ export function loadPendingTaskCreates(userId, storage) {
   }
 }
 
+export function hasPendingTaskCreate(userId, taskId, storage) {
+  if (!userId || !taskId) return false
+  return loadPendingTaskCreates(userId, storage).some((operation) => operation.id === taskId)
+}
+
 const writePendingTaskCreates = (userId, operations, storage) => {
   const target = storageFor(storage)
   if (!operations.length) {
