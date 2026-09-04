@@ -11,6 +11,7 @@ import {
   enqueueTaskMutation,
   flushPendingTaskMutations,
   loadPendingTaskMutations,
+  mergePendingTaskMutations,
 } from '../app/src/services/taskMutationOutbox.js'
 import {
   clearLastRemoteUser,
@@ -95,12 +96,52 @@ assert.deepEqual(loadPendingTaskMutations('user-m', mutationStorage).map(({ kind
 await flushPendingTaskMutations('user-m', async () => {}, mutationStorage)
 assert.deepEqual(loadPendingTaskMutations('user-m', mutationStorage), [])
 
+const replayed = mergePendingTaskMutations({
+  personal: [
+    { id: 'task-1', title: 'old', done: false },
+    { id: 'task-2', title: 'two', done: false },
+    { id: 'task-3', title: 'three', done: false },
+  ],
+  circles: [],
+  settings: {},
+}, [
+  { id: 'ru', kind: 'update', taskId: 'task-1', changes: { title: 'edited', done: true, doneAt: 0 }, queuedAt: '2026-09-04T00:00:00.000Z' },
+  { id: 'rp', kind: 'positions', taskIds: ['task-2', 'task-3'] },
+  { id: 'rd', kind: 'delete', taskIds: ['task-3'] },
+])
+assert.deepEqual(replayed.personal.map(({ id }) => id), ['task-2', 'task-1'])
+assert.equal(replayed.personal.find(({ id }) => id === 'task-1').title, 'edited')
+assert.equal(replayed.personal.find(({ id }) => id === 'task-1').done, true)
+
+const compactStorage = memoryStorage()
+enqueueTaskMutation('user-c', { id: 'cu', kind: 'update', taskId: 'gone', changes: { title: 'edited' } }, compactStorage)
+enqueueTaskMutation('user-c', { id: 'cp', kind: 'positions', taskIds: ['gone', 'keep'] }, compactStorage)
+enqueueTaskMutation('user-c', { id: 'cd', kind: 'delete', taskIds: ['gone'] }, compactStorage)
+enqueueTaskMutation('user-c', { id: 'cu2', kind: 'update', taskId: 'gone', changes: { title: 'must-not-return' } }, compactStorage)
+assert.deepEqual(loadPendingTaskMutations('user-c', compactStorage).map(({ kind }) => kind), ['positions', 'delete'])
+assert.deepEqual(loadPendingTaskMutations('user-c', compactStorage)[0].taskIds, ['keep'])
+
 const previousLocalStorage = globalThis.localStorage
 const bootstrapStorage = memoryStorage()
 globalThis.localStorage = bootstrapStorage
-const bootstrapSnapshot = { personal: [{ id: 'cached' }], circles: [], settings: { language: 'ko' } }
+const bootstrapSnapshot = {
+  personal: [
+    { id: 'cached-1', title: 'cached-1', done: false },
+    { id: 'cached-2', title: 'cached-2', done: false },
+    { id: 'cached-3', title: 'cached-3', done: false },
+  ],
+  circles: [],
+  settings: { language: 'ko' },
+}
 assert.equal(saveRemoteSnapshot('user-3', bootstrapSnapshot), true)
-assert.deepEqual(loadLastRemoteSnapshot(), { userId: 'user-3', snapshot: { ...bootstrapSnapshot, cachedAt: loadLastRemoteSnapshot().snapshot.cachedAt } })
+enqueueTaskCreates('user-3', [operation('new-offline', 1)])
+enqueueTaskMutation('user-3', { id: 'bu', kind: 'update', taskId: 'new-offline', changes: { title: 'edited offline' } })
+enqueueTaskMutation('user-3', { id: 'bp', kind: 'positions', taskIds: ['cached-2', 'new-offline', 'cached-1', 'cached-3'] })
+enqueueTaskMutation('user-3', { id: 'bd', kind: 'delete', taskIds: ['cached-3'] })
+const hydratedBootstrap = loadLastRemoteSnapshot()
+assert.equal(hydratedBootstrap.userId, 'user-3')
+assert.deepEqual(hydratedBootstrap.snapshot.personal.map(({ id }) => id), ['cached-2', 'new-offline', 'cached-1'])
+assert.equal(hydratedBootstrap.snapshot.personal.find(({ id }) => id === 'new-offline').title, 'edited offline')
 clearLastRemoteUser('another-user')
 assert.equal(loadLastRemoteSnapshot().userId, 'user-3')
 clearLastRemoteUser('user-3')
@@ -114,6 +155,7 @@ const authBootstrapSource = readFileSync(resolve(root, 'app/src/services/authBoo
 const mainSource = readFileSync(resolve(root, 'app/src/main.jsx'), 'utf8')
 const clientSource = readFileSync(resolve(root, 'app/src/services/supabaseClient.js'), 'utf8')
 const repositorySource = readFileSync(resolve(root, 'app/src/services/supabaseRepository.js'), 'utf8')
+const remoteCacheSource = readFileSync(resolve(root, 'app/src/services/remoteCache.js'), 'utf8')
 assert(!appSource.includes("if (event === 'TOKEN_REFRESHED') setRemoteReloadKey"))
 assert(appSource.includes('enqueueTaskCreates(remoteUser.id, queuedCreates)'))
 assert(appSource.includes('mergePendingTaskCreates'))
@@ -131,5 +173,7 @@ assert(repositorySource.includes("kind: 'update'"))
 assert(repositorySource.includes("kind: 'positions'"))
 assert(repositorySource.includes("kind: 'delete'"))
 assert(repositorySource.includes("{ onConflict: 'id', ignoreDuplicates: true }"))
+assert(remoteCacheSource.includes('mergePendingTaskMutations'))
+assert(remoteCacheSource.includes('mergePendingTaskCreates'))
 
-console.log(JSON.stringify({ pass: true, checks: 34 }, null, 2))
+console.log(JSON.stringify({ pass: true, checks: 43 }, null, 2))
