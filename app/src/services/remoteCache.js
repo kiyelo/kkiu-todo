@@ -1,3 +1,6 @@
+import { loadPendingTaskCreates, mergePendingTaskCreates } from './remoteSyncQueue.js'
+import { loadPendingTaskMutations, mergePendingTaskMutations } from './taskMutationOutbox.js'
+
 const CACHE_PREFIX = 'kkiu-remote-cache-v1:'
 const LAST_REMOTE_USER_KEY = 'kkiu-last-remote-user-v1'
 
@@ -12,11 +15,17 @@ const validSnapshot = (value) => Boolean(
   && typeof value.settings === 'object',
 )
 
+const hydratePendingChanges = (userId, snapshot) => {
+  const withCreates = mergePendingTaskCreates(snapshot, loadPendingTaskCreates(userId))
+  return mergePendingTaskMutations(withCreates, loadPendingTaskMutations(userId))
+}
+
 export function loadRemoteSnapshot(userId) {
   if (!userId) return null
   try {
     const value = JSON.parse(localStorage.getItem(cacheKey(userId)))
-    return validSnapshot(value) ? value : null
+    if (!validSnapshot(value)) return null
+    return hydratePendingChanges(userId, value)
   } catch {
     return null
   }
