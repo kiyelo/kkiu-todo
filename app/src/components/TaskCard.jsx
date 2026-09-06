@@ -33,6 +33,38 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   }
 
   useEffect(() => { if (editing) { input.current?.focus({ preventScroll: true }); input.current?.setSelectionRange(value.length, value.length) } }, [editing])
+  useEffect(() => {
+    if (!editing) return undefined
+    const keepVisible = () => {
+      const card = cardRef.current
+      const scroller = card?.closest('.qvp')
+      if (!card || !(scroller instanceof HTMLElement)) return
+      const viewport = window.visualViewport
+      const viewportTop = viewport?.offsetTop || 0
+      const viewportBottom = viewportTop + (viewport?.height || window.innerHeight)
+      const scrollerRect = scroller.getBoundingClientRect()
+      const visibleTop = Math.max(scrollerRect.top, viewportTop) + 18
+      const visibleBottom = Math.min(scrollerRect.bottom, viewportBottom) - 18
+      if (visibleBottom <= visibleTop) return
+      const cardRect = card.getBoundingClientRect()
+      const desiredCenter = visibleTop + (visibleBottom - visibleTop) * .46
+      const delta = cardRect.top + cardRect.height / 2 - desiredCenter
+      if (Math.abs(delta) > 2) scroller.scrollTop += delta
+    }
+    const frame = requestAnimationFrame(keepVisible)
+    const shortTimer = window.setTimeout(keepVisible, 90)
+    const keyboardTimer = window.setTimeout(keepVisible, 280)
+    const viewport = window.visualViewport
+    viewport?.addEventListener('resize', keepVisible)
+    viewport?.addEventListener('scroll', keepVisible)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(shortTimer)
+      window.clearTimeout(keyboardTimer)
+      viewport?.removeEventListener('resize', keepVisible)
+      viewport?.removeEventListener('scroll', keepVisible)
+    }
+  }, [editing])
   useLayoutEffect(() => {
     const element = titleRef.current
     if (!element) return undefined
