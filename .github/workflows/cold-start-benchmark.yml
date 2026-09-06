@@ -1,0 +1,102 @@
+name: Measure Android Cold Start
+
+on:
+  pull_request:
+    paths:
+      - 'android/baseline-profile/**'
+      - '.github/workflows/cold-start-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cold-start-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      ANDROID_SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}
+      KKIU_SIGNING_STORE_FILE: ${{ github.workspace }}/android/ci-signing.keystore
+      KKIU_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+      KKIU_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+      KKIU_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable KVM for Gradle Managed Device
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android build and emulator tools
+        run: |
+          sdkmanager "platform-tools" "emulator" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore stable Android signing key
+        run: |
+          test -n "$ANDROID_SIGNING_KEY_BASE64"
+          printf '%s' "$ANDROID_SIGNING_KEY_BASE64" | base64 --decode > "$KKIU_SIGNING_STORE_FILE"
+
+      - name: Build and sync Android web assets
+        run: pnpm run build:android:verified
+
+      - name: Run cold-start Macrobenchmarks
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon \
+            :baseline-profile:pixel6Api31NonMinifiedReleaseAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=Macrobenchmark \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR
+
+      - name: Verify benchmark output
+        run: |
+          echo 'Benchmark output files:'
+          find android/baseline-profile/build/outputs -type f \
+            \( -name '*benchmarkData.json' -o -name '*.perfetto-trace' \) -print
+          benchmark_json=$(find android/baseline-profile/build/outputs -type f -name '*benchmarkData.json' -print -quit)
+          test -n "$benchmark_json"
+          test -s "$benchmark_json"
+          echo "Benchmark JSON: $benchmark_json"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v7
+        with:
+          name: kkiu-todo-${{ github.sha }}-cold-start-benchmark
+          path: |
+            android/baseline-profile/build/outputs/
+            android/baseline-profile/build/reports/androidTests/
+          if-no-files-found: error
+          retention-days: 14
