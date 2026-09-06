@@ -1,6 +1,0 @@
-/* Focus the queue on the task being edited. The floating insert control is a
-   separate queue action and only adds visual noise while a task owns the text
-   keyboard, so remove it until edit mode ends. */
-#app:has(.card.editing) .queue-composer-wrap {
-  display: none !important;
-}
