@@ -71,6 +71,12 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleRelease
 
+      - name: Verify Baseline Profile is packaged in clean release APK
+        run: |
+          test -s android/app/src/release/generated/baselineProfiles/baseline-prof.txt
+          test -s android/app/src/release/generated/baselineProfiles/startup-prof.txt
+          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/dexopt/baseline.prof'
+
       - name: Verify stable APK signatures
         run: |
           debug_sha256=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
