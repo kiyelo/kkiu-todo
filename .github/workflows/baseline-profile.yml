@@ -72,11 +72,11 @@ jobs:
       - name: Build and sync Android web assets
         run: pnpm run build:android:verified
 
-      - name: Generate Baseline and Startup Profiles
+      - name: Generate Baseline and Startup Profiles for release
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :app:generateBaselineProfile
+          ./gradlew --no-daemon :app:generateReleaseBaselineProfile
 
       - name: Verify generated profiles
         run: |
