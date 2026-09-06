@@ -1,0 +1,105 @@
+name: Generate Android Baseline Profile
+
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - '.github/workflows/baseline-profile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: baseline-profile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-profile:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      ANDROID_SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}
+      KKIU_SIGNING_STORE_FILE: ${{ github.workspace }}/android/ci-signing.keystore
+      KKIU_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+      KKIU_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+      KKIU_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable KVM for Gradle Managed Device
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android build and emulator tools
+        run: |
+          sdkmanager "platform-tools" "emulator" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore stable Android signing key
+        run: |
+          test -n "$ANDROID_SIGNING_KEY_BASE64"
+          printf '%s' "$ANDROID_SIGNING_KEY_BASE64" | base64 --decode > "$KKIU_SIGNING_STORE_FILE"
+
+      - name: Build and sync Android web assets
+        run: pnpm run build:android:verified
+
+      - name: Generate Baseline and Startup Profiles for release
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:generateReleaseBaselineProfile
+
+      - name: Verify generated profiles
+        run: |
+          baseline_profile=$(find android/app/src -type f -path '*/generated/baselineProfiles/baseline-prof.txt' -print -quit)
+          startup_profile=$(find android/app/src -type f -path '*/generated/baselineProfiles/startup-prof.txt' -print -quit)
+          test -n "$baseline_profile"
+          test -n "$startup_profile"
+          test -s "$baseline_profile"
+          test -s "$startup_profile"
+          echo "Baseline profile: $baseline_profile ($(wc -l < "$baseline_profile") lines)"
+          echo "Startup profile: $startup_profile ($(wc -l < "$startup_profile") lines)"
+
+      - name: Build release with generated profile
+        working-directory: android
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Verify Baseline Profile is packaged in release APK
+        run: unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -q 'assets/dexopt/baseline.prof'
+
+      - name: Upload generated profile rules
+        uses: actions/upload-artifact@v7
+        with:
+          name: kkiu-todo-${{ github.sha }}-baseline-profile
+          path: android/app/src/*/generated/baselineProfiles/*.txt
+          if-no-files-found: error
+          retention-days: 30
