@@ -23,7 +23,9 @@ const authStorage = read('app/src/services/authStorage.js')
 const haptics = read('app/src/services/interactionFeedback.js')
 const queue = read('app/src/hooks/useFloatingQueue.js')
 const queueScreen = read('app/src/components/QueueScreen.jsx')
-const moreScreen = read('app/src/components/MoreScreen.jsx')
+// MoreScreen.jsx is now only a lazy wrapper; validate the unchanged screen
+// implementation that still owns the floating slot surface.
+const moreScreen = read('app/src/components/MoreScreenImpl.jsx')
 const taskCard = read('app/src/components/TaskCard.jsx')
 const styleEntry = read('app/src/styles/index.css')
 const queueStyles = read('app/src/styles/queue.css')
