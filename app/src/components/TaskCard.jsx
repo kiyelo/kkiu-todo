@@ -15,13 +15,17 @@ function splitAtWidth(text, width) {
   return [text.slice(0, low), text.slice(low).trim()]
 }
 
-export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, selecting, selected, onSelect, onLongPress, showRank = true, searchHit = false, newHit = false, language = 'ko' }) {
+export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDelete, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, showRank = true, searchHit = false, newHit = false, language = 'ko' }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(task.title)
   const [leaving, setLeaving] = useState(false)
   const [titleWidth, setTitleWidth] = useState(0)
+  const [swipeX, setSwipeX] = useState(0)
+  const [swiping, setSwiping] = useState(false)
+  const [swipeReady, setSwipeReady] = useState(false)
+  const [swipeLeaving, setSwipeLeaving] = useState(false)
   const input = useRef(null); const cardRef = useRef(null); const titleRef = useRef(null)
-  const hold = useRef(null); const point = useRef(null); const grip = useRef(null); const suppressHoldClick = useRef(false)
+  const grip = useRef(null); const swipe = useRef(null); const suppressSwipeClick = useRef(false)
 
   useEffect(() => { if (editing) { input.current?.focus(); input.current?.setSelectionRange(value.length, value.length) } }, [editing])
   useLayoutEffect(() => {
@@ -32,56 +36,91 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   }, [editing])
   useEffect(() => { if (!editing) return undefined; const outside = (event) => { if (!cardRef.current?.contains(event.target)) { setValue(task.title); setEditing(false) } }; document.addEventListener('pointerdown', outside, true); return () => document.removeEventListener('pointerdown', outside, true) }, [editing, task.title])
   const save = () => { const next = normalizeTaskTitle(value); if (next) onEdit(task.id, next); setEditing(false) }
-  const clearHold = (event) => {
-    const current = point.current
-    if (event && current?.pointerId !== event.pointerId) return
-    window.clearTimeout(hold.current)
-    hold.current = null
-    point.current = null
-    current?.cleanup?.()
-    if (current?.triggered) window.setTimeout(() => { suppressHoldClick.current = false }, 0)
+
+  const clearSwipe = (event) => {
+    const state = swipe.current
+    if (event && state?.pointerId !== event.pointerId) return
+    if (state?.captured && cardRef.current) {
+      try { cardRef.current.releasePointerCapture(state.pointerId) } catch {}
+    }
+    swipe.current = null
   }
-  const startHold = (event) => {
-    if (editing || task.done || selecting || event.target.closest('.grip,input,textarea')) return
-    clearHold()
-    const state = { x: event.clientX, y: event.clientY, pointerId: event.pointerId, triggered: false, cleanup: null }
-    const move = (nextEvent) => {
-      if (point.current !== state || state.pointerId !== nextEvent.pointerId || state.triggered) return
-      if (Math.abs(nextEvent.clientX - state.x) >= 8 || Math.abs(nextEvent.clientY - state.y) >= 8) clearHold(nextEvent)
+  const resetSwipe = () => {
+    setSwipeX(0)
+    setSwiping(false)
+    setSwipeReady(false)
+    setSwipeLeaving(false)
+  }
+  const startSwipeDelete = (event) => {
+    if (editing || task.done || dragging || swipeLeaving || event.button > 0 || event.target.closest('.grip,.ck,input,textarea,.save,.asgc')) return
+    clearSwipe()
+    swipe.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      active: false,
+      captured: false,
+      ready: false,
+      hapticSent: false,
+      offset: 0,
     }
-    const end = (nextEvent) => { if (point.current === state) clearHold(nextEvent) }
-    state.cleanup = () => {
-      window.removeEventListener('pointermove', move, true)
-      window.removeEventListener('pointerup', end, true)
-      window.removeEventListener('pointercancel', end, true)
+  }
+  const moveSwipeDelete = (event) => {
+    const state = swipe.current
+    if (!state || state.pointerId !== event.pointerId || swipeLeaving) return
+    const dx = event.clientX - state.x
+    const dy = event.clientY - state.y
+    if (!state.active) {
+      if (Math.abs(dy) >= 10 && Math.abs(dy) > Math.abs(dx) * 1.1) { clearSwipe(event); return }
+      if (dx > -8 || Math.abs(dx) <= Math.abs(dy) * 1.12) return
+      state.active = true
+      suppressSwipeClick.current = true
+      setSwiping(true)
+      try { cardRef.current?.setPointerCapture(event.pointerId); state.captured = true } catch {}
     }
-    point.current = state
-    window.addEventListener('pointermove', move, true)
-    window.addEventListener('pointerup', end, true)
-    window.addEventListener('pointercancel', end, true)
-    hold.current = window.setTimeout(() => {
-      const current = point.current
-      if (!current) return
-      hold.current = null
-      current.triggered = true
-      suppressHoldClick.current = true
-      interactionFeedback(20)
-      onLongPress?.(task.id)
-    }, 460)
+    event.preventDefault(); event.stopPropagation()
+    const width = cardRef.current?.offsetWidth || 320
+    const maxDistance = Math.max(112, width * .55)
+    const next = Math.max(-maxDistance, Math.min(0, dx))
+    const threshold = Math.min(120, Math.max(88, width * .3))
+    const ready = Math.abs(next) >= threshold
+    if (ready && !state.hapticSent) { interactionFeedback(16); state.hapticSent = true }
+    state.offset = next
+    state.ready = ready
+    setSwipeX(next)
+    setSwipeReady(ready)
+  }
+  const finishSwipeDelete = (event, cancelled = false) => {
+    const state = swipe.current
+    if (!state || state.pointerId !== event.pointerId) return
+    if (!state.active) { clearSwipe(event); return }
+    event.preventDefault(); event.stopPropagation()
+    const shouldDelete = !cancelled && state.ready
+    clearSwipe(event)
+    if (shouldDelete) {
+      const width = cardRef.current?.offsetWidth || 320
+      setSwipeReady(true)
+      setSwipeLeaving(true)
+      setSwiping(false)
+      setSwipeX(-(width + 48))
+      window.setTimeout(() => onDelete?.(task.id), 180)
+    } else {
+      resetSwipe()
+    }
+    window.setTimeout(() => { suppressSwipeClick.current = false }, 0)
   }
 
   useEffect(() => () => {
-    window.clearTimeout(hold.current)
     window.clearTimeout(grip.current?.timer)
-    point.current?.cleanup?.()
     const current = grip.current
     current?.cleanupTouch?.()
     if (current?.element) { current.element.dataset.reorderArmed = 'false'; current.element.dataset.queueMoved = 'false' }
-    hold.current = null; point.current = null; grip.current = null; suppressHoldClick.current = false
+    clearSwipe()
+    grip.current = null; suppressSwipeClick.current = false
   }, [])
 
   const startGrip = (event) => {
-    if (!reorderable || selecting) return
+    if (!reorderable) return
     const element = event.currentTarget
     const state = { element, pointerId: event.pointerId, x: event.clientX, y: event.clientY, armed: false, timer: null, cleanupTouch: null }
     element.dataset.reorderArmed = 'false'; element.dataset.queueMoved = 'false'
@@ -118,16 +157,19 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     state.element.dataset.reorderArmed = 'false'; state.element.dataset.queueMoved = 'false'; grip.current = null
   }
 
-  const finish = () => { if (task.done || selecting) return; interactionFeedback(10); setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
+  const finish = () => { if (task.done) return; interactionFeedback(10); setLeaving(true); window.setTimeout(() => { onComplete(task.id); setLeaving(false) }, 300) }
   const assignedMembers = (task.assignees || [task.assignee]).map((id) => members.find((member) => member.id === id)).filter(Boolean)
   const hasFormerAssignee = assignedMembers.some((member) => member.leftAt)
   const assignableMembers = members.filter((member) => !member.leftAt)
   const [line1, line2] = splitAtWidth(task.title, titleWidth)
-  return <article ref={cardRef} data-task-id={task.id} className={`card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${selected ? ' sel-on' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}${hasFormerAssignee ? ' former-assignee' : ''}`} onPointerDown={startHold} onClickCapture={(event) => { if (suppressHoldClick.current) { event.preventDefault(); event.stopPropagation() } }}>
-    <button className={`ck${task.done || selected || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={selecting ? `${selected ? (language==='en'?'Deselect':'선택 해제') : (language==='en'?'Select':'선택')}: ${task.title}` : `${language==='en'?'Complete to-do':'할 일 완료'}: ${task.title}`} data-act={selecting ? 'sel' : 'complete'} data-id={task.id} onClick={() => selecting ? onSelect(task.id) : finish()}>{(task.done || selected || leaving) && <CheckIcon />}</button>
-    {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
-    <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" aria-label={`${language === 'en' ? 'Edit to-do' : '할 일 수정'}: ${task.title}`} value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" aria-label={task.title} data-act="title" data-id={task.id} onClick={() => selecting ? onSelect(task.id) : !task.done && setEditing(true)}><span aria-hidden="true" className="t-main">{line1}</span>{line2 && <span aria-hidden="true" className="t-rest">{line2}</span>}</button>}</div>
-    <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className={`who${assignedMembers[0].leftAt ? ' former' : ''}`}>{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className={`who${member.leftAt ? ' former' : ''}`} key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" style={{ touchAction: 'pan-y' }} data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
-    {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{assignableMembers.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText></button>)}</div>}
-  </article>
+  return <div className={`swipe-delete-shell${swiping ? ' swiping' : ''}${swipeReady ? ' armed' : ''}${swipeLeaving ? ' dismissing' : ''}`}>
+    <div className="swipe-delete-action" aria-hidden="true"><span className="swipe-delete-trash"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" /></svg></span></div>
+    <article ref={cardRef} data-task-id={task.id} className={`card swipe-delete-card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}${hasFormerAssignee ? ' former-assignee' : ''}`} style={swipeX ? { transform: `translate3d(${swipeX}px,0,0)` } : undefined} onPointerDown={startSwipeDelete} onPointerMove={moveSwipeDelete} onPointerUp={(event) => finishSwipeDelete(event)} onPointerCancel={(event) => finishSwipeDelete(event, true)} onClickCapture={(event) => { if (suppressSwipeClick.current) { event.preventDefault(); event.stopPropagation() } }}>
+      <button className={`ck${task.done || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={`${language==='en'?'Complete to-do':'할 일 완료'}: ${task.title}`} data-act="complete" data-id={task.id} onClick={finish}>{(task.done || leaving) && <CheckIcon />}</button>
+      {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
+      <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" aria-label={`${language === 'en' ? 'Edit to-do' : '할 일 수정'}: ${task.title}`} value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" aria-label={task.title} data-act="title" data-id={task.id} onClick={() => !task.done && setEditing(true)}><span aria-hidden="true" className="t-main">{line1}</span>{line2 && <span aria-hidden="true" className="t-rest">{line2}</span>}</button>}</div>
+      <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className={`who${assignedMembers[0].leftAt ? ' former' : ''}`}>{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className={`who${member.leftAt ? ' former' : ''}`} key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" style={{ touchAction: 'pan-y' }} data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
+      {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{assignableMembers.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText></button>)}</div>}
+    </article>
+  </div>
 }
