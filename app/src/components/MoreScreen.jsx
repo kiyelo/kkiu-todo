@@ -1,6 +1,13 @@
 import { Suspense, lazy } from 'react'
 
-const LazyMoreScreen = lazy(() => import('./MoreScreenImpl.jsx'))
+let moreScreenModulePromise = null
+
+export function preloadMoreScreen() {
+  if (!moreScreenModulePromise) moreScreenModulePromise = import('./MoreScreenImpl.jsx')
+  return moreScreenModulePromise
+}
+
+const LazyMoreScreen = lazy(() => preloadMoreScreen())
 
 export default function MoreScreen(props) {
   return (
