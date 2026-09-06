@@ -1,7 +1,13 @@
 import { Suspense, lazy } from 'react'
 
-const loadSheets = () => import('./SheetsImpl.jsx')
-const lazyNamed = (name) => lazy(() => loadSheets().then((module) => ({ default: module[name] })))
+let sheetsModulePromise = null
+
+export function preloadSheets() {
+  if (!sheetsModulePromise) sheetsModulePromise = import('./SheetsImpl.jsx')
+  return sheetsModulePromise
+}
+
+const lazyNamed = (name) => lazy(() => preloadSheets().then((module) => ({ default: module[name] })))
 
 const LazyActivityLogSheet = lazyNamed('ActivityLogSheet')
 const LazyCircleEditor = lazyNamed('CircleEditor')
