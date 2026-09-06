@@ -1,55 +1,22 @@
-/* Swipe-to-delete is the only horizontal gesture on active task cards.
-   The card follows the pointer while the delete surface is revealed behind it. */
+/* Swipe-to-delete is a direct dismiss gesture: no destructive backdrop is shown.
+   The task card follows the pointer and fades in proportion to swipe distance. */
 .swipe-delete-shell {
   position: relative;
   width: 100%;
   border-radius: 16px;
+  background: transparent;
+  overflow: visible;
+}
+
+/* Keep each swipe visually contained to its own row while the card moves. */
+.swipe-delete-shell.swiping,
+.swipe-delete-shell.dismissing {
   overflow: hidden;
-  background: #ff3b30;
 }
 
-.swipe-delete-action {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 23px;
-  background: #ff3b30;
-  color: #fff;
-  pointer-events: none;
-}
-
+.swipe-delete-action,
 .swipe-delete-trash {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: rgba(255,255,255,.14);
-  opacity: .82;
-  transform: scale(.92);
-  transition: transform .14s ease, opacity .14s ease, background .14s ease;
-}
-
-.swipe-delete-trash svg {
-  width: 19px;
-  height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.swipe-delete-shell.armed .swipe-delete-action {
-  background: #e9342b;
-}
-
-.swipe-delete-shell.armed .swipe-delete-trash {
-  opacity: 1;
-  transform: scale(1.1);
-  background: rgba(255,255,255,.2);
+  display: none !important;
 }
 
 .swipe-delete-card {
@@ -57,7 +24,8 @@
   z-index: 1;
   width: 100%;
   touch-action: pan-y;
-  will-change: transform;
+  will-change: transform, opacity;
+  transition: transform .18s cubic-bezier(.22,.72,.25,1), opacity .18s ease;
 }
 
 .swipe-delete-shell.swiping .swipe-delete-card {
@@ -65,19 +33,18 @@
 }
 
 .swipe-delete-shell.dismissing .swipe-delete-card {
-  transition: transform .18s cubic-bezier(.4,0,1,1) !important;
+  transition: transform .18s cubic-bezier(.4,0,1,1), opacity .18s ease !important;
 }
 
-/* The card's own surface must fully cover the delete background at rest. */
+/* At rest the card must be fully opaque and in its normal position. */
 .swipe-delete-shell:not(.swiping):not(.dismissing) .swipe-delete-card {
   transform: translate3d(0,0,0);
+  opacity: 1;
 }
 
-html[data-theme="dark"] .swipe-delete-shell,
-html[data-theme="dark"] .swipe-delete-action {
-  background: #d9342b;
-}
-
-html[data-theme="dark"] .swipe-delete-shell.armed .swipe-delete-action {
-  background: #c92e27;
+@media (prefers-reduced-motion: reduce) {
+  .swipe-delete-card,
+  .swipe-delete-shell.dismissing .swipe-delete-card {
+    transition: none !important;
+  }
 }
