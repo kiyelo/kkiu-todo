@@ -40,3 +40,12 @@
 .stage.q:not(.reordering) .queue-task-row {
   transition: none !important;
 }
+
+/* A normal task occupies 62px inside a 72px row, leaving a 10px rhythm.
+   Edit mode grows the card to about 70px. Shift every following model row by
+   the 8px growth so the edited card keeps the same visual gap below it instead
+   of nearly touching the next task. Individual `translate` composes with the
+   inline transform used by the virtual/reorder layout. */
+.stage.q:not(.reordering) .qtrack > .queue-task-row:has(.card.editing) ~ * {
+  translate: 0 8px;
+}
