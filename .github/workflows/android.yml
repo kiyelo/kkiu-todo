@@ -62,20 +62,36 @@ jobs:
           test -n "$ANDROID_SIGNING_KEY_BASE64"
           printf '%s' "$ANDROID_SIGNING_KEY_BASE64" | base64 --decode > "$KKIU_SIGNING_STORE_FILE"
 
-      - name: Build and verify APK from shared source
+      - name: Build and verify debug APK from shared source
         run: |
           chmod +x android/gradlew
           pnpm run build:apk
 
-      - name: Verify stable APK signature
-        run: |
-          certificate_sha256=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
-          test "$certificate_sha256" = "0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47"
+      - name: Build optimized release APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleRelease
 
-      - name: Upload APK
+      - name: Verify stable APK signatures
+        run: |
+          debug_sha256=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          release_sha256=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs android/app/build/outputs/apk/release/app-release.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          test "$debug_sha256" = "0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47"
+          test "$release_sha256" = "0de41bf747834b849eb3ab63770cfdfc6abc8ee3ba90b37fa14501a5c2f99f47"
+
+      - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
           name: kkiu-todo-${{ github.sha }}-signed-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload optimized release APK and mapping
+        uses: actions/upload-artifact@v7
+        with:
+          name: kkiu-todo-${{ github.sha }}-optimized-release
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error
           retention-days: 30
