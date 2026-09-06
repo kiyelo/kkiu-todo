@@ -43,8 +43,9 @@ android {
         }
         release {
             if (hasKkiuSigning) signingConfig signingConfigs.kkiuStable
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
