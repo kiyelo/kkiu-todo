@@ -4,12 +4,19 @@ import { Capacitor } from '@capacitor/core'
 const handlers = []
 let nativeListenerStarted = false
 
+function closeVisibleSearch() {
+  const closeButton = document.querySelector('.phone.searching [data-act="hsearch"]')
+  if (!(closeButton instanceof HTMLElement)) return false
+  closeButton.click()
+  return true
+}
+
 function runTopHandler() {
   for (let index = handlers.length - 1; index >= 0; index -= 1) {
     const handled = handlers[index].handler?.()
     if (handled !== false) return true
   }
-  return false
+  return closeVisibleSearch()
 }
 
 function ensureNativeBackListener() {
