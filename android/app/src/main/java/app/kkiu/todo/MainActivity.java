@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(ThemePlugin.class);
         registerPlugin(HapticsPlugin.class);
+        registerPlugin(StartupMetricsPlugin.class);
         getWindow().setBackgroundDrawableResource(R.color.kkiu_launch_background);
         super.onCreate(savedInstanceState);
         if (getBridge() != null && getBridge().getWebView() != null) {

@@ -1,5 +1,6 @@
 import { loadPendingTaskCreates, mergePendingTaskCreates } from './remoteSyncQueue.js'
 import { loadPendingTaskMutations, mergePendingTaskMutations } from './taskMutationOutbox.js'
+import { markStartupOnce } from './startupMetrics.js'
 
 const CACHE_PREFIX = 'kkiu-remote-cache-v1:'
 const LAST_REMOTE_USER_KEY = 'kkiu-last-remote-user-v1'
@@ -32,11 +33,15 @@ export function loadRemoteSnapshot(userId) {
 }
 
 export function loadLastRemoteSnapshot() {
+  markStartupOnce('remote-cache-read-start')
   try {
     const userId = localStorage.getItem(LAST_REMOTE_USER_KEY)
     const snapshot = loadRemoteSnapshot(userId)
-    return userId && snapshot ? { userId, snapshot } : null
+    const result = userId && snapshot ? { userId, snapshot } : null
+    markStartupOnce(result ? 'remote-cache-ready' : 'remote-cache-miss')
+    return result
   } catch {
+    markStartupOnce('remote-cache-miss')
     return null
   }
 }
