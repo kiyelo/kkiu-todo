@@ -81,7 +81,7 @@ jobs:
             -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=Macrobenchmark \
             -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR
 
-      - name: Verify benchmark output
+      - name: Verify and summarize benchmark output
         run: |
           echo 'Benchmark output files:'
           find android/baseline-profile/build/outputs -type f \
@@ -90,6 +90,44 @@ jobs:
           test -n "$benchmark_json"
           test -s "$benchmark_json"
           echo "Benchmark JSON: $benchmark_json"
+          BENCHMARK_JSON="$benchmark_json" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ['BENCHMARK_JSON'])
+          data = json.loads(path.read_text())
+          rows = {}
+          for item in data.get('benchmarks', []):
+              metric = item.get('metrics', {}).get('timeToInitialDisplayMs')
+              if metric:
+                  rows[item['name']] = metric
+
+          baseline = rows.get('coldStartupWithBaselineProfile')
+          none = rows.get('coldStartupWithoutPrecompilation')
+          if baseline is None or none is None:
+              raise SystemExit('Missing expected cold-start benchmark results')
+
+          delta_ms = baseline['median'] - none['median']
+          delta_pct = delta_ms / none['median'] * 100.0
+          lines = [
+              '## Android cold-start benchmark',
+              '',
+              '| Mode | Median | Min | Max | CV |',
+              '| --- | ---: | ---: | ---: | ---: |',
+              f"| Baseline Profile | {baseline['median']:.1f} ms | {baseline['minimum']:.1f} ms | {baseline['maximum']:.1f} ms | {baseline['coefficientOfVariation'] * 100:.1f}% |",
+              f"| No precompilation | {none['median']:.1f} ms | {none['minimum']:.1f} ms | {none['maximum']:.1f} ms | {none['coefficientOfVariation'] * 100:.1f}% |",
+              '',
+              f"Median delta (Baseline - None): **{delta_ms:+.1f} ms ({delta_pct:+.1f}%)**",
+              '',
+              'GMD/emulator measurements are for relative comparison and regression tracking, not end-user device latency.',
+          ]
+          print('\n'.join(lines))
+          summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if summary:
+              with open(summary, 'a', encoding='utf-8') as f:
+                  f.write('\n'.join(lines) + '\n')
+          PY
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7
