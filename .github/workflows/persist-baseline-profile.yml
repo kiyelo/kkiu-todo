@@ -1,0 +1,47 @@
+name: Persist verified Baseline Profile
+
+on:
+  push:
+    branches:
+      - perf/cold-start-benchmark-ci
+    paths:
+      - '.github/workflows/persist-baseline-profile.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  persist:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: perf/cold-start-benchmark-ci
+
+      - name: Download verified profile artifact
+        run: |
+          gh api repos/${{ github.repository }}/actions/artifacts/9992285610/zip > /tmp/kkiu-baseline-profile.zip
+          rm -rf /tmp/kkiu-baseline-profile
+          mkdir -p /tmp/kkiu-baseline-profile
+          unzip -q /tmp/kkiu-baseline-profile.zip -d /tmp/kkiu-baseline-profile
+          test -s /tmp/kkiu-baseline-profile/release/generated/baselineProfiles/baseline-prof.txt
+          test -s /tmp/kkiu-baseline-profile/release/generated/baselineProfiles/startup-prof.txt
+
+      - name: Commit generated profiles
+        run: |
+          mkdir -p android/app/src/release/generated/baselineProfiles
+          cp /tmp/kkiu-baseline-profile/release/generated/baselineProfiles/baseline-prof.txt android/app/src/release/generated/baselineProfiles/baseline-prof.txt
+          cp /tmp/kkiu-baseline-profile/release/generated/baselineProfiles/startup-prof.txt android/app/src/release/generated/baselineProfiles/startup-prof.txt
+          test "$(wc -l < android/app/src/release/generated/baselineProfiles/baseline-prof.txt)" -eq 2338
+          test "$(wc -l < android/app/src/release/generated/baselineProfiles/startup-prof.txt)" -eq 2338
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android/app/src/release/generated/baselineProfiles/baseline-prof.txt android/app/src/release/generated/baselineProfiles/startup-prof.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "Persist generated Android Baseline Profile"
+          git push origin HEAD:perf/cold-start-benchmark-ci
