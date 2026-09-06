@@ -15,7 +15,7 @@ function splitAtWidth(text, width) {
   return [text.slice(0, low), text.slice(low).trim()]
 }
 
-export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDelete, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, showRank = true, searchHit = false, newHit = false, language = 'ko' }) {
+export default function TaskCard({ task, index, members, circle, onComplete, onEdit, onAssignee, onMove, onDelete, onEditingChange, onDragStart, onDragMove, onDragEnd, dragging, reorderable = true, showRank = true, searchHit = false, newHit = false, language = 'ko' }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(task.title)
   const [leaving, setLeaving] = useState(false)
@@ -27,15 +27,20 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
   const input = useRef(null); const cardRef = useRef(null); const titleRef = useRef(null)
   const grip = useRef(null); const swipe = useRef(null); const suppressSwipeClick = useRef(false)
 
-  useEffect(() => { if (editing) { input.current?.focus(); input.current?.setSelectionRange(value.length, value.length) } }, [editing])
+  const setEditingState = (next) => {
+    setEditing(next)
+    onEditingChange?.(task.id, next)
+  }
+
+  useEffect(() => { if (editing) { input.current?.focus({ preventScroll: true }); input.current?.setSelectionRange(value.length, value.length) } }, [editing])
   useLayoutEffect(() => {
     const element = titleRef.current
     if (!element) return undefined
     const measure = () => setTitleWidth(element.clientWidth)
     measure(); const observer = new ResizeObserver(measure); observer.observe(element); return () => observer.disconnect()
   }, [editing])
-  useEffect(() => { if (!editing) return undefined; const outside = (event) => { if (!cardRef.current?.contains(event.target)) { setValue(task.title); setEditing(false) } }; document.addEventListener('pointerdown', outside, true); return () => document.removeEventListener('pointerdown', outside, true) }, [editing, task.title])
-  const save = () => { const next = normalizeTaskTitle(value); if (next) onEdit(task.id, next); setEditing(false) }
+  useEffect(() => { if (!editing) return undefined; const outside = (event) => { if (!cardRef.current?.contains(event.target)) { setValue(task.title); setEditingState(false) } }; document.addEventListener('pointerdown', outside, true); return () => document.removeEventListener('pointerdown', outside, true) }, [editing, task.title])
+  const save = () => { const next = normalizeTaskTitle(value); if (next) onEdit(task.id, next); setEditingState(false) }
 
   const clearSwipe = (event) => {
     const state = swipe.current
@@ -171,7 +176,7 @@ export default function TaskCard({ task, index, members, circle, onComplete, onE
     <article ref={cardRef} data-task-id={task.id} className={`card swipe-delete-card${showRank ? ' hasrank' : ''}${index < 3 && !task.done ? ` t${index + 1}` : ''}${editing ? ' editing' : ''}${dragging ? ' lift' : ''}${leaving ? ' leaving' : ''}${searchHit ? ' search-hit' : ''}${newHit ? ' new-hit' : ''}${hasFormerAssignee ? ' former-assignee' : ''}`} style={swipeStyle} onPointerDown={startSwipeDelete} onPointerMove={moveSwipeDelete} onPointerUp={(event) => finishSwipeDelete(event)} onPointerCancel={(event) => finishSwipeDelete(event, true)} onClickCapture={(event) => { if (suppressSwipeClick.current) { event.preventDefault(); event.stopPropagation() } }}>
       <button className={`ck${task.done || leaving ? ' on' : ''}${leaving ? ' pop' : ''}`} aria-label={`${language==='en'?'Complete to-do':'할 일 완료'}: ${task.title}`} data-act="complete" data-id={task.id} onClick={finish}>{(task.done || leaving) && <CheckIcon />}</button>
       {showRank && <div className={`rank${index < 3 ? ' top' : ''}`}>#{index + 1}</div>}
-      <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" aria-label={`${language === 'en' ? 'Edit to-do' : '할 일 수정'}: ${task.title}`} value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditing(false) } }} /> : <button className="t-title" aria-label={task.title} data-act="title" data-id={task.id} onClick={() => !task.done && setEditing(true)}><span aria-hidden="true" className="t-main">{line1}</span>{line2 && <span aria-hidden="true" className="t-rest">{line2}</span>}</button>}</div>
+      <div className="mid" ref={titleRef}>{editing ? <textarea ref={input} className="edit-text" aria-label={`${language === 'en' ? 'Edit to-do' : '할 일 수정'}: ${task.title}`} value={value} onChange={(event) => setValue(limitGraphemes(event.target.value, TASK_TITLE_LIMIT))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } if (event.key === 'Escape') { setValue(task.title); setEditingState(false) } }} /> : <button className="t-title" aria-label={task.title} data-act="title" data-id={task.id} onClick={() => { if (!task.done) setEditingState(true) }}><span aria-hidden="true" className="t-main">{line1}</span>{line2 && <span aria-hidden="true" className="t-rest">{line2}</span>}</button>}</div>
       <div className="acts">{!editing && circle && task.sourceUnread && <i className="source-unread-dot" aria-label={language==='en'?'Unseen update':'처음 확인하는 업데이트'} />}{!editing && circle && assignedMembers.length === 1 && <span className={`who${assignedMembers[0].leftAt ? ' former' : ''}`}>{assignedMembers[0].emoji}</span>}{!editing && circle && assignedMembers.length > 1 && <span className="whos">{assignedMembers.slice(0,3).map((member) => <span className={`who${member.leftAt ? ' former' : ''}`} key={member.id}>{member.emoji}</span>)}{assignedMembers.length > 3 && <span className="who more">+{assignedMembers.length-3}</span>}</span>}{editing ? <button className="save edit-save" aria-label={language==='en'?'Save edit':'수정 저장'} data-act="edit-save" data-id={task.id} onClick={save}><ArrowIcon /></button> : !task.done && showRank && reorderable ? <button className="ico grip" style={{ touchAction: 'pan-y' }} data-act="grip" data-id={task.id} aria-label={`${language==='en'?'Reorder':'순서 변경'}: ${task.title}`} onPointerDown={startGrip} onPointerMove={moveGrip} onPointerUp={(event) => finishGrip(event)} onPointerCancel={(event) => finishGrip(event, true)} onKeyDown={(event) => { if (event.key === 'ArrowUp') onMove(task.id, -1); if (event.key === 'ArrowDown') onMove(task.id, 1) }}><GripIcon /></button> : null}</div>
       {editing && circle && <div className="asgrow edit-assignee-picker" aria-label={language==='en'?'Choose assignee':'담당자 선택'}>{assignableMembers.map((member) => <button key={member.id} className={`asgc${(task.assignee || task.assignees?.[0]) === member.id ? ' on' : ''}`} data-act="edit-asg-pick" data-m={member.id} data-id={task.id} onClick={() => onAssignee(task.id, member.id)}><span className="av">{member.emoji}</span><OverflowText className="assignee-name" title={member.name}>{member.name}</OverflowText></button>)}</div>}
     </article>
