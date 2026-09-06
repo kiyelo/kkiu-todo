@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { registerBackHandler } from '../services/backNavigation.js'
 
 const FOCUSABLE_SELECTOR = 'button:not([disabled]),a[href],input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
@@ -27,6 +28,11 @@ export default function useDialogA11y(onClose) {
       focusTarget.focus()
     }
     const focusFrame = requestAnimationFrame(focusFirst)
+    const unregisterBack = registerBackHandler(() => {
+      if (!isTopmostDialog(dialog)) return false
+      closeRef.current?.()
+      return true
+    })
 
     const handleKeyDown = (event) => {
       if (!isTopmostDialog(dialog)) return
@@ -59,6 +65,7 @@ export default function useDialogA11y(onClose) {
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       cancelAnimationFrame(focusFrame)
+      unregisterBack()
       document.removeEventListener('keydown', handleKeyDown)
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
         requestAnimationFrame(() => previousFocus.focus())

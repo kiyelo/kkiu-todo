@@ -69,7 +69,8 @@ export default function useFloatingQueue(count, initialIndex = count, options = 
     const previous = indexRef.current
     indexRef.current = next
     setIndexState(next)
-    if (!programmaticRef.current) notifyCrossedSlots(previous, next)
+    const editingText = typeof document !== 'undefined' && document.activeElement?.classList?.contains('edit-text')
+    if (!programmaticRef.current && !editingText) notifyCrossedSlots(previous, next)
   }, [notifyCrossedSlots])
 
   const stopSettling = useCallback(() => {
