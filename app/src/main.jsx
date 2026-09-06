@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { initializeNativeAuth } from './services/nativeAuth.js'
 import './styles/index.css'
-import './styles/editMode.css'
 import './interactions/reorderHighlight.js'
 
 // Start native auth/deep-link setup immediately, but do not block the first
