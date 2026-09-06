@@ -45,7 +45,7 @@ const deletedTaskIds = (operations) => new Set(
 const normalizeBeforeAppend = (operations, nextOperation) => {
   if (nextOperation.kind === 'update') {
     if (deletedTaskIds(operations).has(nextOperation.taskId)) return operations
-    return operations
+    return [...operations, nextOperation]
   }
 
   if (nextOperation.kind === 'positions') {
