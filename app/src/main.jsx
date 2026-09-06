@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { initializeNativeAuth } from './services/nativeAuth.js'
 import './styles/index.css'
+import './styles/taskSwipe.css'
 import './interactions/reorderHighlight.js'
 
 await initializeNativeAuth()
