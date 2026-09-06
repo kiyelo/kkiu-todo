@@ -23,7 +23,7 @@ android {
 }
 
 baselineProfile {
-    managedDevices ['pixel6Api31']
+    managedDevices = ['pixel6Api31']
     useConnectedDevices false
 }
 
