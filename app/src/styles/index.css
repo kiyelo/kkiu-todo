@@ -3,6 +3,17 @@
 @import '../styles.css';
 @import './queue.css';
 @import './taskHighlight.css';
+@import './taskSwipe.css';
+
+/* Bottom navigation is only for top-level destinations. During focused work,
+   keep the current destination in place but remove the tab switcher. */
+.phone.searching #app > .nav,
+#app:has(.slotwrap.open) > .nav,
+#app:has(.card.editing) > .nav,
+#app:has(.identity-modal) > .nav,
+#app:has([data-act="circle-identity-edit"]) > .nav {
+  display: none !important;
+}
 
 /* Startup/auth restoration must never paint the legacy beige prototype shell.
    Keep this layer transparent so the already-resolved light/dark document
