@@ -57,9 +57,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install Android SDK and AOSP managed-device image
+      - name: Install Android build and emulator tools
         run: |
-          sdkmanager "platform-tools" "emulator" "platforms;android-36" "build-tools;36.0.0" "platforms;android-31" "system-images;android-31;aosp;x86_64"
+          sdkmanager "platform-tools" "emulator" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
