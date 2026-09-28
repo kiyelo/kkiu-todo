@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#f2f5fa" />
     <meta name="color-scheme" content="light dark" />
     <script>
+      if (location.hostname === 'kkiu.3dayweekendlab.com' && location.pathname.startsWith('/kkiu-todo/')) {
+        location.replace('/' + location.search + location.hash)
+      }
+    </script>
+    <script>
       (() => {
         const root = document.documentElement
         const systemDark = matchMedia('(prefers-color-scheme: dark)').matches
