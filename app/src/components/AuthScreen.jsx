@@ -68,7 +68,7 @@ export default function AuthScreen() {
     <main className="auth-screen">
       <section className="auth-login-panel" aria-labelledby="auth-title">
         <div className="auth-login-brand">
-          <img className="auth-app-icon" src="/icon-192.png" alt="" aria-hidden="true" />
+          <img className="auth-app-icon" src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" aria-hidden="true" />
           <h1 id="auth-title">{t(language, 'authTitle')}</h1>
           <p>{t(language, 'authHero')}</p>
         </div>
