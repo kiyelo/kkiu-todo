@@ -8,8 +8,8 @@
   <body>
     <p>끼우로 이동하고 있어요…</p>
     <script>
-      const appRoot = '/kkiu-todo/'
       const current = new URL(window.location.href)
+      const appRoot = current.hostname === 'kkiu.3dayweekendlab.com' ? '/' : '/kkiu-todo/'
       window.location.replace(`${appRoot}${current.search}${current.hash}`)
     </script>
   </body>
